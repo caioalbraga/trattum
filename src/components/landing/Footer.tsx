@@ -61,7 +61,7 @@ export function Footer() {
           {/* Company Links */}
           <div>
             <h3 className="font-semibold text-sm mb-6 uppercase tracking-wide text-primary-foreground/70">
-              Tratto
+              Trattum
             </h3>
             <ul className="space-y-4">
               {companyLinks.map((link, index) => (
@@ -86,7 +86,7 @@ export function Footer() {
           {/* Logo */}
           <div>
             <h2 className="text-2xl font-serif font-semibold mb-6">
-              Tratto
+              Trattum
             </h2>
             
             {/* Legal Links */}
@@ -122,19 +122,19 @@ export function Footer() {
           <Mail className="w-5 h-5" />
           <div className="text-sm">
             <p className="font-medium">Seja uma farmácia parceira:</p>
-            <p className="text-primary-foreground/70">parcerias@tratto.com.br</p>
+            <p className="text-primary-foreground/70">parcerias@trattum.com.br</p>
           </div>
         </div>
 
         {/* Disclaimer */}
         <p className="text-xs text-primary-foreground/50 mt-8 max-w-2xl">
-          A Tratto é uma plataforma de telemedicina. Todos os medicamentos são manipulados por farmácias credenciadas e autorizadas pela Anvisa, seguindo os mais rigorosos padrões de qualidade farmacêutica.
+          A Trattum é uma plataforma de telemedicina. Todos os medicamentos são manipulados por farmácias credenciadas e autorizadas pela Anvisa, seguindo os mais rigorosos padrões de qualidade farmacêutica.
         </p>
 
         {/* Copyright & Payment Methods */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mt-8 pt-8 border-t border-primary-foreground/10">
           <p className="text-sm text-primary-foreground/50">
-            © 2026 Tratto™. Todos os direitos reservados.
+            © 2026 Trattum™. Todos os direitos reservados.
           </p>
 
           <div className="flex items-center gap-4">

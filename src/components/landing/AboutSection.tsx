@@ -16,7 +16,7 @@ export function AboutSection() {
       <div className="container">
         <div className="text-center mb-4">
           <span className="text-xs font-medium tracking-widest text-primary/70 uppercase">
-            Sobre a Tratto
+            Sobre a Trattum
           </span>
         </div>
         
@@ -26,7 +26,7 @@ export function AboutSection() {
         
         <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
           Gerenciamos cada etapa do seu tratamento para que você foque apenas nos seus resultados.
-          Na Tratto, você tem acesso a médicos especializados, farmácias credenciadas pela Anvisa e suporte clínico dedicado.
+          Na Trattum, você tem acesso a médicos especializados, farmácias credenciadas pela Anvisa e suporte clínico dedicado.
         </p>
 
         <div className="text-center mb-8">
