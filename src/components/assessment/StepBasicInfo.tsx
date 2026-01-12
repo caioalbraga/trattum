@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Scale, Ruler, Target } from "lucide-react";
+import { Scale, Ruler, Target, Activity } from "lucide-react";
+import { calculateBMI, getBMICategory } from "@/lib/assessment-logic";
 
 interface StepBasicInfoProps {
   data: {
@@ -17,6 +18,20 @@ interface StepBasicInfoProps {
 
 export function StepBasicInfo({ data, onUpdate, onNext }: StepBasicInfoProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const bmi = useMemo(() => {
+    if (data.currentWeight && data.height) {
+      return calculateBMI(data.currentWeight, data.height);
+    }
+    return 0;
+  }, [data.currentWeight, data.height]);
+
+  const bmiInfo = useMemo(() => {
+    if (bmi > 0) {
+      return getBMICategory(bmi);
+    }
+    return null;
+  }, [bmi]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -46,19 +61,20 @@ export function StepBasicInfo({ data, onUpdate, onNext }: StepBasicInfoProps) {
 
   return (
     <div className="animate-fade-in max-w-xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-foreground mb-2">
+      <div className="text-center mb-10">
+        <h2 className="heading-section mb-3">
           Vamos começar pelo básico
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-body-lg">
           Essas informações nos ajudam a criar seu plano personalizado
         </p>
       </div>
 
-      <Card className="p-6 space-y-6 card-elevated">
+      <Card className="p-8 space-y-6 card-elevated">
+        {/* Weight Input */}
         <div className="space-y-2">
-          <Label htmlFor="currentWeight" className="flex items-center gap-2">
-            <Scale className="w-4 h-4 text-primary" />
+          <Label htmlFor="currentWeight" className="flex items-center gap-2 text-sm font-medium">
+            <Scale className="w-4 h-4 text-teal" />
             Peso atual (kg)
           </Label>
           <Input
@@ -67,16 +83,17 @@ export function StepBasicInfo({ data, onUpdate, onNext }: StepBasicInfoProps) {
             placeholder="Ex: 85"
             value={data.currentWeight || ""}
             onChange={(e) => onUpdate({ currentWeight: Number(e.target.value) })}
-            className="h-12 text-lg"
+            className="h-14 text-lg bg-background"
           />
           {errors.currentWeight && (
             <p className="text-sm text-destructive">{errors.currentWeight}</p>
           )}
         </div>
 
+        {/* Height Input */}
         <div className="space-y-2">
-          <Label htmlFor="height" className="flex items-center gap-2">
-            <Ruler className="w-4 h-4 text-primary" />
+          <Label htmlFor="height" className="flex items-center gap-2 text-sm font-medium">
+            <Ruler className="w-4 h-4 text-teal" />
             Altura (cm)
           </Label>
           <Input
@@ -85,16 +102,35 @@ export function StepBasicInfo({ data, onUpdate, onNext }: StepBasicInfoProps) {
             placeholder="Ex: 170"
             value={data.height || ""}
             onChange={(e) => onUpdate({ height: Number(e.target.value) })}
-            className="h-12 text-lg"
+            className="h-14 text-lg bg-background"
           />
           {errors.height && (
             <p className="text-sm text-destructive">{errors.height}</p>
           )}
         </div>
 
+        {/* BMI Display */}
+        {bmi > 0 && bmiInfo && (
+          <div className="bg-secondary/50 rounded-xl p-4 border border-border/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-teal" />
+                <span className="text-sm font-medium">Seu IMC</span>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold">{bmi.toFixed(1)}</span>
+                <p className={`text-sm font-medium ${bmiInfo.color}`}>
+                  {bmiInfo.category}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Target Weight Input */}
         <div className="space-y-2">
-          <Label htmlFor="targetWeight" className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" />
+          <Label htmlFor="targetWeight" className="flex items-center gap-2 text-sm font-medium">
+            <Target className="w-4 h-4 text-teal" />
             Meta de peso (kg)
           </Label>
           <Input
@@ -103,16 +139,26 @@ export function StepBasicInfo({ data, onUpdate, onNext }: StepBasicInfoProps) {
             placeholder="Ex: 70"
             value={data.targetWeight || ""}
             onChange={(e) => onUpdate({ targetWeight: Number(e.target.value) })}
-            className="h-12 text-lg"
+            className="h-14 text-lg bg-background"
           />
           {errors.targetWeight && (
             <p className="text-sm text-destructive">{errors.targetWeight}</p>
           )}
+          {data.currentWeight && data.targetWeight && data.targetWeight < data.currentWeight && (
+            <p className="text-sm text-muted-foreground">
+              Perda de {data.currentWeight - data.targetWeight}kg ({((data.currentWeight - data.targetWeight) / data.currentWeight * 100).toFixed(1)}% do peso atual)
+            </p>
+          )}
         </div>
       </Card>
 
-      <div className="mt-8 flex justify-center">
-        <Button variant="coral" size="lg" onClick={handleNext}>
+      <div className="mt-10 flex justify-center">
+        <Button 
+          variant="coral" 
+          size="lg" 
+          onClick={handleNext}
+          className="min-w-[200px]"
+        >
           Continuar
         </Button>
       </div>

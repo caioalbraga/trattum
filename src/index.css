@@ -2,57 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Off-white background inspired by manual.com.br */
-    --background: 40 33% 98%;
-    --foreground: 160 25% 20%;
+    /* Off-white background - FDFCF8 */
+    --background: 43 43% 98%;
+    --foreground: 166 29% 14%;
 
-    /* Cards - pure white */
+    /* Cards - pure white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 160 25% 20%;
+    --card-foreground: 166 29% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 160 25% 20%;
+    --popover-foreground: 166 29% 14%;
 
-    /* Teal/Emerald primary - for charts and icons */
-    --primary: 160 45% 35%;
-    --primary-foreground: 0 0% 100%;
+    /* Dark Forest Green - 1A2E2A */
+    --primary: 166 29% 14%;
+    --primary-foreground: 43 43% 98%;
 
     /* Light mint for icon backgrounds */
-    --secondary: 158 35% 92%;
-    --secondary-foreground: 160 45% 35%;
+    --secondary: 166 20% 94%;
+    --secondary-foreground: 166 29% 14%;
 
     /* Muted tones */
     --muted: 40 20% 94%;
-    --muted-foreground: 160 10% 45%;
+    --muted-foreground: 166 15% 45%;
 
     /* Coral/Salmon accent - CTAs */
     --accent: 15 85% 70%;
-    --accent-foreground: 160 25% 20%;
+    --accent-foreground: 166 29% 14%;
 
     /* Coral for destructive/urgent */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 160 15% 88%;
-    --input: 160 15% 88%;
-    --ring: 160 45% 35%;
+    --border: 166 15% 88%;
+    --input: 166 15% 88%;
+    --ring: 166 29% 14%;
 
     --radius: 0.75rem;
 
     /* Custom colors */
-    --coral: 15 85% 70%;
-    --coral-hover: 15 85% 65%;
-    --emerald: 160 45% 35%;
-    --emerald-light: 158 35% 92%;
-    --cream: 40 33% 98%;
-    --charcoal: 160 25% 20%;
+    --coral: 12 76% 72%;
+    --coral-hover: 12 76% 65%;
+    --forest: 166 29% 14%;
+    --forest-light: 166 20% 94%;
+    --cream: 43 43% 98%;
+    --charcoal: 166 29% 14%;
+
+    /* Teal for charts */
+    --teal: 166 45% 35%;
+    --teal-light: 166 35% 92%;
 
     /* Gradients */
-    --gradient-chart: linear-gradient(180deg, hsl(160 45% 35% / 0.3) 0%, hsl(160 45% 35% / 0.05) 100%);
+    --gradient-chart: linear-gradient(180deg, hsl(166 45% 35% / 0.3) 0%, hsl(166 45% 35% / 0.05) 100%);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -65,33 +69,33 @@
   }
 
   .dark {
-    --background: 160 25% 8%;
-    --foreground: 40 33% 98%;
+    --background: 166 25% 8%;
+    --foreground: 43 43% 98%;
 
-    --card: 160 20% 12%;
-    --card-foreground: 40 33% 98%;
+    --card: 166 20% 12%;
+    --card-foreground: 43 43% 98%;
 
-    --popover: 160 20% 12%;
-    --popover-foreground: 40 33% 98%;
+    --popover: 166 20% 12%;
+    --popover-foreground: 43 43% 98%;
 
-    --primary: 160 45% 45%;
-    --primary-foreground: 160 25% 8%;
+    --primary: 166 35% 45%;
+    --primary-foreground: 166 25% 8%;
 
-    --secondary: 160 20% 18%;
-    --secondary-foreground: 40 33% 98%;
+    --secondary: 166 20% 18%;
+    --secondary-foreground: 43 43% 98%;
 
-    --muted: 160 20% 18%;
-    --muted-foreground: 160 10% 60%;
+    --muted: 166 20% 18%;
+    --muted-foreground: 166 10% 60%;
 
-    --accent: 15 75% 60%;
+    --accent: 12 75% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 160 20% 20%;
-    --input: 160 20% 20%;
-    --ring: 160 45% 45%;
+    --border: 166 20% 20%;
+    --input: 166 20% 20%;
+    --ring: 166 35% 45%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -116,24 +120,48 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
+    @apply tracking-tight;
   }
 }
 
 @layer components {
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-forest bg-clip-text text-transparent;
   }
 
   .card-elevated {
-    @apply bg-card rounded-2xl shadow-lg shadow-primary/5 border border-border/50;
+    @apply bg-card rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] border border-border/40;
+  }
+
+  .card-subtle {
+    @apply bg-card rounded-xl shadow-[0_1px_4px_-1px_rgba(0,0,0,0.04)] border border-border/30;
   }
 
   .icon-container {
     @apply w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary;
   }
 
+  .icon-container-sm {
+    @apply w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary;
+  }
+
   .timeline-connector {
     @apply absolute left-7 top-16 w-0.5 h-12 border-l-2 border-dashed border-primary/30;
+  }
+
+  /* Editorial typography */
+  .heading-display {
+    font-family: 'Playfair Display', serif;
+    @apply text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-tight;
+  }
+
+  .heading-section {
+    font-family: 'Playfair Display', serif;
+    @apply text-2xl sm:text-3xl font-medium tracking-tight;
+  }
+
+  .text-body-lg {
+    @apply text-lg leading-relaxed text-muted-foreground;
   }
 }
 

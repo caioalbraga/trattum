@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
-import { ProgressBar } from "@/components/assessment/ProgressBar";
 import { WeightChart } from "@/components/results/WeightChart";
 import { BenefitsList } from "@/components/results/BenefitsList";
 import { HelpTimeline } from "@/components/results/HelpTimeline";
@@ -13,6 +12,7 @@ import {
   determineTreatment,
   getTreatmentDetails,
   generateWeightProjection,
+  calculateBMI,
 } from "@/lib/assessment-logic";
 
 export default function Results() {
@@ -31,9 +31,9 @@ export default function Results() {
     } else {
       // Demo data if no assessment
       setData({
-        currentWeight: 150,
-        height: 175,
-        targetWeight: 130,
+        currentWeight: 95,
+        height: 170,
+        targetWeight: 78,
         primaryGoal: 'lose_weight',
         timeline: '6_months',
         hasTriedDiets: true,
@@ -46,71 +46,76 @@ export default function Results() {
       });
     }
 
-    // Show discount modal after 3 seconds
+    // Show discount modal after 5 seconds
     const timer = setTimeout(() => {
       setShowDiscountModal(true);
-    }, 3000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, []);
 
   if (!data) return null;
 
+  const bmi = calculateBMI(data.currentWeight, data.height);
   const projection = generateWeightProjection(data.currentWeight, data.targetWeight);
   const treatment = getTreatmentDetails(treatmentType);
-
-  const steps = [
-    { id: 1, name: 'Questionário', completed: true },
-    { id: 2, name: 'Metas', completed: activeTab === 'tratamento' },
-    { id: 3, name: 'Tratamento', completed: false },
-    { id: 4, name: 'Pedido', completed: false },
-  ];
 
   const handleSelectTreatment = () => {
     navigate('/checkout');
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-28">
       <Header />
 
-      <main className="container py-8">
+      <main className="container py-8 max-w-4xl mx-auto">
         {/* Tabs */}
-        <div className="flex justify-center gap-8 mb-8 border-b">
+        <div className="flex justify-center gap-12 mb-10 border-b border-border/60">
           <button
-            className={`pb-4 text-sm font-medium transition-colors ${
+            className={`pb-4 text-sm font-semibold tracking-wide uppercase transition-colors relative ${
               activeTab === 'metas'
-                ? 'text-primary border-b-2 border-primary'
+                ? 'text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => setActiveTab('metas')}
           >
-            METAS
+            Metas
+            {activeTab === 'metas' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+            )}
           </button>
           <button
-            className={`pb-4 text-sm font-medium transition-colors ${
+            className={`pb-4 text-sm font-semibold tracking-wide uppercase transition-colors relative ${
               activeTab === 'tratamento'
-                ? 'text-primary border-b-2 border-primary'
+                ? 'text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={() => setActiveTab('tratamento')}
           >
-            TRATAMENTO
+            Tratamento
+            {activeTab === 'tratamento' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+            )}
           </button>
         </div>
 
         {activeTab === 'metas' && (
           <div className="animate-fade-in">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl sm:text-3xl font-serif font-semibold mb-2">
-                Seu plano de metas
+            {/* Header */}
+            <div className="text-center mb-10">
+              <p className="text-sm font-semibold tracking-widest text-teal uppercase mb-3">
+                Seu IMC: {bmi.toFixed(1)}
+              </p>
+              <h1 className="heading-section mb-4">
+                Seu plano de metas personalizado
               </h1>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                Agora que te conhecemos melhor, veja como podemos te ajudar a alcançar suas metas com possíveis medicações e um time de saúde.
+              <p className="text-body-lg max-w-2xl mx-auto">
+                Agora que te conhecemos melhor, veja como podemos te ajudar a alcançar 
+                suas metas com medicações aprovadas e um time de saúde dedicado.
               </p>
             </div>
 
-            <div className="max-w-3xl mx-auto space-y-8">
+            <div className="space-y-10">
               <WeightChart
                 data={projection}
                 currentWeight={data.currentWeight}
@@ -126,12 +131,16 @@ export default function Results() {
 
         {activeTab === 'tratamento' && (
           <div className="animate-fade-in max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl sm:text-3xl font-serif font-semibold mb-2">
-                Medicação e Suporte Nutricional
+            <div className="text-center mb-10">
+              <p className="text-sm font-semibold tracking-widest text-teal uppercase mb-3">
+                Medicação recomendada
+              </p>
+              <h1 className="heading-section mb-4">
+                {treatment.name}
               </h1>
-              <p className="text-muted-foreground">
-                Com base no seu perfil, recomendamos o seguinte plano
+              <p className="text-body-lg">
+                Com base no seu perfil e IMC de {bmi.toFixed(1)}, este é o tratamento 
+                mais indicado para você
               </p>
             </div>
 
@@ -142,10 +151,11 @@ export default function Results() {
 
       <FloatingCTA
         message="Perca peso com saúde e mantenha seus resultados"
-        buttonText={activeTab === 'metas' ? 'Descubra o seu plano ideal' : 'Finalizar'}
+        buttonText={activeTab === 'metas' ? 'Ver tratamento recomendado' : 'Iniciar tratamento'}
         onClick={() => {
           if (activeTab === 'metas') {
             setActiveTab('tratamento');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           } else {
             handleSelectTreatment();
           }
@@ -157,7 +167,7 @@ export default function Results() {
         onClose={() => setShowDiscountModal(false)}
         onSubmit={(email) => {
           console.log('Email captured:', email);
-          // Here you would save the email to your database
+          setShowDiscountModal(false);
         }}
       />
     </div>

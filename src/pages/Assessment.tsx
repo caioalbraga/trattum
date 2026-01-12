@@ -7,6 +7,7 @@ import { StepGoals } from "@/components/assessment/StepGoals";
 import { StepHealth } from "@/components/assessment/StepHealth";
 import { StepLifestyle } from "@/components/assessment/StepLifestyle";
 import { AssessmentData } from "@/types/assessment";
+import { calculateBMI, isEligibleForMedication } from "@/lib/assessment-logic";
 
 const initialData: AssessmentData = {
   currentWeight: 0,
@@ -40,8 +41,18 @@ export default function Assessment() {
   };
 
   const handleComplete = () => {
-    // Store data and navigate to results
+    // Calculate BMI and check eligibility
+    const bmi = calculateBMI(data.currentWeight, data.height);
+    
+    // Store data
     sessionStorage.setItem('assessmentData', JSON.stringify(data));
+    
+    // Check if eligible for medication (BMI >= 27)
+    if (!isEligibleForMedication(bmi)) {
+      navigate('/not-eligible');
+      return;
+    }
+    
     navigate('/results');
   };
 
