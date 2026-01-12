@@ -9,7 +9,7 @@ export default {
       center: true,
       padding: "2rem",
       screens: {
-        "2xl": "1400px",
+        "2xl": "1200px",
       },
     },
     extend: {
@@ -55,9 +55,13 @@ export default {
           DEFAULT: "hsl(var(--coral))",
           hover: "hsl(var(--coral-hover))",
         },
-        emerald: {
-          DEFAULT: "hsl(var(--emerald))",
-          light: "hsl(var(--emerald-light))",
+        forest: {
+          DEFAULT: "hsl(var(--forest))",
+          light: "hsl(var(--forest-light))",
+        },
+        teal: {
+          DEFAULT: "hsl(var(--teal))",
+          light: "hsl(var(--teal-light))",
         },
         cream: "hsl(var(--cream))",
         charcoal: "hsl(var(--charcoal))",
@@ -97,9 +101,13 @@ export default {
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
       },
       boxShadow: {
-        'card': '0 4px 20px -4px rgba(0, 0, 0, 0.08)',
-        'card-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.12)',
-        'button': '0 4px 14px 0 rgba(233, 150, 122, 0.39)',
+        'card': '0 2px 12px -4px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 4px 20px -4px rgba(0, 0, 0, 0.1)',
+        'button': '0 4px 14px 0 rgba(233, 150, 122, 0.35)',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
       },
     },
   },
