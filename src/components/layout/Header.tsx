@@ -25,7 +25,7 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="absolute left-1/2 -translate-x-1/2">
           <h1 className="text-xl font-serif font-semibold text-foreground tracking-wide">
-            VIDASAÚDE
+            TRATTO
           </h1>
         </Link>
         
@@ -49,7 +49,7 @@ export function Header() {
         {/* Mobile Logo */}
         <Link to="/" className="md:hidden">
           <h1 className="text-lg font-serif font-semibold text-foreground tracking-wide">
-            VIDASAÚDE
+            TRATTO
           </h1>
         </Link>
       </div>
