@@ -12,15 +12,15 @@ export function HeroSection() {
           {/* Text Content */}
           <div className="order-2 lg:order-1 max-w-xl">
             <h1 className="heading-display text-foreground mb-6">
-              Saúde e<br />
+              A ciência do<br />
               <span className="italic">emagrecimento</span><br />
-              do jeito que você precisa.
+              ao seu alcance.
             </h1>
             
             <p className="text-body-lg mb-8 max-w-md">
-              Sem salas de espera ou conversas constrangedoras.
+              Acesso médico imediato, sem burocracia ou deslocamentos.
               <br /><br />
-              Apenas tratamentos baseados na ciência, entregues direto na sua porta, e com acompanhamento durante todo o processo.
+              Protocolos clínicos rigorosos e medicações de última geração, com acompanhamento especializado em cada etapa.
             </p>
 
             <Button 
@@ -29,7 +29,7 @@ export function HeroSection() {
               onClick={() => navigate('/assessment')}
               className="group"
             >
-              Começar agora
+              Iniciar meu Diagnóstico
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>

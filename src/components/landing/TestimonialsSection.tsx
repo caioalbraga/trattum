@@ -4,27 +4,27 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 const testimonials = [
   {
     name: "Alexandre P.",
-    text: "Foi tudo muito rápido e o preço é ótimo. Em menos de 3 dias o meu tratamento já estava em casa.",
+    text: "O processo foi ágil e o investimento é justo pelo que entrega. Em menos de 3 dias recebi meu tratamento em casa, com total discrição.",
     rating: 5,
   },
   {
     name: "Eduardo B.",
-    text: "Os meus resultados estão sendo muito positivos! Aqui eu sei que estou falando com profissionais que tratam seriamente o meu problema.",
+    text: "Minha evolução tem sido consistente. A equipe médica trata meu caso com seriedade e o acompanhamento faz toda diferença nos resultados.",
     rating: 5,
   },
   {
     name: "Marcelo F.",
-    text: "A Manual está resolvendo meus problemas! Muito satisfeito com o atendimento e os resultados.",
+    text: "Finalmente encontrei um programa que funciona. O suporte clínico é atencioso e os resultados começaram a aparecer já nas primeiras semanas.",
     rating: 5,
   },
   {
     name: "Yuri C.",
-    text: "Eu estava sem tempo para ir ao dermatologista. Na Manual tive a oportunidade de ser avaliado e ainda recebi os medicamentos em casa.",
+    text: "Minha rotina não permitia consultas presenciais. Aqui consegui uma avaliação completa e o tratamento chegou direto na minha porta.",
     rating: 5,
   },
   {
     name: "Silvio G.",
-    text: "O diferencial é que tem avaliando e são tratamentos que funcionam. Recomendo a todos.",
+    text: "O diferencial está no protocolo personalizado. São tratamentos validados cientificamente com acompanhamento real. Indico sem hesitar.",
     rating: 5,
   },
 ];
@@ -48,7 +48,7 @@ export function TestimonialsSection() {
         <div className="flex items-start justify-between mb-12">
           <div>
             <h2 className="heading-section text-foreground mb-4">
-              O que nossos clientes dizem
+              Resultados que transformam vidas
             </h2>
             
             {/* Reclame Aqui Badge */}

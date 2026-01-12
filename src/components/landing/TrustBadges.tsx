@@ -3,23 +3,23 @@ import { Shield, Truck, RefreshCw, Stethoscope } from "lucide-react";
 const badges = [
   {
     icon: Shield,
-    title: "Tratamentos elaborados e vendidos por farmácias de manipulação",
+    title: "Medicações de última geração manipuladas por farmácias",
     highlight: "autorizadas pela Anvisa",
   },
   {
     icon: Truck,
-    title: "Entrega",
-    highlight: "rápida e gratuita",
+    title: "Logística discreta:",
+    highlight: "seu tratamento entregue na sua porta",
   },
   {
     icon: RefreshCw,
-    title: "Planos flexíveis.",
-    highlight: "Cancele quando quiser.",
+    title: "Flexibilidade total.",
+    highlight: "Ajuste ou cancele quando precisar.",
   },
   {
     icon: Stethoscope,
-    title: "Acompanhamento",
-    highlight: "clínico",
+    title: "Suporte clínico",
+    highlight: "contínuo e especializado",
   },
 ];
 

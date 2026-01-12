@@ -1,16 +1,16 @@
 import { HelpCircle, ChevronRight, Facebook, Instagram, Mail } from "lucide-react";
 
 const treatmentLinks = [
-  { label: "Emagrecimento", href: "#" },
-  { label: "Queda Capilar", href: "#" },
-  { label: "Disfunção Erétil", href: "#" },
+  { label: "Gerenciamento de Peso", href: "#" },
+  { label: "Saúde Capilar", href: "#" },
+  { label: "Saúde Sexual", href: "#" },
 ];
 
 const companyLinks = [
-  { label: "Home", href: "/" },
+  { label: "Início", href: "/" },
   { label: "Quem Somos", href: "#" },
-  { label: "Perguntas Frequentes", href: "#" },
-  { label: "Saiba mais", href: "#" },
+  { label: "Central de Ajuda", href: "#" },
+  { label: "Blog Clínico", href: "#" },
 ];
 
 export function Footer() {
@@ -22,7 +22,7 @@ export function Footer() {
           {/* Help Section */}
           <div>
             <h3 className="font-semibold text-lg mb-6 uppercase tracking-wide">
-              Ficou alguma dúvida?
+              Precisa de orientação?
             </h3>
             <a 
               href="#" 
@@ -32,8 +32,8 @@ export function Footer() {
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-medium">Visite nossa central de ajuda</p>
-                <p className="text-sm text-primary-foreground/60">Encontre respostas para suas perguntas</p>
+                <p className="font-medium">Acesse nossa Central de Ajuda</p>
+                <p className="text-sm text-primary-foreground/60">Respostas para suas principais dúvidas</p>
               </div>
             </a>
           </div>
@@ -41,7 +41,7 @@ export function Footer() {
           {/* Treatment Links */}
           <div>
             <h3 className="font-semibold text-sm mb-6 uppercase tracking-wide text-primary-foreground/70">
-              Tratamentos
+              Programas Clínicos
             </h3>
             <ul className="space-y-4">
               {treatmentLinks.map((link, index) => (
@@ -92,10 +92,10 @@ export function Footer() {
             {/* Legal Links */}
             <div className="flex gap-6 text-sm text-primary-foreground/70">
               <a href="#" className="hover:text-primary-foreground transition-colors">
-                Política de privacidade
+                Política de Privacidade
               </a>
               <a href="#" className="hover:text-primary-foreground transition-colors">
-                Termos e condições
+                Termos de Uso
               </a>
             </div>
           </div>
@@ -121,20 +121,20 @@ export function Footer() {
         <div className="mt-8 inline-flex items-center gap-3 bg-primary-foreground/10 rounded-xl px-4 py-3">
           <Mail className="w-5 h-5" />
           <div className="text-sm">
-            <p className="font-medium">Seja uma farmácia credenciada:</p>
-            <p className="text-primary-foreground/70">contato@vidasaude.com.br</p>
+            <p className="font-medium">Seja uma farmácia parceira:</p>
+            <p className="text-primary-foreground/70">parcerias@vidasaude.com.br</p>
           </div>
         </div>
 
         {/* Disclaimer */}
         <p className="text-xs text-primary-foreground/50 mt-8 max-w-2xl">
-          A VidaSaúde não é uma farmácia. Todos produtos adquiridos são manipulados pelas farmácias credenciadas, de acordo com as normas da Anvisa.
+          A VidaSaúde é uma plataforma de telemedicina. Todos os medicamentos são manipulados por farmácias credenciadas e autorizadas pela Anvisa, seguindo os mais rigorosos padrões de qualidade farmacêutica.
         </p>
 
         {/* Copyright & Payment Methods */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mt-8 pt-8 border-t border-primary-foreground/10">
           <p className="text-sm text-primary-foreground/50">
-            Copyright 2026 VidaSaúde™. Todos os direitos reservados.
+            © 2026 VidaSaúde™. Todos os direitos reservados.
           </p>
 
           <div className="flex items-center gap-4">

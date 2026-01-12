@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 
 const benefits = [
-  "Perda de peso de 15-20% em 6 meses",
-  "Redução significativa do apetite",
-  "Melhora nos níveis de açúcar no sangue",
-  "Acompanhamento médico contínuo",
-  "Entrega discreta na sua casa",
-  "Suporte via WhatsApp 7 dias por semana",
+  "Redução de 15-20% do peso corporal em até 6 meses",
+  "Regulação hormonal e controle da saciedade",
+  "Melhora significativa dos marcadores metabólicos",
+  "Monitoramento clínico contínuo e ajustes de protocolo",
+  "Logística discreta com entrega domiciliar",
+  "Canal de suporte disponível 7 dias por semana",
 ];
 
 export function TreatmentShowcase() {
@@ -19,12 +19,12 @@ export function TreatmentShowcase() {
       <div className="container">
         <div className="text-center mb-4">
           <span className="text-xs font-medium tracking-widest text-primary/70 uppercase">
-            Tratamentos
+            Programa Clínico
           </span>
         </div>
         
         <h2 className="heading-section text-foreground text-center mb-16 max-w-3xl mx-auto">
-          Tratamentos baseados na ciência, personalizados para você
+          Transformação metabólica duradoura com respaldo científico
         </h2>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
@@ -33,7 +33,7 @@ export function TreatmentShowcase() {
             <div className="aspect-square bg-gradient-to-br from-secondary/80 to-secondary/40 rounded-3xl overflow-hidden flex items-center justify-center">
               <img 
                 src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80"
-                alt="Tratamento para emagrecimento"
+                alt="Tratamento para gerenciamento metabólico"
                 className="w-3/4 h-3/4 object-contain drop-shadow-xl"
               />
             </div>
@@ -45,7 +45,7 @@ export function TreatmentShowcase() {
                   <Check className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Aprovado</p>
+                  <p className="font-medium text-foreground">Autorizado</p>
                   <p className="text-xs text-muted-foreground">pela Anvisa</p>
                 </div>
               </div>
@@ -55,11 +55,12 @@ export function TreatmentShowcase() {
           {/* Content */}
           <div>
             <h3 className="text-2xl font-serif font-medium text-foreground mb-4">
-              Programa de Emagrecimento
+              Programa de Gerenciamento Metabólico
             </h3>
             
             <p className="text-muted-foreground mb-8 leading-relaxed">
-              Nosso programa combina medicamentos de última geração com acompanhamento médico personalizado para resultados duradouros e seguros.
+              Nosso protocolo integra medicações de alta eficácia com acompanhamento médico especializado. 
+              Focamos na regulação hormonal e no controle de saciedade para uma transformação sustentável e segura.
             </p>
 
             <ul className="space-y-4 mb-8">
@@ -79,7 +80,7 @@ export function TreatmentShowcase() {
               onClick={() => navigate('/assessment')}
               className="group"
             >
-              Começar avaliação gratuita
+              Verificar Elegibilidade
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>

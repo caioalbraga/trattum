@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Check, MessageCircle, Pill, ArrowRight } from "lucide-react";
 
 const features = [
-  "Avaliação médica assíncrona",
-  "Medicamentos entregues na sua porta com frete gratuito, se prescritos",
-  "Suporte contínuo com o time de especialistas",
+  "Avaliação médica digital com análise de perfil metabólico",
+  "Medicações prescritas entregues na sua porta com frete incluído",
+  "Suporte clínico contínuo para ajustes e orientações",
 ];
 
 export function AboutSection() {
@@ -21,17 +21,17 @@ export function AboutSection() {
         </div>
         
         <h2 className="heading-section text-foreground text-center mb-4 max-w-3xl mx-auto">
-          Cuidado completo e descomplicado
+          Medicina de precisão, simplificada
         </h2>
         
         <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
-          Nós gerenciamos o seu tratamento e cuidamos de tudo para que você possa se cuidar com tranquilidade.
-          Pela VidaSaúde, você está conectado a médicos especializados, farmácias parceiras e conta com suporte clínico sempre que precisar.
+          Gerenciamos cada etapa do seu tratamento para que você foque apenas nos seus resultados.
+          Na VidaSaúde, você tem acesso a médicos especializados, farmácias credenciadas pela Anvisa e suporte clínico dedicado.
         </p>
 
         <div className="text-center mb-8">
           <h3 className="text-xl font-serif font-medium text-foreground">
-            Opções de Planos
+            Modalidades de Atendimento
           </h3>
         </div>
 
@@ -41,21 +41,21 @@ export function AboutSection() {
             <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
               <img 
                 src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80"
-                alt="Tratamento completo"
+                alt="Programa de tratamento integrado"
                 className="w-full h-full object-cover"
               />
             </div>
             
             <div className="p-6">
               <h4 className="font-semibold text-lg text-foreground mb-2">
-                Cuidado Completo
+                Programa Integrado
               </h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Diagnóstico médico, medicamentos prescritos e suporte clínico ilimitado
+                Diagnóstico médico, prescrição personalizada e suporte clínico ilimitado
               </p>
 
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-                Está incluso
+                Incluso no programa
               </p>
 
               <ul className="space-y-2 mb-6">
@@ -72,7 +72,7 @@ export function AboutSection() {
                 className="w-full group"
                 onClick={() => navigate('/assessment')}
               >
-                Começar avaliação
+                Descobrir meu Plano de Metas
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
@@ -84,10 +84,10 @@ export function AboutSection() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h4 className="font-semibold text-primary mb-1">
-                    Consulta Médica Avulsa
+                    Consulta Avulsa
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Avaliação assíncrona realizada por um médico credenciado.
+                    Avaliação digital realizada por médico credenciado, sem compromisso de plano.
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -95,7 +95,7 @@ export function AboutSection() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Esta opção está disponível para ser selecionada ao configurar suas preferências de plano de tratamento
+                Ideal para quem busca orientação médica pontual antes de iniciar um tratamento
               </p>
             </div>
 
@@ -103,10 +103,10 @@ export function AboutSection() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">
-                    Farmácia Online
+                    Farmácia Credenciada
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Caso você já tenha uma prescrição médica, pode comprar seus medicamentos através de uma farmácia parceira VidaSaúde
+                    Já possui prescrição médica? Adquira suas medicações através de nossa rede de farmácias autorizadas
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
@@ -114,7 +114,7 @@ export function AboutSection() {
                 </div>
               </div>
               <button className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
-                Começar <ArrowRight className="w-4 h-4" />
+                Acessar <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
