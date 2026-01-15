@@ -1,0 +1,481 @@
+[
+  {
+    "id": "motivos_emagrecer",
+    "step": 1,
+    "question": "Quais são os principais motivos para você querer emagrecer?",
+    "type": "multiple",
+    "options": [
+      { "label": "Melhorar minha saúde física", "value": "saude_fisica", "next": "apoio_programa" },
+      { "label": "Sentir-se mais confiante com a minha aparência", "value": "confianca_aparencia", "next": "apoio_programa" },
+      { "label": "Melhorar meu bem-estar", "value": "bem_estar", "next": "apoio_programa" },
+      { "label": "Ter uma vida mais ativa", "value": "vida_ativa", "next": "apoio_programa" },
+      { "label": "Ter uma relação melhor com a comida", "value": "relacao_comida", "next": "apoio_programa" },
+      { "label": "Me alimentar melhor", "value": "alimentacao", "next": "apoio_programa" },
+      { "label": "Outras", "value": "outras", "next": "apoio_programa" }
+    ]
+  },
+  {
+    "id": "apoio_programa",
+    "step": 2,
+    "question": "Quais áreas do programa de mudança de estilo de vida você gostaria de apoio?",
+    "type": "multiple",
+    "options": [
+      { "label": "Suporte nutricional", "value": "suporte_nutricional", "next": "dificuldade_emagrecimento" },
+      { "label": "Construção de hábitos mais saudáveis", "value": "habitos_saudaveis", "next": "dificuldade_emagrecimento" },
+      { "label": "Dormir melhor", "value": "dormir_metodo", "next": "dificuldade_emagrecimento" },
+      { "label": "Manter-se em movimento (atividade física)", "value": "atividade_fisica", "next": "dificuldade_emagrecimento" },
+      { "label": "Outras", "value": "outras", "next": "dificuldade_emagrecimento" }
+    ]
+  },
+  {
+    "id": "dificuldade_emagrecimento",
+    "step": 3,
+    "question": "O que você acha mais difícil no processo de emagrecimento?",
+    "type": "multiple",
+    "options": [
+      { "label": "Não consigo me organizar com a rotina de alimentação", "value": "organizacao", "next": "genero_nascimento" },
+      { "label": "Queria resultados mais rápidos", "value": "rapidez", "next": "genero_nascimento" },
+      { "label": "Efeito sanfona", "value": "efeito_sanfona", "next": "genero_nascimento" },
+      { "label": "Eu perco a motivação", "value": "motivacao", "next": "genero_nascimento" },
+      { "label": "Acho difícil ser consistente", "value": "consistencia", "next": "genero_nascimento" },
+      { "label": "Outros...", "value": "outros", "next": "genero_nascimento" }
+    ]
+  },
+  {
+    "id": "genero_nascimento",
+    "step": 4,
+    "question": "Qual seu gênero atribuído ao nascimento?",
+    "description": "O sexo define seus padrões hormonais, afetando a dinâmica do seu metabolismo.",
+    "type": "single",
+    "options": [
+      { "label": "Masculino", "value": "masculino", "next": "idade" },
+      { "label": "Feminino", "value": "feminino", "next": "idade" }
+    ]
+  },
+  {
+    "id": "idade",
+    "step": 5,
+    "question": "Qual sua idade?",
+    "type": "single",
+    "options": [
+      { "label": "Menos de 18 anos", "value": "sub_18", "next": "stop_page" },
+      { "label": "Entre 18 e 65", "value": "adulto", "next": "altura_peso" },
+      { "label": "Mais de 65", "value": "senior", "next": "altura_peso" }
+    ]
+  },
+  {
+    "id": "altura_peso",
+    "step": 6,
+    "question": "Qual é a sua altura e peso?",
+    "type": "multiple_numbers",
+    "fields": [
+      {
+        "id": "altura",
+        "label": "Altura",
+        "unit": "cm",
+        "placeholder": "Altura deve ser entre 90 a 250 cm",
+        "min": 90,
+        "max": 250,
+        "required": true
+      },
+      {
+        "id": "peso",
+        "label": "Peso",
+        "unit": "kg",
+        "placeholder": "Digite seu peso atual",
+        "min": 30,
+        "max": 300,
+        "required": true
+      }
+    ],
+    "next": "check_parametros_saude"
+  },
+  {
+    "id": "check_parametros_saude",
+    "step": 7,
+    "type": "logic",
+    "condition": "altura < 90 || altura > 250 || (peso/((altura/100)*(altura/100))) < 15",
+    "if_true": "stop_page",
+    "if_false": "tem_meta_peso"
+  },
+  {
+    "id": "tem_meta_peso",
+    "step": 8,
+    "question": "Você tem meta de peso?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "true", "next": "qual_meta_peso" },
+      { "label": "Não...", "value": "false", "next": "peso_maximo" }
+    ]
+  },
+  {
+    "id": "qual_meta_peso",
+    "step": 9,
+    "question": "Qual sua meta de peso?",
+    "type": "number",
+    "unit": "kg",
+    "next": "peso_maximo"
+  },
+  {
+    "id": "peso_maximo",
+    "step": 10,
+    "question": "Qual o peso máximo que você atingiu na sua vida?",
+    "type": "number",
+    "unit": "kg",
+    "next": "gordura_localizada"
+  },
+  {
+    "id": "gordura_localizada",
+    "step": 11,
+    "question": "Em qual parte do corpo você nota que tem mais gordura acumulada?",
+    "type": "single",
+    "options": [
+      { "label": "Na barriga", "value": "barriga", "next": "tempo_tentativa" },
+      { "label": "Quadris e coxas", "value": "quadris_coxas", "next": "tempo_tentativa" },
+      { "label": "Corpo todo...", "value": "corpo_todo", "next": "tempo_tentativa" }
+    ]
+  },
+  {
+    "id": "tempo_tentativa",
+    "step": 12,
+    "question": "Há quanto tempo você está tentando emagrecer?",
+    "type": "single",
+    "options": [
+      { "label": "Há 12 meses", "value": "12_meses", "next": "metodos_anteriores" },
+      { "label": "Há 5 anos", "value": "5_anos", "next": "metodos_anteriores" },
+      { "label": "Há 10 anos", "value": "10_anos", "next": "metodos_anteriores" },
+      { "label": "Maior parte da vida", "value": "vida", "next": "metodos_anteriores" },
+      { "label": "Nunca tentei", "value": "nunca", "next": "metodos_anteriores" }
+    ]
+  },
+  {
+    "id": "metodos_anteriores",
+    "step": 13,
+    "question": "O que você já tentou fazer para emagrecer?",
+    "type": "multiple",
+    "options": [
+      { "label": "Exercício", "value": "exercicio", "next": "frequencia_exercicios" },
+      { "label": "Dieta", "value": "dieta", "next": "frequencia_exercicios" },
+      { "label": "Contagem calorias", "value": "calorias", "next": "frequencia_exercicios" },
+      { "label": "Programas perda peso", "value": "programas", "next": "frequencia_exercicios" },
+      { "label": "Medicamentos", "value": "medicamentos", "next": "frequencia_exercicios" },
+      { "label": "Nenhuma das opções", "value": "nenhuma", "next": "frequencia_exercicios" }
+    ]
+  },
+  {
+    "id": "frequencia_exercicios",
+    "step": 14,
+    "question": "Com que frequência você tem se exercitado?",
+    "type": "single",
+    "options": [
+      { "label": "Não faço, quero mudar", "value": "sedentario", "next": "vontade_comer_incontrolavel" },
+      { "label": "1-2 vezes por semana", "value": "pouco", "next": "vontade_comer_incontrolavel" },
+      { "label": "3-4 vezes por semana", "value": "moderado", "next": "vontade_comer_incontrolavel" },
+      { "label": "5-7 vezes por semana", "value": "intenso", "next": "vontade_comer_incontrolavel" }
+    ]
+  },
+  {
+    "id": "vontade_comer_incontrolavel",
+    "step": 15,
+    "question": "Você tem vontade de comer de forma quase incontrolável fora das refeições principais?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "comer_estressado" },
+      { "label": "Não...", "value": "nao", "next": "habito_beliscar" }
+    ]
+  },
+  {
+    "id": "comer_estressado",
+    "step": 16,
+    "question": "Você costuma comer alguma coisa quando sente-se estressado ou sobrecarregado?",
+    "type": "single",
+    "options": [
+      { "label": "Sempre", "value": "sempre", "next": "consumo_alcool" },
+      { "label": "Quase Sempre", "value": "quase", "next": "consumo_alcool" },
+      { "label": "Às vezes", "value": "as_vezes", "next": "consumo_alcool" },
+      { "label": "Nunca", "value": "nunca", "next": "consumo_alcool" }
+    ]
+  },
+  {
+    "id": "habito_beliscar",
+    "step": 17,
+    "question": "Você tem o hábito de beliscar?",
+    "type": "single",
+    "options": [
+      { "label": "Não tenho hábito", "value": "nao", "next": "consumo_alcool" },
+      { "label": "1-2 dias p/ semana", "value": "pouco", "next": "consumo_alcool" },
+      { "label": "Diariamente", "value": "sempre", "next": "consumo_alcool" }
+    ]
+  },
+  {
+    "id": "consumo_alcool",
+    "step": 18,
+    "question": "Qual a frequência que você consome 5 ou mais bebidas alcoólicas em um único dia?",
+    "type": "single",
+    "options": [
+      { "label": "Nunca", "value": "nunca", "next": "etapa_21_triagem_transtorno" },
+      { "label": "Mensalmente", "value": "mes", "next": "etapa_21_triagem_transtorno" },
+      { "label": "Diariamente", "value": "diariamente_risco", "next": "aviso_alcool" }
+    ]
+  },
+  {
+    "id": "aviso_alcool",
+    "step": 19,
+    "type": "info",
+    "title": "Atenção sobre o consumo de álcool",
+    "message": "Sua resposta indica uso potencialmente prejudicial. Alguns medicamentos podem interagir com álcool.",
+    "action_label": "Estou ciente",
+    "next": "etapa_21_triagem_transtorno"
+  },
+  {
+    "id": "etapa_21_triagem_transtorno",
+    "step": 20,
+    "question": "Você já teve diagnóstico de transtorno alimentar?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_22_qual_transtorno" },
+      { "label": "Não...", "value": "nao", "next": "saude_mental_diagnostico" }
+    ]
+  },
+  {
+    "id": "etapa_22_qual_transtorno",
+    "step": 21,
+    "question": "Qual transtorno alimentar?",
+    "type": "single",
+    "options": [
+      { "label": "Anorexia (limitar severamente a ingestão de alimentos)", "value": "anorexia", "next": "etapa_24_anorexia_3meses" },
+      { "label": "Bulimia (Vômito, laxantes ou diuréticos após comer)", "value": "bulimia", "next": "etapa_23_bulimia_3meses" },
+      { "label": "Transtorno de compulsão alimentar", "value": "compulsao", "next": "saude_mental_diagnostico" },
+      { "label": "Não tive uma das condições acima", "value": "nenhuma", "next": "saude_mental_diagnostico" }
+    ]
+  },
+  {
+    "id": "etapa_23_bulimia_3meses",
+    "step": 22,
+    "question": "Você induziu vomitos, fez uso de laxantes ou diuréticos após comer excessivamente, para emagrecer nos últimos 3 meses?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "stop_page" },
+      { "label": "Não", "value": "nao", "next": "saude_mental_diagnostico" }
+    ]
+  },
+  {
+    "id": "etapa_24_anorexia_3meses",
+    "step": 23,
+    "question": "Você limitou severamente sua alimentação nos últimos 3 meses?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "stop_page" },
+      { "label": "Não", "value": "nao", "next": "saude_mental_diagnostico" }
+    ]
+  },
+  {
+    "id": "saude_mental_diagnostico",
+    "step": 24,
+    "question": "Você possui alguma condição relacionada à sua saúde mental diagnosticado por um médico?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "quais_condicoes_mentais" },
+      { "label": "Não", "value": "nao", "next": "condicoes_medicas_lista" }
+    ]
+  },
+  {
+    "id": "quais_condicoes_mentais",
+    "step": 25,
+    "question": "Você foi diagnóstico com um dos seguintes condições?",
+    "type": "multiple",
+    "options": [
+      { "label": "Depressão", "value": "depressao", "next": "tomando_medicamento_mental" },
+      { "label": "Ansiedade", "value": "ansiedade", "next": "tomando_medicamento_mental" },
+      { "label": "Transtorno Bipolar", "value": "bipolar", "next": "tomando_medicamento_mental" },
+      { "label": "Outros", "value": "outros", "next": "tomando_medicamento_mental" }
+    ]
+  },
+  {
+    "id": "tomando_medicamento_mental",
+    "step": 26,
+    "question": "Você atualmente esta tomando algum medicamento para sua saúde mental?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "detalhe_medicamento_mental" },
+      { "label": "Não", "value": "nao", "next": "condicoes_medicas_lista" }
+    ]
+  },
+  {
+    "id": "detalhe_medicamento_mental",
+    "step": 27,
+    "question": "Qual medicamento você toma?",
+    "type": "text",
+    "placeholder": "CAMPO DE ESCRITA",
+    "next": "condicoes_medicas_lista"
+  },
+  {
+    "id": "condicoes_medicas_lista",
+    "step": 28,
+    "question": "Você possui alguma das condições médicas listadas abaixo?",
+    "description": "Coração, hormonais, renais, hepáticas, estômago, intestino, etc.",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_30" },
+      { "label": "Não", "value": "nao", "next": "etapa_34" }
+    ]
+  },
+  {
+    "id": "etapa_30",
+    "step": 29,
+    "question": "Você tem histórico de doenças do coração?",
+    "type": "multiple",
+    "options": [
+      { "label": "Nenhuma", "value": "nenhuma", "next": "etapa_31" },
+      { "label": "Hipertensão", "value": "hipertensao", "next": "etapa_31" },
+      { "label": "Infarto/AVC", "value": "infarto", "next": "etapa_31" }
+    ]
+  },
+  {
+    "id": "etapa_31",
+    "step": 30,
+    "question": "Histórico de doenças hormonais ou renais?",
+    "type": "multiple",
+    "options": [
+      { "label": "Nenhuma", "value": "nenhuma", "next": "etapa_32" },
+      { "label": "Diabetes Tipo 1", "value": "diabetes1", "next": "etapa_32" }
+    ]
+  },
+  {
+    "id": "etapa_32",
+    "step": 31,
+    "question": "Problemas de estômago ou intestino?",
+    "type": "single",
+    "options": [
+      { "label": "Não", "value": "nao", "next": "etapa_33" },
+      { "label": "Pancreatite", "value": "pancreatite", "next": "etapa_33" },
+      { "label": "Problemas GRAVES", "value": "graves", "next": "stop_page" }
+    ]
+  },
+  {
+    "id": "etapa_33",
+    "step": 32,
+    "question": "Condições adicionais (Convulsões, Glaucoma, Câncer)?",
+    "type": "multiple",
+    "options": [
+      { "label": "Não", "value": "nao", "next": "etapa_34" },
+      { "label": "Glaucoma", "value": "glaucoma", "next": "etapa_34" }
+    ]
+  },
+  {
+    "id": "etapa_34",
+    "step": 33,
+    "question": "Você tem alguma dessas condições?",
+    "description": "Depressão, Pressão Alta, Colesterol, Refluxo, Apneia, etc.",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_35" },
+      { "label": "Não", "value": "nao", "next": "etapa_35" }
+    ]
+  },
+  {
+    "id": "etapa_35",
+    "step": 34,
+    "question": "Fez cirurgias bariátricas?",
+    "type": "single",
+    "options": [
+      { "label": "Não", "value": "nao", "next": "etapa_36" },
+      { "label": "Sim", "value": "sim", "next": "etapa_36" }
+    ]
+  },
+  {
+    "id": "etapa_36",
+    "step": 35,
+    "question": "Medicamentos ou suplementos nos últimos 30 dias?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_37" },
+      { "label": "Não", "value": "nao", "next": "etapa_38" }
+    ]
+  },
+  {
+    "id": "etapa_37",
+    "step": 36,
+    "type": "text",
+    "question": "Quais medicamentos e por que foram prescritos?",
+    "placeholder": "CAMPO DE TEXTO",
+    "next": "etapa_38"
+  },
+  {
+    "id": "etapa_38",
+    "step": 37,
+    "question": "Você possui alguma alergia?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_39" },
+      { "label": "Não", "value": "nao", "next": "etapa_40" }
+    ]
+  },
+  {
+    "id": "etapa_39",
+    "step": 38,
+    "question": "Alergia a qual desses medicamentos?",
+    "type": "multiple",
+    "options": [
+      { "label": "Saxenda", "value": "saxenda", "next": "etapa_40" },
+      { "label": "Ozempic/Wegovy", "value": "semaglutida", "next": "etapa_40" },
+      { "label": "Nenhum desses", "value": "nenhum", "next": "etapa_40" }
+    ]
+  },
+  {
+    "id": "etapa_40",
+    "step": 39,
+    "question": "Informações adicionais sobre sua saúde?",
+    "type": "single",
+    "options": [
+      { "label": "Sim", "value": "sim", "next": "etapa_41" },
+      { "label": "Não", "value": "nao", "next": "etapa_42" }
+    ]
+  },
+  {
+    "id": "etapa_41",
+    "step": 40,
+    "type": "text",
+    "question": "Conte-nos mais detalhes",
+    "placeholder": "CAMPO DE TEXTO",
+    "next": "etapa_42"
+  },
+  {
+    "id": "etapa_42",
+    "step": 41,
+    "question": "Qual plano te atende melhor?",
+    "type": "single",
+    "options": [
+      { "label": "Orais (A partir R$ 380/mês)", "value": "oral", "next": "etapa_43" },
+      { "label": "Injetáveis (A partir R$ 1400/mês)", "value": "injetavel", "next": "etapa_43" }
+    ]
+  },
+  {
+    "id": "etapa_43",
+    "step": 42,
+    "question": "Como se sente sobre injetáveis?",
+    "type": "single",
+    "options": [
+      { "label": "Não me importo", "value": "aceita", "next": "etapa_44" },
+      { "label": "Sem agulhas", "value": "recusa", "next": "stop_page" }
+    ]
+  },
+  {
+    "id": "etapa_44",
+    "step": 43,
+    "question": "Preferência de tratamento?",
+    "type": "single",
+    "options": [
+      { "label": "Wegovy (1x p/ semana)", "value": "wegovy", "next": "final_results" },
+      { "label": "Saxenda (Diário)", "value": "saxenda", "next": "final_results" }
+    ]
+  },
+  {
+    "id": "stop_page",
+    "type": "stop",
+    "title": "Vamos parar por aqui",
+    "message": "Pelo seu histórico de saúde, consulte um médico presencialmente.",
+    "checkbox": "Concordo em fornecer respostas verdadeiras",
+    "action_label": "Revise suas respostas"
+  }
+]

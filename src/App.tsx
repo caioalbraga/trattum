@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Assessment from "./pages/Assessment";
+import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import Checkout from "./pages/Checkout";
 import NotEligible from "./pages/NotEligible";
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/assessment" element={<Assessment />} />
+            <Route path="/quiz" element={<Quiz />} />
             <Route path="/results" element={<Results />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/not-eligible" element={<NotEligible />} />
