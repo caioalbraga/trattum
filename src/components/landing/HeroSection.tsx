@@ -37,10 +37,10 @@ export function HeroSection() {
           <Button 
             variant="hero" 
             size="xl"
-            onClick={() => navigate('/assessment')}
+            onClick={() => navigate('/anamnese')}
             className="group"
           >
-            Iniciar meu Diagnóstico
+            Iniciar minha Avaliação
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
