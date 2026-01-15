@@ -42,7 +42,7 @@ export function Header() {
           <Button 
             variant="ghost" 
             className="text-sm font-medium uppercase tracking-wide"
-            onClick={() => navigate('/assessment')}
+            onClick={() => navigate('/anamnese')}
           >
             Entrar
           </Button>
