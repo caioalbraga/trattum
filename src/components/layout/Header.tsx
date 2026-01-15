@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border/40">
+    <header className="sticky top-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border/40 transition-colors duration-300">
       <div className="container flex h-16 items-center justify-between">
         {/* Left Navigation */}
         <nav className="hidden md:flex items-center gap-8">
@@ -24,19 +25,20 @@ export function Header() {
 
         {/* Logo */}
         <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="text-xl font-serif font-semibold text-foreground tracking-wide">
+          <h1 className="text-xl font-semibold text-foreground tracking-wide">
             TRATTUM
           </h1>
         </Link>
         
         {/* Right Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-4">
           <Link 
             to="#" 
             className="text-sm font-medium text-foreground hover:text-primary transition-colors uppercase tracking-wide"
           >
             Quem Somos
           </Link>
+          <ThemeToggle />
           <Button 
             variant="ghost" 
             className="text-sm font-medium uppercase tracking-wide"
@@ -46,12 +48,15 @@ export function Header() {
           </Button>
         </nav>
 
-        {/* Mobile Logo */}
-        <Link to="/" className="md:hidden">
-          <h1 className="text-lg font-serif font-semibold text-foreground tracking-wide">
-            TRATTUM
-          </h1>
-        </Link>
+        {/* Mobile Navigation */}
+        <div className="flex md:hidden items-center gap-2">
+          <ThemeToggle />
+          <Link to="/">
+            <h1 className="text-lg font-semibold text-foreground tracking-wide">
+              TRATTUM
+            </h1>
+          </Link>
+        </div>
       </div>
     </header>
   );
