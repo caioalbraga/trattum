@@ -12,7 +12,7 @@ export function AboutSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 bg-muted/20">
+    <section id="about-section" className="py-24 bg-muted/20">
       <div className="container">
         <div className="text-center mb-4">
           <span className="text-xs font-medium tracking-widest text-primary/70 uppercase">
@@ -70,7 +70,7 @@ export function AboutSection() {
               <Button 
                 variant="hero" 
                 className="w-full group"
-                onClick={() => navigate('/assessment')}
+                onClick={() => navigate('/anamnese')}
               >
                 Descobrir meu Plano de Metas
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
