@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      enderecos: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          created_at: string
+          estado: string | null
+          id: string
+          is_default: boolean | null
+          logradouro: string | null
+          numero: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          estado?: string | null
+          id?: string
+          is_default?: boolean | null
+          logradouro?: string | null
+          numero?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          estado?: string | null
+          id?: string
+          is_default?: boolean | null
+          logradouro?: string | null
+          numero?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      metas_diarias: {
+        Row: {
+          concluida: boolean | null
+          created_at: string
+          data: string
+          id: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          concluida?: boolean | null
+          created_at?: string
+          data?: string
+          id?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          concluida?: boolean | null
+          created_at?: string
+          data?: string
+          id?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pedidos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          status: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          foto_url: string | null
+          id: string
+          nome: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      tratamentos: {
+        Row: {
+          created_at: string
+          data_inicio: string | null
+          data_proxima_renovacao: string | null
+          documento_pdf_url: string | null
+          id: string
+          observacoes: string | null
+          plano: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_inicio?: string | null
+          data_proxima_renovacao?: string | null
+          documento_pdf_url?: string | null
+          id?: string
+          observacoes?: string | null
+          plano?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_inicio?: string | null
+          data_proxima_renovacao?: string | null
+          documento_pdf_url?: string | null
+          id?: string
+          observacoes?: string | null
+          plano?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

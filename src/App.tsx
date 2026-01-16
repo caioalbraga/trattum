@@ -11,6 +11,10 @@ import Results from "./pages/Results";
 import Checkout from "./pages/Checkout";
 import NotEligible from "./pages/NotEligible";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import DashboardAtendimento from "./pages/DashboardAtendimento";
+import DashboardTratamento from "./pages/DashboardTratamento";
+import DashboardConta from "./pages/DashboardConta";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,11 @@ const App = () => (
             <Route path="/results" element={<Results />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/not-eligible" element={<NotEligible />} />
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/atendimento" element={<DashboardAtendimento />} />
+            <Route path="/dashboard/tratamento" element={<DashboardTratamento />} />
+            <Route path="/dashboard/conta" element={<DashboardConta />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
