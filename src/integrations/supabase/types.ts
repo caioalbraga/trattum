@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      avaliacoes: {
+        Row: {
+          created_at: string
+          id: string
+          imc: number | null
+          respostas: Json
+          score_risco: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imc?: number | null
+          respostas?: Json
+          score_risco?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imc?: number | null
+          respostas?: Json
+          score_risco?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      configuracoes_produtos: {
+        Row: {
+          ativo: boolean
+          id: string
+          nome: string
+          preco: number
+          preco_original: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          id?: string
+          nome: string
+          preco: number
+          preco_original?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          id?: string
+          nome?: string
+          preco?: number
+          preco_original?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cupons: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          desconto_percentual: number
+          id: string
+          uso_atual: number
+          uso_maximo: number | null
+          validade: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          desconto_percentual: number
+          id?: string
+          uso_atual?: number
+          uso_maximo?: number | null
+          validade?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          desconto_percentual?: number
+          id?: string
+          uso_atual?: number
+          uso_maximo?: number | null
+          validade?: string | null
+        }
+        Relationships: []
+      }
       enderecos: {
         Row: {
           bairro: string | null
@@ -86,6 +179,65 @@ export type Database = {
         }
         Relationships: []
       }
+      metricas_funil: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          tipo: string
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          tipo: string
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          tipo?: string
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      notas_impedimento: {
+        Row: {
+          avaliacao_id: string | null
+          created_at: string
+          criado_por: string | null
+          id: string
+          nota: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          nota: string
+          user_id: string
+        }
+        Update: {
+          avaliacao_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          nota?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_impedimento_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "avaliacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           created_at: string
@@ -112,6 +264,47 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      prescricoes: {
+        Row: {
+          aprovado_por: string | null
+          avaliacao_id: string | null
+          created_at: string
+          dosagem: string | null
+          id: string
+          observacoes: string | null
+          tratamento: string
+          user_id: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          avaliacao_id?: string | null
+          created_at?: string
+          dosagem?: string | null
+          id?: string
+          observacoes?: string | null
+          tratamento: string
+          user_id: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          avaliacao_id?: string | null
+          created_at?: string
+          dosagem?: string | null
+          id?: string
+          observacoes?: string | null
+          tratamento?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescricoes_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "avaliacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -185,15 +378,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -320,6 +540,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
