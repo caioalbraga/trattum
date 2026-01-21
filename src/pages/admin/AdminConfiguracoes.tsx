@@ -32,6 +32,7 @@ import {
   Pencil,
   Save
 } from 'lucide-react';
+import { couponCodeSchema } from '@/lib/validation-schemas';
 
 interface Produto {
   id: string;
@@ -65,6 +66,7 @@ export default function AdminConfiguracoes() {
   // Coupon edit state
   const [editingCoupon, setEditingCoupon] = useState<Cupom | null>(null);
   const [couponDialogOpen, setCouponDialogOpen] = useState(false);
+  const [couponErrors, setCouponErrors] = useState<Record<string, string>>({});
   
   const { toast } = useToast();
 
@@ -156,18 +158,45 @@ export default function AdminConfiguracoes() {
   const saveCoupon = async () => {
     if (!editingCoupon) return;
     
+    // Validate coupon data using zod schema
+    const validation = couponCodeSchema.safeParse({
+      codigo: editingCoupon.codigo,
+      desconto_percentual: editingCoupon.desconto_percentual,
+      uso_maximo: editingCoupon.uso_maximo,
+    });
+
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0] as string] = err.message;
+        }
+      });
+      setCouponErrors(errors);
+      toast({
+        title: "Erro de validação",
+        description: "Corrija os campos destacados.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCouponErrors({});
     setSaving(true);
+    
     try {
+      const validatedData = {
+        codigo: validation.data.codigo,
+        desconto_percentual: validation.data.desconto_percentual,
+        ativo: editingCoupon.ativo,
+        uso_maximo: validation.data.uso_maximo,
+      };
+
       if (editingCoupon.id) {
         // Update existing
         const { error } = await supabase
           .from('cupons')
-          .update({
-            codigo: editingCoupon.codigo,
-            desconto_percentual: editingCoupon.desconto_percentual,
-            ativo: editingCoupon.ativo,
-            uso_maximo: editingCoupon.uso_maximo,
-          })
+          .update(validatedData)
           .eq('id', editingCoupon.id);
 
         if (error) throw error;
@@ -175,19 +204,14 @@ export default function AdminConfiguracoes() {
         // Create new
         const { error } = await supabase
           .from('cupons')
-          .insert({
-            codigo: editingCoupon.codigo,
-            desconto_percentual: editingCoupon.desconto_percentual,
-            ativo: editingCoupon.ativo,
-            uso_maximo: editingCoupon.uso_maximo,
-          });
+          .insert(validatedData);
 
         if (error) throw error;
       }
 
       toast({
         title: "Cupom salvo",
-        description: `${editingCoupon.codigo} foi salvo com sucesso.`,
+        description: `${validation.data.codigo} foi salvo com sucesso.`,
       });
 
       setCouponDialogOpen(false);
@@ -440,12 +464,19 @@ export default function AdminConfiguracoes() {
                   <Label>Código do Cupom</Label>
                   <Input
                     value={editingCoupon.codigo}
-                    onChange={(e) => setEditingCoupon({
-                      ...editingCoupon,
-                      codigo: e.target.value.toUpperCase()
-                    })}
+                    onChange={(e) => {
+                      setEditingCoupon({
+                        ...editingCoupon,
+                        codigo: e.target.value.toUpperCase()
+                      });
+                      setCouponErrors(prev => ({ ...prev, codigo: '' }));
+                    }}
                     placeholder="Ex: TRATTUM20"
+                    className={couponErrors.codigo ? 'border-destructive' : ''}
                   />
+                  {couponErrors.codigo && (
+                    <p className="text-sm text-destructive mt-1">{couponErrors.codigo}</p>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -456,23 +487,37 @@ export default function AdminConfiguracoes() {
                       min="1"
                       max="100"
                       value={editingCoupon.desconto_percentual}
-                      onChange={(e) => setEditingCoupon({
-                        ...editingCoupon,
-                        desconto_percentual: parseInt(e.target.value) || 0
-                      })}
+                      onChange={(e) => {
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          desconto_percentual: parseInt(e.target.value) || 0
+                        });
+                        setCouponErrors(prev => ({ ...prev, desconto_percentual: '' }));
+                      }}
+                      className={couponErrors.desconto_percentual ? 'border-destructive' : ''}
                     />
+                    {couponErrors.desconto_percentual && (
+                      <p className="text-sm text-destructive mt-1">{couponErrors.desconto_percentual}</p>
+                    )}
                   </div>
                   <div>
                     <Label>Uso Máximo (opcional)</Label>
                     <Input
                       type="number"
                       value={editingCoupon.uso_maximo || ''}
-                      onChange={(e) => setEditingCoupon({
-                        ...editingCoupon,
-                        uso_maximo: parseInt(e.target.value) || null
-                      })}
+                      onChange={(e) => {
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          uso_maximo: parseInt(e.target.value) || null
+                        });
+                        setCouponErrors(prev => ({ ...prev, uso_maximo: '' }));
+                      }}
                       placeholder="Ilimitado"
+                      className={couponErrors.uso_maximo ? 'border-destructive' : ''}
                     />
+                    {couponErrors.uso_maximo && (
+                      <p className="text-sm text-destructive mt-1">{couponErrors.uso_maximo}</p>
+                    )}
                   </div>
                 </div>
 
