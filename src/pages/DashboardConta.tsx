@@ -29,6 +29,12 @@ import {
   type ProfileFormData, 
   type EnderecoFormData 
 } from '@/lib/validation-schemas';
+import { 
+  encryptProfile, 
+  decryptProfile, 
+  encryptEndereco, 
+  decryptEndereco 
+} from '@/lib/crypto-client';
 
 interface Pedido {
   id: string;
@@ -75,10 +81,12 @@ export default function DashboardConta() {
         .single();
 
       if (profileData) {
+        // Decrypt sensitive fields
+        const decrypted = await decryptProfile(profileData);
         profileForm.reset({
-          nome: profileData.nome || '',
-          whatsapp: profileData.whatsapp || '',
-          cpf: profileData.cpf || '',
+          nome: decrypted?.nome || '',
+          whatsapp: decrypted?.whatsapp || '',
+          cpf: decrypted?.cpf || '',
         });
         setFotoUrl(profileData.foto_url);
       }
@@ -92,14 +100,16 @@ export default function DashboardConta() {
         .single();
 
       if (enderecoData) {
+        // Decrypt sensitive fields
+        const decrypted = await decryptEndereco(enderecoData);
         enderecoForm.reset({
-          cep: enderecoData.cep || '',
-          logradouro: enderecoData.logradouro || '',
-          numero: enderecoData.numero || '',
-          complemento: enderecoData.complemento || '',
-          bairro: enderecoData.bairro || '',
-          cidade: enderecoData.cidade || '',
-          estado: enderecoData.estado || '',
+          cep: decrypted?.cep || '',
+          logradouro: decrypted?.logradouro || '',
+          numero: decrypted?.numero || '',
+          complemento: decrypted?.complemento || '',
+          bairro: decrypted?.bairro || '',
+          cidade: decrypted?.cidade || '',
+          estado: enderecoData.estado || '', // estado is not encrypted
         });
       }
 
@@ -121,14 +131,16 @@ export default function DashboardConta() {
     setLoading(true);
 
     try {
-      // Data is already validated by zod resolver
+      // Encrypt sensitive fields before saving
+      const encryptedData = await encryptProfile({
+        nome: data.nome.trim(),
+        whatsapp: data.whatsapp.trim(),
+        cpf: data.cpf.trim(),
+      });
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          nome: data.nome.trim(),
-          whatsapp: data.whatsapp.trim(),
-          cpf: data.cpf.trim(),
-        })
+        .update(encryptedData)
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -145,14 +157,19 @@ export default function DashboardConta() {
     setLoading(true);
 
     try {
-      // Data is already validated by zod resolver, trim all fields
-      const sanitizedData = {
+      // Encrypt sensitive address fields
+      const encryptedData = await encryptEndereco({
         cep: data.cep.trim(),
         logradouro: data.logradouro.trim(),
         numero: data.numero.trim(),
         complemento: data.complemento.trim(),
         bairro: data.bairro.trim(),
         cidade: data.cidade.trim(),
+      });
+
+      // Add non-encrypted field
+      const fullData = {
+        ...encryptedData,
         estado: data.estado.trim().toUpperCase(),
       };
 
@@ -167,12 +184,12 @@ export default function DashboardConta() {
       if (existing) {
         await supabase
           .from('enderecos')
-          .update(sanitizedData)
+          .update(fullData)
           .eq('id', existing.id);
       } else {
         await supabase
           .from('enderecos')
-          .insert({ ...sanitizedData, user_id: user.id, is_default: true });
+          .insert({ ...fullData, user_id: user.id, is_default: true });
       }
 
       toast.success('Endereço atualizado!');
