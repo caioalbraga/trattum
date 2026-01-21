@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { decryptProfiles } from '@/lib/crypto-client';
 
 interface Profile {
   id: string;
@@ -65,6 +66,9 @@ export default function AdminCRM() {
 
       if (profilesError) throw profilesError;
 
+      // Decrypt sensitive fields in batch
+      const decryptedProfiles = await decryptProfiles(profilesData || []);
+
       // Fetch treatments to get status
       const { data: tratamentosData } = await supabase
         .from('tratamentos')
@@ -76,7 +80,7 @@ export default function AdminCRM() {
         .select('user_id, status, imc, score_risco');
 
       // Merge data
-      const mergedProfiles = (profilesData || []).map(profile => {
+      const mergedProfiles = decryptedProfiles.map(profile => {
         const tratamento = tratamentosData?.find(t => t.user_id === profile.user_id);
         const avaliacao = avaliacoesData?.find(a => a.user_id === profile.user_id);
         return {

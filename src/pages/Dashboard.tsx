@@ -6,6 +6,7 @@ import { getGreeting } from '@/lib/greeting';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Activity, Calendar, CheckCircle2 } from 'lucide-react';
+import { decryptProfile } from '@/lib/crypto-client';
 
 interface Profile {
   nome: string | null;
@@ -47,7 +48,9 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .single();
 
-      setProfile(profileData);
+      // Decrypt the name
+      const decrypted = await decryptProfile(profileData);
+      setProfile(decrypted);
 
       // Fetch tratamento
       const { data: tratamentoData } = await supabase

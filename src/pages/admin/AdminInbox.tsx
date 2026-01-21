@@ -43,6 +43,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { impedimentNoteSchema } from '@/lib/validation-schemas';
+import { decryptProfiles } from '@/lib/crypto-client';
 
 interface Avaliacao {
   id: string;
@@ -105,9 +106,12 @@ export default function AdminInbox() {
         .select('user_id, nome, whatsapp')
         .in('user_id', userIds);
 
+      // Decrypt profiles in batch
+      const decryptedProfiles = await decryptProfiles(profiles || []);
+
       const mergedData = (data || []).map(avaliacao => ({
         ...avaliacao,
-        profile: profiles?.find(p => p.user_id === avaliacao.user_id) || null
+        profile: decryptedProfiles.find(p => p.user_id === avaliacao.user_id) || null
       }));
 
       setAvaliacoes(mergedData as Avaliacao[]);
