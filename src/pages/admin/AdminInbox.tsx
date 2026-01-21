@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -41,6 +42,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { impedimentNoteSchema } from '@/lib/validation-schemas';
 
 interface Avaliacao {
   id: string;
@@ -79,6 +81,7 @@ export default function AdminInbox() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [impedimentNote, setImpedimentNote] = useState('');
+  const [noteError, setNoteError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
@@ -170,16 +173,25 @@ export default function AdminInbox() {
   };
 
   const handleBlock = async () => {
-    if (!selectedAvaliacao || !impedimentNote.trim()) {
+    if (!selectedAvaliacao) return;
+
+    // Validate the note using zod schema
+    const validation = impedimentNoteSchema.safeParse({ nota: impedimentNote });
+    
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Nota inválida';
+      setNoteError(errorMessage);
       toast({
-        title: "Nota obrigatória",
-        description: "Por favor, descreva o motivo do impedimento.",
+        title: "Erro de validação",
+        description: errorMessage,
         variant: "destructive",
       });
       return;
     }
 
+    setNoteError(null);
     setProcessing(true);
+    
     try {
       // Update status to blocked
       const { error: updateError } = await supabase
@@ -189,7 +201,7 @@ export default function AdminInbox() {
 
       if (updateError) throw updateError;
 
-      // Create impediment note
+      // Create impediment note with validated/trimmed data
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error: noteError } = await supabase
@@ -197,7 +209,7 @@ export default function AdminInbox() {
         .insert({
           user_id: selectedAvaliacao.user_id,
           avaliacao_id: selectedAvaliacao.id,
-          nota: impedimentNote,
+          nota: validation.data.nota, // Use validated/trimmed data
           criado_por: user?.id,
         });
 
@@ -513,12 +525,24 @@ export default function AdminInbox() {
               </DialogDescription>
             </DialogHeader>
 
-            <Textarea
-              placeholder="Ex: Necessário ajuste de dosagem devido a..."
-              value={impedimentNote}
-              onChange={(e) => setImpedimentNote(e.target.value)}
-              rows={5}
-            />
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Ex: Necessário ajuste de dosagem devido a..."
+                value={impedimentNote}
+                onChange={(e) => {
+                  setImpedimentNote(e.target.value);
+                  setNoteError(null); // Clear error on input change
+                }}
+                rows={5}
+                className={noteError ? 'border-destructive' : ''}
+              />
+              {noteError && (
+                <p className="text-sm text-destructive">{noteError}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Mínimo 10 caracteres, máximo 1000.
+              </p>
+            </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>

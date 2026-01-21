@@ -22,22 +22,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { User, MapPin, CreditCard, AlertTriangle, Camera } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-
-interface ProfileForm {
-  nome: string;
-  whatsapp: string;
-  cpf: string;
-}
-
-interface EnderecoForm {
-  cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-}
+import { zodResolver } from '@hookform/resolvers/zod';
+import { 
+  profileSchema, 
+  enderecoSchema, 
+  type ProfileFormData, 
+  type EnderecoFormData 
+} from '@/lib/validation-schemas';
 
 interface Pedido {
   id: string;
@@ -53,11 +44,13 @@ export default function DashboardConta() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
-  const profileForm = useForm<ProfileForm>({
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
     defaultValues: { nome: '', whatsapp: '', cpf: '' },
   });
 
-  const enderecoForm = useForm<EnderecoForm>({
+  const enderecoForm = useForm<EnderecoFormData>({
+    resolver: zodResolver(enderecoSchema),
     defaultValues: {
       cep: '', logradouro: '', numero: '', complemento: '',
       bairro: '', cidade: '', estado: '',
@@ -123,17 +116,18 @@ export default function DashboardConta() {
     }
   };
 
-  const handleProfileSave = async (data: ProfileForm) => {
+  const handleProfileSave = async (data: ProfileFormData) => {
     if (!user) return;
     setLoading(true);
 
     try {
+      // Data is already validated by zod resolver
       const { error } = await supabase
         .from('profiles')
         .update({
-          nome: data.nome,
-          whatsapp: data.whatsapp,
-          cpf: data.cpf,
+          nome: data.nome.trim(),
+          whatsapp: data.whatsapp.trim(),
+          cpf: data.cpf.trim(),
         })
         .eq('user_id', user.id);
 
@@ -146,11 +140,22 @@ export default function DashboardConta() {
     }
   };
 
-  const handleEnderecoSave = async (data: EnderecoForm) => {
+  const handleEnderecoSave = async (data: EnderecoFormData) => {
     if (!user) return;
     setLoading(true);
 
     try {
+      // Data is already validated by zod resolver, trim all fields
+      const sanitizedData = {
+        cep: data.cep.trim(),
+        logradouro: data.logradouro.trim(),
+        numero: data.numero.trim(),
+        complemento: data.complemento.trim(),
+        bairro: data.bairro.trim(),
+        cidade: data.cidade.trim(),
+        estado: data.estado.trim().toUpperCase(),
+      };
+
       // Check if address exists
       const { data: existing } = await supabase
         .from('enderecos')
@@ -162,12 +167,12 @@ export default function DashboardConta() {
       if (existing) {
         await supabase
           .from('enderecos')
-          .update(data)
+          .update(sanitizedData)
           .eq('id', existing.id);
       } else {
         await supabase
           .from('enderecos')
-          .insert({ ...data, user_id: user.id, is_default: true });
+          .insert({ ...sanitizedData, user_id: user.id, is_default: true });
       }
 
       toast.success('Endereço atualizado!');
@@ -279,6 +284,9 @@ export default function DashboardConta() {
                         {...profileForm.register('nome')}
                         placeholder="Seu nome completo"
                       />
+                      {profileForm.formState.errors.nome && (
+                        <p className="text-sm text-destructive">{profileForm.formState.errors.nome.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="whatsapp">WhatsApp</Label>
@@ -287,6 +295,9 @@ export default function DashboardConta() {
                         {...profileForm.register('whatsapp')}
                         placeholder="(11) 99999-9999"
                       />
+                      {profileForm.formState.errors.whatsapp && (
+                        <p className="text-sm text-destructive">{profileForm.formState.errors.whatsapp.message}</p>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2 max-w-sm">
@@ -296,6 +307,9 @@ export default function DashboardConta() {
                       {...profileForm.register('cpf')}
                       placeholder="000.000.000-00"
                     />
+                    {profileForm.formState.errors.cpf && (
+                      <p className="text-sm text-destructive">{profileForm.formState.errors.cpf.message}</p>
+                    )}
                   </div>
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Salvando...' : 'Salvar Alterações'}
