@@ -15,6 +15,10 @@ import Dashboard from "./pages/Dashboard";
 import DashboardAtendimento from "./pages/DashboardAtendimento";
 import DashboardTratamento from "./pages/DashboardTratamento";
 import DashboardConta from "./pages/DashboardConta";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminInbox from "./pages/admin/AdminInbox";
+import AdminCRM from "./pages/admin/AdminCRM";
+import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +41,11 @@ const App = () => (
             <Route path="/dashboard/atendimento" element={<DashboardAtendimento />} />
             <Route path="/dashboard/tratamento" element={<DashboardTratamento />} />
             <Route path="/dashboard/conta" element={<DashboardConta />} />
+            {/* Admin Routes */}
+            <Route path="/trattum-admin" element={<AdminDashboard />} />
+            <Route path="/trattum-admin/inbox" element={<AdminInbox />} />
+            <Route path="/trattum-admin/crm" element={<AdminCRM />} />
+            <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
