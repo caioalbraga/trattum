@@ -44,13 +44,17 @@ export async function encryptData<T extends Record<string, any>>(
     });
 
     if (!response.ok) {
-      console.error('Encryption failed:', await response.text());
+      if (import.meta.env.DEV) {
+        console.error('Encryption failed:', await response.text());
+      }
       return data; // Return original data if encryption fails
     }
 
     const result: EncryptResponse = await response.json();
     if (result.error) {
-      console.error('Encryption error:', result.error);
+      if (import.meta.env.DEV) {
+        console.error('Encryption error:', result.error);
+      }
       return data;
     }
 
@@ -79,19 +83,25 @@ export async function decryptData<T extends Record<string, any>>(
     });
 
     if (!response.ok) {
-      console.error('Decryption failed:', await response.text());
+      if (import.meta.env.DEV) {
+        console.error('Decryption failed:', await response.text());
+      }
       return data;
     }
 
     const result: DecryptResponse = await response.json();
     if (result.error) {
-      console.error('Decryption error:', result.error);
+      if (import.meta.env.DEV) {
+        console.error('Decryption error:', result.error);
+      }
       return data;
     }
 
     return result.decryptedData as T;
   } catch (error) {
-    console.error('Decryption request failed:', error);
+    if (import.meta.env.DEV) {
+      console.error('Decryption request failed:', error);
+    }
     return data;
   }
 }
@@ -114,19 +124,25 @@ export async function decryptBatch<T extends Record<string, any>>(
     });
 
     if (!response.ok) {
-      console.error('Batch decryption failed:', await response.text());
+      if (import.meta.env.DEV) {
+        console.error('Batch decryption failed:', await response.text());
+      }
       return batch;
     }
 
     const result: DecryptBatchResponse = await response.json();
     if (result.error) {
-      console.error('Batch decryption error:', result.error);
+      if (import.meta.env.DEV) {
+        console.error('Batch decryption error:', result.error);
+      }
       return batch;
     }
 
     return result.decryptedBatch as T[];
   } catch (error) {
-    console.error('Batch decryption request failed:', error);
+    if (import.meta.env.DEV) {
+      console.error('Batch decryption request failed:', error);
+    }
     return batch;
   }
 }

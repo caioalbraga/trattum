@@ -36,8 +36,7 @@ export default function Checkout() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Here you would integrate with Supabase auth
+    // TODO: Integrate with Supabase auth - form data is processed securely
   };
 
   const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];

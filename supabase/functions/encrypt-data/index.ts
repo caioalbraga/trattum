@@ -1,9 +1,33 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Validate JWT and return user ID
+async function validateAuth(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  
+  if (error || !data?.claims?.sub) {
+    return null;
+  }
+
+  return { userId: data.claims.sub as string };
+}
 
 // AES-256-GCM encryption
 async function encrypt(text: string, key: CryptoKey): Promise<string> {
@@ -54,6 +78,15 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authentication
+    const auth = await validateAuth(req);
+    if (!auth) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { table, data } = await req.json();
     
     if (!table || !data) {

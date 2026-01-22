@@ -166,7 +166,7 @@ export default function Results() {
         isOpen={showDiscountModal}
         onClose={() => setShowDiscountModal(false)}
         onSubmit={(email) => {
-          console.log('Email captured:', email);
+          // TODO: Save email to marketing list via secure backend
           setShowDiscountModal(false);
         }}
       />
