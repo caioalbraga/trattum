@@ -8,6 +8,8 @@ import { TreatmentCard } from "@/components/results/TreatmentCard";
 import { DiscountModal } from "@/components/results/DiscountModal";
 import { FloatingCTA } from "@/components/layout/FloatingCTA";
 import { AssessmentData, TreatmentType } from "@/types/assessment";
+import { supabase } from "@/integrations/supabase/client";
+import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import {
   determineTreatment,
   getTreatmentDetails,
@@ -17,34 +19,90 @@ import {
 
 export default function Results() {
   const navigate = useNavigate();
+  const { checkPendingAssessment } = useSubmitAssessment();
   const [activeTab, setActiveTab] = useState<'metas' | 'tratamento'>('metas');
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [data, setData] = useState<AssessmentData | null>(null);
   const [treatmentType, setTreatmentType] = useState<TreatmentType>('injectable');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('assessmentData');
-    if (stored) {
-      const parsed = JSON.parse(stored) as AssessmentData;
-      setData(parsed);
-      setTreatmentType(determineTreatment(parsed));
-    } else {
-      // Demo data if no assessment
-      setData({
-        currentWeight: 95,
-        height: 170,
-        targetWeight: 78,
-        primaryGoal: 'lose_weight',
-        timeline: '6_months',
-        hasTriedDiets: true,
-        hasMedicalConditions: false,
-        medicalConditions: [],
-        takesMedication: false,
-        activityLevel: 'sedentary',
-        eatingHabits: 'irregular',
-        sleepQuality: 'average',
-      });
-    }
+    const loadAssessment = async () => {
+      setIsLoading(true);
+
+      // Check for pending assessment after auth redirect
+      await checkPendingAssessment();
+
+      // Get assessment ID from session
+      const assessmentId = sessionStorage.getItem('assessmentId');
+
+      if (assessmentId) {
+        // Fetch assessment from database
+        const { data: assessment, error } = await supabase
+          .from('avaliacoes')
+          .select('*')
+          .eq('id', assessmentId)
+          .single();
+
+        if (!error && assessment) {
+          const respostas = assessment.respostas as Record<string, unknown>;
+          const alturaData = respostas?.altura_peso as { altura?: number; peso?: number } | undefined;
+
+          // Map goal values to valid types
+          const goalMap: Record<string, AssessmentData['primaryGoal']> = {
+            'emagrecer': 'lose_weight',
+            'saude': 'health',
+            'energia': 'energy',
+            'aparencia': 'appearance',
+            'lose_weight': 'lose_weight',
+            'health': 'health',
+            'energy': 'energy',
+            'appearance': 'appearance',
+          };
+
+          const activityMap: Record<string, AssessmentData['activityLevel']> = {
+            'sedentario': 'sedentary',
+            'leve': 'light',
+            'moderado': 'moderate',
+            'ativo': 'active',
+            'sedentary': 'sedentary',
+            'light': 'light',
+            'moderate': 'moderate',
+            'active': 'active',
+          };
+
+          const rawGoal = respostas?.objetivo as string || 'lose_weight';
+          const rawActivity = respostas?.nivel_atividade as string || 'sedentary';
+
+          // Transform database response to AssessmentData
+          const assessmentData: AssessmentData = {
+            currentWeight: alturaData?.peso || 0,
+            height: alturaData?.altura || 0,
+            targetWeight: Math.round((alturaData?.peso || 0) * 0.85),
+            primaryGoal: goalMap[rawGoal] || 'lose_weight',
+            timeline: '6_months',
+            hasTriedDiets: respostas?.dietas_anteriores === 'sim',
+            hasMedicalConditions: Array.isArray(respostas?.condicoes_medicas) && 
+              (respostas.condicoes_medicas as string[]).length > 0,
+            medicalConditions: (respostas?.condicoes_medicas as string[]) || [],
+            takesMedication: respostas?.medicamentos_risco === 'sim',
+            activityLevel: activityMap[rawActivity] || 'sedentary',
+            eatingHabits: 'irregular',
+            sleepQuality: 'average',
+          };
+
+          setData(assessmentData);
+          setTreatmentType(determineTreatment(assessmentData));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Redirect to quiz if no valid assessment
+      navigate('/anamnese');
+    };
+
+    loadAssessment();
 
     // Show discount modal after 5 seconds
     const timer = setTimeout(() => {
@@ -52,9 +110,18 @@ export default function Results() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigate, checkPendingAssessment]);
 
-  if (!data) return null;
+  if (isLoading || !data) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando seus resultados...</p>
+        </div>
+      </div>
+    );
+  }
 
   const bmi = calculateBMI(data.currentWeight, data.height);
   const projection = generateWeightProjection(data.currentWeight, data.targetWeight);

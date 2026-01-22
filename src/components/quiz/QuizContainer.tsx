@@ -1,4 +1,5 @@
 import { useQuiz } from "@/hooks/useQuiz";
+import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import { QuizProgress } from "./QuizProgress";
 import { SingleQuestion } from "./questions/SingleQuestion";
 import { MultipleQuestion } from "./questions/MultipleQuestion";
@@ -11,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 
 export function QuizContainer() {
   const navigate = useNavigate();
+  const { submitAssessment, isSubmitting } = useSubmitAssessment();
   const {
     currentQuestion,
     answers,
@@ -30,11 +32,15 @@ export function QuizContainer() {
     );
   }
 
-  // Handle final_results navigation
-  const handleNext = (nextId: string) => {
+  // Handle final_results navigation with server-side validation
+  const handleNext = async (nextId: string) => {
     if (nextId === 'final_results') {
-      sessionStorage.setItem('quizAnswers', JSON.stringify(answers));
-      navigate('/results');
+      // Submit assessment to database (requires auth)
+      const result = await submitAssessment(answers);
+      if (result.success) {
+        navigate('/results');
+      }
+      // If not successful, submitAssessment handles redirect to auth
       return;
     }
     goNext(nextId);
