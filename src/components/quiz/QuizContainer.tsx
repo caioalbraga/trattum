@@ -135,9 +135,6 @@ export function QuizContainer() {
 
   return (
     <div className="max-w-xl mx-auto">
-      {currentQuestion.type !== 'stop' && currentQuestion.type !== 'info' && (
-        <QuizProgress progress={progress} />
-      )}
       {renderQuestion()}
     </div>
   );

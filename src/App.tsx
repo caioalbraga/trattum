@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInbox from "./pages/admin/AdminInbox";
 import AdminCRM from "./pages/admin/AdminCRM";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
+import TestLogic from "./pages/TestLogic";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,8 @@ const App = () => (
             <Route path="/trattum-admin/inbox" element={<AdminInbox />} />
             <Route path="/trattum-admin/crm" element={<AdminCRM />} />
             <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
+            {/* Developer Tools */}
+            <Route path="/test-logic" element={<TestLogic />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
