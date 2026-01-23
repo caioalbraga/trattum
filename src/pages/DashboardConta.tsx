@@ -20,7 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { User, MapPin, CreditCard, AlertTriangle, Camera } from 'lucide-react';
+import { User, MapPin, CreditCard, AlertTriangle, Camera, Lock, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
@@ -49,6 +49,13 @@ export default function DashboardConta() {
   const [loading, setLoading] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -212,6 +219,41 @@ export default function DashboardConta() {
     toast.info('Upload de foto será implementado em breve.');
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success('Senha alterada com sucesso!');
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast.error('Erro ao alterar senha');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pago': return 'bg-teal/10 text-teal';
@@ -238,7 +280,7 @@ export default function DashboardConta() {
         </div>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
             <TabsTrigger value="dados" className="py-3">
               <User className="w-4 h-4 mr-2" />
               Dados Pessoais
@@ -246,6 +288,10 @@ export default function DashboardConta() {
             <TabsTrigger value="endereco" className="py-3">
               <MapPin className="w-4 h-4 mr-2" />
               Endereço
+            </TabsTrigger>
+            <TabsTrigger value="seguranca" className="py-3">
+              <Lock className="w-4 h-4 mr-2" />
+              Segurança
             </TabsTrigger>
             <TabsTrigger value="faturamento" className="py-3">
               <CreditCard className="w-4 h-4 mr-2" />
@@ -412,6 +458,70 @@ export default function DashboardConta() {
                   </div>
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Salvando...' : 'Salvar Endereço'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Segurança */}
+          <TabsContent value="seguranca" className="mt-6">
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="font-serif text-xl">Alterar Senha</CardTitle>
+                <CardDescription>
+                  Atualize sua senha para manter sua conta segura
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nova Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="new-password"
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={passwordLoading}>
+                    {passwordLoading ? 'Alterando...' : 'Alterar Senha'}
                   </Button>
                 </form>
               </CardContent>
