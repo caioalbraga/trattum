@@ -434,29 +434,18 @@ export type Database = {
       }
     }
     Views: {
-      profiles_public: {
-        Row: {
-          created_at: string | null
-          foto_url: string | null
-          id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          foto_url?: string | null
-          id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          foto_url?: string | null
-          id?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_public_profile: {
+        Args: { target_user_id: string }
+        Returns: {
+          created_at: string
+          foto_url: string
+          id: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
