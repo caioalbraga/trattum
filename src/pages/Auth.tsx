@@ -5,8 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,6 +35,11 @@ export default function Auth() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+
+  // Forgot password
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotDialogOpen, setForgotDialogOpen] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -136,6 +149,40 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(forgotEmail);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
+    }
+
+    setForgotLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+      setForgotDialogOpen(false);
+      setForgotEmail("");
+    } catch (err) {
+      toast.error('Erro ao enviar e-mail de recuperação');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Simple Header */}
@@ -183,7 +230,47 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password-login">Senha</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password-login">Senha</Label>
+                      <Dialog open={forgotDialogOpen} onOpenChange={setForgotDialogOpen}>
+                        <DialogTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
+                          >
+                            Esqueci minha senha
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="font-serif">Recuperar Senha</DialogTitle>
+                            <DialogDescription>
+                              Digite seu e-mail e enviaremos um link para redefinir sua senha.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleForgotPassword} className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="forgot-email">E-mail</Label>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                  id="forgot-email"
+                                  type="email"
+                                  placeholder="seu@email.com"
+                                  value={forgotEmail}
+                                  onChange={(e) => setForgotEmail(e.target.value)}
+                                  className="pl-10"
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <Button type="submit" className="w-full" disabled={forgotLoading}>
+                              {forgotLoading ? "Enviando..." : "Enviar Link de Recuperação"}
+                            </Button>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="relative">
                       <Input 
                         id="password-login" 

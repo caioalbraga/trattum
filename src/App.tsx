@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Results from "./pages/Results";
 import Checkout from "./pages/Checkout";
 import NotEligible from "./pages/NotEligible";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import DashboardAtendimento from "./pages/DashboardAtendimento";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/results" element={<Results />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/not-eligible" element={<NotEligible />} />
