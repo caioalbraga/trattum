@@ -46,16 +46,25 @@ export default function Results() {
 
   useEffect(() => {
     const loadAssessment = async () => {
+      console.log('[Results] Starting loadAssessment...');
       setIsLoading(true);
 
       try {
         // Check for pending assessment after auth redirect
-        await checkPendingAssessment();
+        const hasPending = sessionStorage.getItem('pendingQuizAnswers');
+        console.log('[Results] Pending answers:', hasPending ? 'Yes' : 'No');
+        
+        if (hasPending) {
+          console.log('[Results] Processing pending assessment...');
+          await checkPendingAssessment();
+        }
 
         // Get assessment ID from session
         const assessmentId = sessionStorage.getItem('assessmentId');
+        console.log('[Results] Assessment ID:', assessmentId);
 
         if (!assessmentId) {
+          console.log('[Results] No assessment ID, redirecting to /anamnese');
           navigate('/anamnese');
           return;
         }
@@ -69,12 +78,16 @@ export default function Results() {
 
         if (error || !assessment) {
           console.error('Failed to load assessment:', error);
+          console.log('[Results] No assessment found, redirecting to /anamnese');
           sessionStorage.removeItem('assessmentId');
           navigate('/anamnese');
           return;
         }
 
+        console.log('[Results] Assessment loaded:', assessment);
+
         const respostas = assessment.respostas as QuizResponses;
+        console.log('[Results] Respostas:', respostas);
         setQuizResponses(respostas);
         
         const alturaData = respostas?.altura_peso;
@@ -137,13 +150,18 @@ export default function Results() {
         const bmi = calculateBMI(assessmentData.currentWeight, assessmentData.height);
         const tier = determineTier(bmi, assessmentData.hasMedicalConditions);
         
+        console.log('[Results] BMI:', bmi, 'Tier:', tier);
+        
         setData(assessmentData);
         setTierInfo(tier);
+        console.log('[Results] Data loaded successfully');
       } catch (err) {
         console.error('Error loading assessment:', err);
+        console.log('[Results] Error occurred, redirecting to /anamnese');
         sessionStorage.removeItem('assessmentId');
         navigate('/anamnese');
       } finally {
+        console.log('[Results] Setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -156,7 +174,7 @@ export default function Results() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [navigate, checkPendingAssessment]);
+  }, [navigate]);
 
   // Calculate dynamic values
   const calculatedValues = useMemo(() => {
