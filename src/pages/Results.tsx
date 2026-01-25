@@ -25,13 +25,13 @@ import {
 
 interface QuizResponses {
   altura_peso?: { altura?: number; peso?: number };
-  objetivo?: string;
-  nivel_atividade?: string;
-  condicoes_medicas?: string[];
-  dietas_anteriores?: string;
-  medicamentos_risco?: string;
-  idade?: number;
-  nome?: string;
+  motivos_emagrecer?: string[];
+  frequencia_exercicios?: string;
+  etapa_30?: string[];
+  etapa_31?: string[];
+  etapa_34?: string;
+  metodos_anteriores?: string[];
+  idade?: string;
 }
 
 export default function Results() {
@@ -48,82 +48,104 @@ export default function Results() {
     const loadAssessment = async () => {
       setIsLoading(true);
 
-      // Check for pending assessment after auth redirect
-      await checkPendingAssessment();
+      try {
+        // Check for pending assessment after auth redirect
+        await checkPendingAssessment();
 
-      // Get assessment ID from session
-      const assessmentId = sessionStorage.getItem('assessmentId');
+        // Get assessment ID from session
+        const assessmentId = sessionStorage.getItem('assessmentId');
 
-      if (assessmentId) {
+        if (!assessmentId) {
+          navigate('/anamnese');
+          return;
+        }
+
         // Fetch assessment from database
         const { data: assessment, error } = await supabase
           .from('avaliacoes')
           .select('*')
           .eq('id', assessmentId)
-          .single();
+          .maybeSingle();
 
-        if (!error && assessment) {
-          const respostas = assessment.respostas as QuizResponses;
-          setQuizResponses(respostas);
-          
-          const alturaData = respostas?.altura_peso;
-
-          // Map goal values to valid types
-          const goalMap: Record<string, AssessmentData['primaryGoal']> = {
-            'emagrecer': 'lose_weight',
-            'saude': 'health',
-            'energia': 'energy',
-            'aparencia': 'appearance',
-            'lose_weight': 'lose_weight',
-            'health': 'health',
-            'energy': 'energy',
-            'appearance': 'appearance',
-          };
-
-          const activityMap: Record<string, AssessmentData['activityLevel']> = {
-            'sedentario': 'sedentary',
-            'leve': 'light',
-            'moderado': 'moderate',
-            'ativo': 'active',
-            'sedentary': 'sedentary',
-            'light': 'light',
-            'moderate': 'moderate',
-            'active': 'active',
-          };
-
-          const rawGoal = respostas?.objetivo || 'lose_weight';
-          const rawActivity = respostas?.nivel_atividade || 'sedentary';
-          const conditions = (respostas?.condicoes_medicas as string[]) || [];
-
-          // Transform database response to AssessmentData
-          const assessmentData: AssessmentData = {
-            currentWeight: alturaData?.peso || 0,
-            height: alturaData?.altura || 0,
-            targetWeight: Math.round((alturaData?.peso || 0) * 0.82), // 18% loss target
-            primaryGoal: goalMap[rawGoal] || 'lose_weight',
-            timeline: '6_months',
-            hasTriedDiets: respostas?.dietas_anteriores === 'sim',
-            hasMedicalConditions: hasRelevantComorbidity(conditions),
-            medicalConditions: conditions,
-            takesMedication: respostas?.medicamentos_risco === 'sim',
-            activityLevel: activityMap[rawActivity] || 'sedentary',
-            eatingHabits: 'irregular',
-            sleepQuality: 'average',
-          };
-
-          // Calculate tier based on BMI and comorbidities
-          const bmi = calculateBMI(assessmentData.currentWeight, assessmentData.height);
-          const tier = determineTier(bmi, assessmentData.hasMedicalConditions);
-          
-          setData(assessmentData);
-          setTierInfo(tier);
-          setIsLoading(false);
+        if (error || !assessment) {
+          console.error('Failed to load assessment:', error);
+          sessionStorage.removeItem('assessmentId');
+          navigate('/anamnese');
           return;
         }
-      }
 
-      // Redirect to quiz if no valid assessment
-      navigate('/anamnese');
+        const respostas = assessment.respostas as QuizResponses;
+        setQuizResponses(respostas);
+        
+        const alturaData = respostas?.altura_peso;
+
+        // Map goal values from quiz to internal types
+        const goalMapping: Record<string, AssessmentData['primaryGoal']> = {
+          'saude_fisica': 'health',
+          'confianca_aparencia': 'appearance',
+          'bem_estar': 'health',
+          'vida_ativa': 'energy',
+          'relacao_comida': 'health',
+          'alimentacao': 'health',
+        };
+
+        // Map activity levels from quiz
+        const activityMapping: Record<string, AssessmentData['activityLevel']> = {
+          'sedentario': 'sedentary',
+          'pouco': 'light',
+          'moderado': 'moderate',
+          'intenso': 'active',
+        };
+
+        // Get primary goal from motivos array
+        const rawGoals = respostas?.motivos_emagrecer || [];
+        const primaryGoal = rawGoals[0] ? goalMapping[rawGoals[0]] || 'lose_weight' : 'lose_weight';
+
+        // Get activity level
+        const rawActivity = respostas?.frequencia_exercicios || 'sedentario';
+        const activityLevel = activityMapping[rawActivity] || 'sedentary';
+
+        // Combine comorbidities from multiple fields
+        const conditions = [
+          ...(respostas?.etapa_30 || []),
+          ...(respostas?.etapa_31 || []),
+        ].filter(c => c && c !== 'nenhuma' && c !== 'nao');
+
+        // Check if user tried diets before
+        const previousMethods = respostas?.metodos_anteriores || [];
+        const hasTriedDiets = previousMethods.some(m => 
+          ['dieta', 'programas', 'medicamentos', 'calorias'].includes(m)
+        );
+
+        // Transform database response to AssessmentData
+        const assessmentData: AssessmentData = {
+          currentWeight: alturaData?.peso || 0,
+          height: alturaData?.altura || 0,
+          targetWeight: Math.round((alturaData?.peso || 0) * 0.82),
+          primaryGoal,
+          timeline: '6_months',
+          hasTriedDiets,
+          hasMedicalConditions: hasRelevantComorbidity(conditions),
+          medicalConditions: conditions,
+          takesMedication: previousMethods.includes('medicamentos'),
+          activityLevel,
+          eatingHabits: 'irregular',
+          sleepQuality: 'average',
+        };
+
+        // Calculate tier based on BMI and comorbidities
+        const bmi = calculateBMI(assessmentData.currentWeight, assessmentData.height);
+        const tier = determineTier(bmi, assessmentData.hasMedicalConditions);
+        
+        setData(assessmentData);
+        setTierInfo(tier);
+      } catch (err) {
+        console.error('Error loading assessment:', err);
+        sessionStorage.removeItem('assessmentId');
+        navigate('/anamnese');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadAssessment();
@@ -141,7 +163,9 @@ export default function Results() {
     if (!data) return null;
     
     const bmi = calculateBMI(data.currentWeight, data.height);
-    const age = quizResponses?.idade || 35;
+    // Map age category to approximate age for metabolic calculations
+    const ageCategory = quizResponses?.idade || 'adulto';
+    const age = ageCategory === 'senior' ? 60 : 35;
     const projection = calculateWeightProjection(data.currentWeight, data.height, age);
     const potentialLoss = calculatePotentialWeightLoss(data.currentWeight);
     
@@ -158,12 +182,9 @@ export default function Results() {
     if (!data || !quizResponses || !calculatedValues) return null;
     
     const weightToLose = calculatedValues.weightToLose;
-    const motivation = getGoalMotivation(quizResponses?.objetivo || 'lose_weight');
-    const name = quizResponses?.nome;
+    const rawGoals = quizResponses?.motivos_emagrecer || [];
+    const motivation = getGoalMotivation(rawGoals[0] || 'lose_weight');
     
-    if (name) {
-      return `Vimos que você deseja perder ${weightToLose}kg para ${motivation}, ${name}`;
-    }
     return `Vimos que você deseja perder ${weightToLose}kg para ${motivation}`;
   }, [data, quizResponses, calculatedValues]);
 

@@ -16,7 +16,6 @@ export function QuizContainer() {
   const {
     currentQuestion,
     answers,
-    progress,
     canGoBack,
     setAnswer,
     goNext,

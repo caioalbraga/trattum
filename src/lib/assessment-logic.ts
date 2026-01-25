@@ -253,6 +253,15 @@ export function calculatePotentialWeightLoss(currentWeight: number): {
  */
 export function getGoalMotivation(goalValue: string): string {
   const motivationMap: Record<string, string> = {
+    // Values from quiz (motivos_emagrecer)
+    'saude_fisica': 'melhorar sua saúde física',
+    'confianca_aparencia': 'se sentir mais confiante',
+    'bem_estar': 'melhorar seu bem-estar',
+    'vida_ativa': 'ter uma vida mais ativa',
+    'relacao_comida': 'ter uma relação melhor com a comida',
+    'alimentacao': 'se alimentar melhor',
+    'outras': 'alcançar seus objetivos',
+    // Legacy values
     'emagrecer': 'perder peso de forma saudável',
     'saude': 'melhorar sua saúde',
     'energia': 'ter mais disposição no dia a dia',
@@ -271,12 +280,19 @@ export function getGoalMotivation(goalValue: string): string {
 // ============================================
 
 export const RELEVANT_COMORBIDITIES = [
-  'diabetes_tipo_2',
+  // Values from quiz (etapa_30, etapa_31)
   'hipertensao',
+  'infarto',
+  'diabetes1',
+  // Legacy values
+  'diabetes_tipo_2',
   'colesterol_alto',
   'apneia_sono',
   'problemas_cardiacos',
   'sindrome_metabolica',
+  'pressao_alta',
+  'pre_diabetes',
+  'dislipidemia',
 ];
 
 export function hasRelevantComorbidity(conditions: string[]): boolean {
