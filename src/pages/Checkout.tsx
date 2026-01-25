@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, X, Stethoscope } from "lucide-react";
+import { ChevronRight, X, Stethoscope, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
 interface FormData {
   nome: string;
@@ -18,7 +24,23 @@ interface FormData {
   termos: boolean;
 }
 
+interface EnderecoData {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+}
+
 export default function Checkout() {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
     nome: '',
     sobrenome: '',
@@ -30,16 +52,149 @@ export default function Checkout() {
     termos: false,
   });
 
+  const [enderecoData, setEnderecoData] = useState<EnderecoData>({
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+  });
+
+  // Load profile data for logged-in users
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nome, whatsapp, cpf')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (profile) {
+        setProfileData(profile);
+        // Pre-fill form with profile data
+        if (profile.nome) {
+          const nameParts = profile.nome.split(' ');
+          setFormData(prev => ({
+            ...prev,
+            nome: nameParts[0] || '',
+            sobrenome: nameParts.slice(1).join(' ') || '',
+            whatsapp: profile.whatsapp || '',
+            cpf: profile.cpf || '',
+            email: user.email || '',
+          }));
+        }
+      }
+    };
+
+    loadProfile();
+  }, [user]);
+
+  // Skip to delivery step if user is logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      setCurrentStep('entrega');
+    }
+  }, [user, authLoading]);
+
   const handleChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleEnderecoChange = (field: keyof EnderecoData, value: string) => {
+    setEnderecoData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Integrate with Supabase auth - form data is processed securely
+    setIsSubmitting(true);
+
+    try {
+      // Create account via Supabase
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.senha,
+        options: {
+          emailRedirectTo: `${window.location.origin}/checkout`,
+          data: {
+            full_name: `${formData.nome} ${formData.sobrenome}`.trim(),
+          },
+        },
+      });
+
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          toast.error('Este e-mail já está cadastrado. Faça login para continuar.');
+          navigate('/auth');
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      toast.success('Conta criada com sucesso!');
+      setCurrentStep('entrega');
+    } catch (err) {
+      toast.error('Erro ao criar conta');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEnderecoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user) {
+        toast.error('Você precisa estar logado para continuar');
+        navigate('/auth');
+        return;
+      }
+
+      // Save address to database
+      const { error } = await supabase
+        .from('enderecos')
+        .upsert({
+          user_id: user.id,
+          cep: enderecoData.cep,
+          logradouro: enderecoData.logradouro,
+          numero: enderecoData.numero,
+          complemento: enderecoData.complemento,
+          bairro: enderecoData.bairro,
+          cidade: enderecoData.cidade,
+          estado: enderecoData.estado,
+          is_default: true,
+        });
+
+      if (error) {
+        console.error('Error saving address:', error);
+        toast.error('Erro ao salvar endereço');
+        return;
+      }
+
+      toast.success('Endereço salvo!');
+      setCurrentStep('pagamento');
+    } catch (err) {
+      toast.error('Erro ao salvar endereço');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
+  const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-muted flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted">
@@ -50,7 +205,7 @@ export default function Checkout() {
         <nav className="flex items-center gap-2 text-sm mb-8">
           {steps.map((step, index) => (
             <div key={step} className="flex items-center">
-              <span className={index === 1 ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+              <span className={index === stepIndex ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
                 {step}
               </span>
               {index < steps.length - 1 && (
@@ -64,120 +219,252 @@ export default function Checkout() {
           {/* Form */}
           <div className="lg:col-span-3">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6">1. Crie sua conta</h2>
+              {currentStep === 'conta' && !user && (
+                <>
+                  <h2 className="text-xl font-semibold mb-6">1. Crie sua conta</h2>
+                  <form onSubmit={handleAccountSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nome">Nome</Label>
+                        <Input
+                          id="nome"
+                          value={formData.nome}
+                          onChange={(e) => handleChange('nome', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sobrenome">Sobrenome</Label>
+                        <Input
+                          id="sobrenome"
+                          value={formData.sobrenome}
+                          onChange={(e) => handleChange('sobrenome', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                    </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => handleChange('nome', e.target.value)}
-                      className="h-12"
-                      required
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange('email', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="senha">Crie uma senha</Label>
+                      <Input
+                        id="senha"
+                        type="password"
+                        value={formData.senha}
+                        onChange={(e) => handleChange('senha', e.target.value)}
+                        className="h-12"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="whatsapp">WhatsApp</Label>
+                      <Input
+                        id="whatsapp"
+                        type="tel"
+                        placeholder="(11) 99999-9999"
+                        value={formData.whatsapp}
+                        onChange={(e) => handleChange('whatsapp', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dataNascimento">Data de nascimento (DD/MM/AAAA)</Label>
+                      <Input
+                        id="dataNascimento"
+                        placeholder="DD/MM/AAAA"
+                        value={formData.dataNascimento}
+                        onChange={(e) => handleChange('dataNascimento', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Necessário para análise médica e prescrição do tratamento.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.cpf}
+                        onChange={(e) => handleChange('cpf', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex items-start space-x-2 pt-4">
+                      <Checkbox
+                        id="termos"
+                        checked={formData.termos}
+                        onCheckedChange={(checked) => handleChange('termos', checked as boolean)}
+                      />
+                      <Label htmlFor="termos" className="text-sm leading-relaxed cursor-pointer">
+                        Eu concordo com{" "}
+                        <a href="#" className="text-primary hover:underline">Termos & Condições</a>
+                        {" "}e com a{" "}
+                        <a href="#" className="text-primary hover:underline">Política de Privacidade</a>
+                      </Label>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      variant="coral"
+                      size="lg"
+                      className="w-full mt-6"
+                      disabled={!formData.termos || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Criando conta...
+                        </>
+                      ) : (
+                        'Continuar para entrega'
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
+
+              {currentStep === 'entrega' && (
+                <>
+                  <h2 className="text-xl font-semibold mb-6">2. Endereço de entrega</h2>
+                  <form onSubmit={handleEnderecoSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="cep">CEP</Label>
+                        <Input
+                          id="cep"
+                          placeholder="00000-000"
+                          value={enderecoData.cep}
+                          onChange={(e) => handleEnderecoChange('cep', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="col-span-2 space-y-2">
+                        <Label htmlFor="logradouro">Logradouro</Label>
+                        <Input
+                          id="logradouro"
+                          placeholder="Rua, Avenida, etc."
+                          value={enderecoData.logradouro}
+                          onChange={(e) => handleEnderecoChange('logradouro', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="numero">Número</Label>
+                        <Input
+                          id="numero"
+                          placeholder="123"
+                          value={enderecoData.numero}
+                          onChange={(e) => handleEnderecoChange('numero', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="complemento">Complemento (opcional)</Label>
+                      <Input
+                        id="complemento"
+                        placeholder="Apto, Bloco, etc."
+                        value={enderecoData.complemento}
+                        onChange={(e) => handleEnderecoChange('complemento', e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bairro">Bairro</Label>
+                      <Input
+                        id="bairro"
+                        value={enderecoData.bairro}
+                        onChange={(e) => handleEnderecoChange('bairro', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="col-span-2 space-y-2">
+                        <Label htmlFor="cidade">Cidade</Label>
+                        <Input
+                          id="cidade"
+                          value={enderecoData.cidade}
+                          onChange={(e) => handleEnderecoChange('cidade', e.target.value)}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="estado">Estado</Label>
+                        <Input
+                          id="estado"
+                          placeholder="SP"
+                          maxLength={2}
+                          value={enderecoData.estado}
+                          onChange={(e) => handleEnderecoChange('estado', e.target.value.toUpperCase())}
+                          className="h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      variant="coral"
+                      size="lg"
+                      className="w-full mt-6"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        'Continuar para pagamento'
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
+
+              {currentStep === 'pagamento' && (
+                <>
+                  <h2 className="text-xl font-semibold mb-6">3. Pagamento</h2>
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      Integração de pagamento será implementada em breve.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sobrenome">Sobrenome</Label>
-                    <Input
-                      id="sobrenome"
-                      value={formData.sobrenome}
-                      onChange={(e) => handleChange('sobrenome', e.target.value)}
-                      className="h-12"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="senha">Crie uma senha</Label>
-                  <Input
-                    id="senha"
-                    type="password"
-                    value={formData.senha}
-                    onChange={(e) => handleChange('senha', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input
-                    id="whatsapp"
-                    type="tel"
-                    placeholder="(11) 99999-9999"
-                    value={formData.whatsapp}
-                    onChange={(e) => handleChange('whatsapp', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dataNascimento">Data de nascimento (DD/MM/AAAA)</Label>
-                  <Input
-                    id="dataNascimento"
-                    placeholder="DD/MM/AAAA"
-                    value={formData.dataNascimento}
-                    onChange={(e) => handleChange('dataNascimento', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Necessário para análise médica e prescrição do tratamento.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    placeholder="000.000.000-00"
-                    value={formData.cpf}
-                    onChange={(e) => handleChange('cpf', e.target.value)}
-                    className="h-12"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-start space-x-2 pt-4">
-                  <Checkbox
-                    id="termos"
-                    checked={formData.termos}
-                    onCheckedChange={(checked) => handleChange('termos', checked as boolean)}
-                  />
-                  <Label htmlFor="termos" className="text-sm leading-relaxed cursor-pointer">
-                    Eu concordo com{" "}
-                    <a href="#" className="text-primary hover:underline">Termos & Condições</a>
-                    {" "}e com a{" "}
-                    <a href="#" className="text-primary hover:underline">Política de Privacidade</a>
-                  </Label>
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="coral"
-                  size="lg"
-                  className="w-full mt-6"
-                  disabled={!formData.termos}
-                >
-                  Continuar para entrega
-                </Button>
-              </form>
+                </>
+              )}
             </Card>
           </div>
 
