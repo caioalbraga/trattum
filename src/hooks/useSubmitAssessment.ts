@@ -55,10 +55,12 @@ export function useSubmitAssessment() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // Store answers temporarily and redirect to checkout (account creation flow)
+        // Store answers temporarily for submission after account creation
         sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
-        // Redirect to checkout which handles account creation for new users
-        navigate('/checkout');
+        // Store a temporary assessment ID so Results page can show treatment preview
+        sessionStorage.setItem('pendingAssessmentPreview', 'true');
+        // Redirect to results to show treatment before account creation
+        navigate('/results');
         return { success: false, error: 'auth_required' };
       }
 
