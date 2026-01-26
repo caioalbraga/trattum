@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, X, Stethoscope, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChevronRight, X, Stethoscope, Loader2, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 
 type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
@@ -37,9 +39,11 @@ interface EnderecoData {
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { submitAssessment } = useSubmitAssessment();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
+  const hasPendingAssessment = typeof window !== 'undefined' && sessionStorage.getItem('pendingQuizAnswers') !== null;
 
   const [formData, setFormData] = useState<FormData>({
     nome: '',
@@ -96,6 +100,16 @@ export default function Checkout() {
   // Skip to delivery step if user is logged in
   useEffect(() => {
     if (!authLoading && user) {
+      // If user just logged in and has pending assessment, submit it first
+      const pendingAnswers = sessionStorage.getItem('pendingQuizAnswers');
+      if (pendingAnswers) {
+        const answers = JSON.parse(pendingAnswers);
+        submitAssessment(answers).then((result) => {
+          if (result.success) {
+            sessionStorage.removeItem('pendingQuizAnswers');
+          }
+        });
+      }
       setCurrentStep('entrega');
     }
   }, [user, authLoading]);
@@ -222,6 +236,17 @@ export default function Checkout() {
               {currentStep === 'conta' && !user && (
                 <>
                   <h2 className="text-xl font-semibold mb-6">1. Crie sua conta</h2>
+                  
+                  {hasPendingAssessment && (
+                    <Alert className="mb-6 border-primary/20 bg-primary/5">
+                      <UserCircle className="h-4 w-4 text-primary" />
+                      <AlertDescription className="text-sm">
+                        <strong>Sua avaliação foi concluída!</strong> Crie sua conta para acompanhar seu tratamento, 
+                        visualizar suas consultas e ter acesso exclusivo ao suporte médico pela nossa plataforma.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <form onSubmit={handleAccountSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">

@@ -55,10 +55,10 @@ export function useSubmitAssessment() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // Store answers temporarily and redirect to auth
+        // Store answers temporarily and redirect to checkout (account creation flow)
         sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
-        toast.info('Faça login para ver seus resultados personalizados');
-        navigate('/auth', { state: { from: '/results' } });
+        // Redirect to checkout which handles account creation for new users
+        navigate('/checkout');
         return { success: false, error: 'auth_required' };
       }
 
