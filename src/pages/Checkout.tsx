@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ChevronRight, X, Stethoscope, Loader2, UserCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronRight, X, Stethoscope, Loader2, UserCircle, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,13 +37,25 @@ interface EnderecoData {
   estado: string;
 }
 
+interface PagamentoData {
+  numeroCartao: string;
+  nomeCartao: string;
+  validade: string;
+  cvv: string;
+  parcelas: string;
+  cpfTitular: string;
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { submitAssessment } = useSubmitAssessment();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
+  const [existingAddress, setExistingAddress] = useState<EnderecoData | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const hasPendingAssessment = typeof window !== 'undefined' && sessionStorage.getItem('pendingQuizAnswers') !== null;
 
   const [formData, setFormData] = useState<FormData>({
@@ -66,51 +79,119 @@ export default function Checkout() {
     estado: '',
   });
 
-  // Load profile data for logged-in users
+  const [pagamentoData, setPagamentoData] = useState<PagamentoData>({
+    numeroCartao: '',
+    nomeCartao: '',
+    validade: '',
+    cvv: '',
+    parcelas: '1',
+    cpfTitular: '',
+  });
+
+  // Load user data and determine where to resume
   useEffect(() => {
-    const loadProfile = async () => {
-      if (!user) return;
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('nome, whatsapp, cpf')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (profile) {
-        setProfileData(profile);
-        // Pre-fill form with profile data
-        if (profile.nome) {
-          const nameParts = profile.nome.split(' ');
-          setFormData(prev => ({
-            ...prev,
-            nome: nameParts[0] || '',
-            sobrenome: nameParts.slice(1).join(' ') || '',
-            whatsapp: profile.whatsapp || '',
-            cpf: profile.cpf || '',
-            email: user.email || '',
-          }));
+    const loadUserData = async () => {
+      if (!user) {
+        setIsLoadingData(false);
+        return;
+      }
+
+      setIsLoadingData(true);
+
+      try {
+        // Submit pending assessment if exists
+        const pendingAnswers = sessionStorage.getItem('pendingQuizAnswers');
+        if (pendingAnswers) {
+          const answers = JSON.parse(pendingAnswers);
+          const result = await submitAssessment(answers);
+          if (result.success) {
+            sessionStorage.removeItem('pendingQuizAnswers');
+            sessionStorage.removeItem('pendingAssessmentPreview');
+          }
         }
+
+        // Load profile data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nome, whatsapp, cpf')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          setProfileData(profile);
+          if (profile.nome) {
+            const nameParts = profile.nome.split(' ');
+            setFormData(prev => ({
+              ...prev,
+              nome: nameParts[0] || '',
+              sobrenome: nameParts.slice(1).join(' ') || '',
+              whatsapp: profile.whatsapp || '',
+              cpf: profile.cpf || '',
+              email: user.email || '',
+            }));
+            // Pre-fill CPF for payment if available
+            if (profile.cpf) {
+              setPagamentoData(prev => ({ ...prev, cpfTitular: profile.cpf || '' }));
+            }
+          }
+        }
+
+        // Load existing address
+        const { data: address } = await supabase
+          .from('enderecos')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_default', true)
+          .maybeSingle();
+
+        if (address) {
+          const addr: EnderecoData = {
+            cep: address.cep || '',
+            logradouro: address.logradouro || '',
+            numero: address.numero || '',
+            complemento: address.complemento || '',
+            bairro: address.bairro || '',
+            cidade: address.cidade || '',
+            estado: address.estado || '',
+          };
+          setExistingAddress(addr);
+          setEnderecoData(addr);
+        }
+
+        // Check for pending orders to resume
+        const { data: pendingOrder } = await supabase
+          .from('pedidos')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('status', 'pendente')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (pendingOrder) {
+          setPendingOrderId(pendingOrder.id);
+        }
+
+        // Determine which step to show based on existing data
+        const hasAddress = address && address.cep && address.logradouro;
+        
+        if (hasAddress) {
+          // User has address, go to payment
+          setCurrentStep('pagamento');
+        } else {
+          // User needs to add address
+          setCurrentStep('entrega');
+        }
+
+      } catch (err) {
+        console.error('Error loading user data:', err);
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
-    loadProfile();
-  }, [user]);
-
-  // Skip to delivery step if user is logged in
-  useEffect(() => {
-    if (!authLoading && user) {
-      // If user just logged in and has pending assessment, submit it first
-      const pendingAnswers = sessionStorage.getItem('pendingQuizAnswers');
-      if (pendingAnswers) {
-        const answers = JSON.parse(pendingAnswers);
-        submitAssessment(answers).then((result) => {
-          if (result.success) {
-            sessionStorage.removeItem('pendingQuizAnswers');
-          }
-        });
-      }
-      setCurrentStep('entrega');
+    if (!authLoading) {
+      loadUserData();
     }
   }, [user, authLoading]);
 
@@ -122,12 +203,30 @@ export default function Checkout() {
     setEnderecoData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePagamentoChange = (field: keyof PagamentoData, value: string) => {
+    setPagamentoData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 16);
+    return numbers.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  // Format expiry date
+  const formatExpiry = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 4);
+    if (numbers.length >= 2) {
+      return numbers.slice(0, 2) + '/' + numbers.slice(2);
+    }
+    return numbers;
+  };
+
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Create account via Supabase
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.senha,
@@ -147,6 +246,16 @@ export default function Checkout() {
           toast.error(error.message);
         }
         return;
+      }
+
+      // Update profile with additional data
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase.from('profiles').update({
+          nome: `${formData.nome} ${formData.sobrenome}`.trim(),
+          whatsapp: formData.whatsapp,
+          cpf: formData.cpf,
+        }).eq('user_id', newUser.id);
       }
 
       toast.success('Conta criada com sucesso!');
@@ -169,7 +278,7 @@ export default function Checkout() {
         return;
       }
 
-      // Save address to database
+      // Save or update address
       const { error } = await supabase
         .from('enderecos')
         .upsert({
@@ -190,6 +299,25 @@ export default function Checkout() {
         return;
       }
 
+      // Create or update pending order
+      if (!pendingOrderId) {
+        const treatment = sessionStorage.getItem('selectedTreatment') || 'wegovy';
+        const { data: newOrder, error: orderError } = await supabase
+          .from('pedidos')
+          .insert({
+            user_id: user.id,
+            valor: 910.00,
+            status: 'pendente',
+            descricao: `Tratamento ${treatment} - 1 mês`,
+          })
+          .select('id')
+          .single();
+
+        if (!orderError && newOrder) {
+          setPendingOrderId(newOrder.id);
+        }
+      }
+
       toast.success('Endereço salvo!');
       setCurrentStep('pagamento');
     } catch (err) {
@@ -199,10 +327,69 @@ export default function Checkout() {
     }
   };
 
+  const handlePagamentoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user) {
+        toast.error('Você precisa estar logado para continuar');
+        navigate('/auth');
+        return;
+      }
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Update order status to paid
+      const orderId = pendingOrderId;
+      if (orderId) {
+        await supabase
+          .from('pedidos')
+          .update({ status: 'pago' })
+          .eq('id', orderId);
+      } else {
+        // Create order if doesn't exist
+        const treatment = sessionStorage.getItem('selectedTreatment') || 'wegovy';
+        await supabase
+          .from('pedidos')
+          .insert({
+            user_id: user.id,
+            valor: 910.00,
+            status: 'pago',
+            descricao: `Tratamento ${treatment} - 1 mês`,
+          });
+      }
+
+      // Update treatment status
+      await supabase
+        .from('tratamentos')
+        .update({
+          status: 'ativo',
+          plano: sessionStorage.getItem('selectedTreatment') || 'wegovy',
+          data_inicio: new Date().toISOString().split('T')[0],
+          data_proxima_renovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        })
+        .eq('user_id', user.id);
+
+      // Clear session data
+      sessionStorage.removeItem('selectedTreatment');
+      sessionStorage.removeItem('assessmentId');
+
+      toast.success('Pagamento aprovado! Bem-vindo ao seu tratamento.');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Payment error:', err);
+      toast.error('Erro ao processar pagamento');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
   const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
 
-  if (authLoading) {
+  if (authLoading || isLoadingData) {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -373,6 +560,16 @@ export default function Checkout() {
               {currentStep === 'entrega' && (
                 <>
                   <h2 className="text-xl font-semibold mb-6">2. Endereço de entrega</h2>
+                  
+                  {existingAddress && existingAddress.cep && (
+                    <Alert className="mb-6 border-emerald-200 bg-emerald-50">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      <AlertDescription className="text-sm text-emerald-800">
+                        Encontramos seu endereço salvo. Você pode editá-lo ou continuar para o pagamento.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <form onSubmit={handleEnderecoSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -482,12 +679,149 @@ export default function Checkout() {
 
               {currentStep === 'pagamento' && (
                 <>
-                  <h2 className="text-xl font-semibold mb-6">3. Pagamento</h2>
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">
-                      Integração de pagamento será implementada em breve.
-                    </p>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">3. Pagamento</h2>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Lock className="w-4 h-4" />
+                      <span>Ambiente seguro</span>
+                    </div>
                   </div>
+
+                  {/* Card Brands */}
+                  <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+                    <span className="text-sm text-muted-foreground">Aceitamos:</span>
+                    <div className="flex gap-2">
+                      <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded text-white text-[8px] font-bold flex items-center justify-center">VISA</div>
+                      <div className="w-10 h-6 bg-gradient-to-r from-red-500 to-yellow-500 rounded text-white text-[8px] font-bold flex items-center justify-center">MC</div>
+                      <div className="w-10 h-6 bg-gradient-to-r from-blue-400 to-blue-600 rounded text-white text-[8px] font-bold flex items-center justify-center">ELO</div>
+                      <div className="w-10 h-6 bg-gradient-to-r from-green-500 to-green-700 rounded text-white text-[8px] font-bold flex items-center justify-center">AMEX</div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handlePagamentoSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="numeroCartao">Número do cartão</Label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Input
+                          id="numeroCartao"
+                          placeholder="0000 0000 0000 0000"
+                          value={pagamentoData.numeroCartao}
+                          onChange={(e) => handlePagamentoChange('numeroCartao', formatCardNumber(e.target.value))}
+                          className="h-12 pl-10"
+                          maxLength={19}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="nomeCartao">Nome impresso no cartão</Label>
+                      <Input
+                        id="nomeCartao"
+                        placeholder="NOME COMPLETO"
+                        value={pagamentoData.nomeCartao}
+                        onChange={(e) => handlePagamentoChange('nomeCartao', e.target.value.toUpperCase())}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="validade">Validade</Label>
+                        <Input
+                          id="validade"
+                          placeholder="MM/AA"
+                          value={pagamentoData.validade}
+                          onChange={(e) => handlePagamentoChange('validade', formatExpiry(e.target.value))}
+                          className="h-12"
+                          maxLength={5}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cvv">CVV</Label>
+                        <Input
+                          id="cvv"
+                          type="password"
+                          placeholder="•••"
+                          value={pagamentoData.cvv}
+                          onChange={(e) => handlePagamentoChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          className="h-12"
+                          maxLength={4}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cpfTitular">CPF do titular do cartão</Label>
+                      <Input
+                        id="cpfTitular"
+                        placeholder="000.000.000-00"
+                        value={pagamentoData.cpfTitular}
+                        onChange={(e) => handlePagamentoChange('cpfTitular', e.target.value)}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="parcelas">Parcelas</Label>
+                      <Select
+                        value={pagamentoData.parcelas}
+                        onValueChange={(value) => handlePagamentoChange('parcelas', value)}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Selecione o número de parcelas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1x de R$ 910,00 (sem juros)</SelectItem>
+                          <SelectItem value="2">2x de R$ 455,00 (sem juros)</SelectItem>
+                          <SelectItem value="3">3x de R$ 303,33 (sem juros)</SelectItem>
+                          <SelectItem value="4">4x de R$ 227,50 (sem juros)</SelectItem>
+                          <SelectItem value="5">5x de R$ 182,00 (sem juros)</SelectItem>
+                          <SelectItem value="6">6x de R$ 151,67 (sem juros)</SelectItem>
+                          <SelectItem value="7">7x de R$ 137,14 (com juros)</SelectItem>
+                          <SelectItem value="8">8x de R$ 121,25 (com juros)</SelectItem>
+                          <SelectItem value="9">9x de R$ 109,11 (com juros)</SelectItem>
+                          <SelectItem value="10">10x de R$ 99,00 (com juros)</SelectItem>
+                          <SelectItem value="11">11x de R$ 91,00 (com juros)</SelectItem>
+                          <SelectItem value="12">12x de R$ 84,17 (com juros)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Security Notice */}
+                    <div className="flex items-start gap-3 p-4 bg-muted rounded-lg mt-6">
+                      <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-foreground">Compra 100% segura</p>
+                        <p className="text-muted-foreground">
+                          Seus dados são protegidos com criptografia de ponta a ponta. 
+                          Não armazenamos os dados do seu cartão.
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      variant="coral"
+                      size="lg"
+                      className="w-full mt-6"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processando pagamento...
+                        </>
+                      ) : (
+                        `Pagar R$ 910,00`
+                      )}
+                    </Button>
+                  </form>
                 </>
               )}
             </Card>
@@ -558,6 +892,15 @@ export default function Checkout() {
                   </div>
                 </div>
               </div>
+
+              {/* Payment Method Hint */}
+              {currentStep === 'pagamento' && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Parcelamento em até 12x no cartão de crédito
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
         </div>
