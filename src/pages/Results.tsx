@@ -9,7 +9,6 @@ import { DiscountModal } from "@/components/results/DiscountModal";
 import { FloatingCTA } from "@/components/layout/FloatingCTA";
 import { AssessmentData, TreatmentType } from "@/types/assessment";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -36,7 +35,6 @@ interface QuizResponses {
 
 export default function Results() {
   const navigate = useNavigate();
-  const { checkPendingAssessment } = useSubmitAssessment();
   const [activeTab, setActiveTab] = useState<'metas' | 'tratamento'>('metas');
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [data, setData] = useState<AssessmentData | null>(null);
@@ -50,43 +48,47 @@ export default function Results() {
       setIsLoading(true);
 
       try {
-        // Check for pending assessment after auth redirect
-        const hasPending = sessionStorage.getItem('pendingQuizAnswers');
-        console.log('[Results] Pending answers:', hasPending ? 'Yes' : 'No');
-        
-        if (hasPending) {
-          console.log('[Results] Processing pending assessment...');
-          await checkPendingAssessment();
-        }
-
-        // Get assessment ID from session
+        // Check for pending quiz answers (guest user who just completed quiz)
+        const pendingAnswersStr = sessionStorage.getItem('pendingQuizAnswers');
         const assessmentId = sessionStorage.getItem('assessmentId');
+        
+        console.log('[Results] Pending answers:', pendingAnswersStr ? 'Yes' : 'No');
         console.log('[Results] Assessment ID:', assessmentId);
 
-        if (!assessmentId) {
-          console.log('[Results] No assessment ID, redirecting to /anamnese');
+        let respostas: QuizResponses | null = null;
+
+        // For guest users: use pending answers directly without database fetch
+        if (pendingAnswersStr && !assessmentId) {
+          console.log('[Results] Guest user - using pending answers from sessionStorage');
+          respostas = JSON.parse(pendingAnswersStr) as QuizResponses;
+        } 
+        // For logged-in users: fetch from database
+        else if (assessmentId) {
+          console.log('[Results] Logged-in user - fetching from database');
+          
+          const { data: assessment, error } = await supabase
+            .from('avaliacoes')
+            .select('*')
+            .eq('id', assessmentId)
+            .maybeSingle();
+
+          if (error || !assessment) {
+            console.error('Failed to load assessment:', error);
+            sessionStorage.removeItem('assessmentId');
+            navigate('/anamnese');
+            return;
+          }
+
+          console.log('[Results] Assessment loaded:', assessment);
+          respostas = assessment.respostas as QuizResponses;
+        }
+        // No data available - redirect to quiz
+        else {
+          console.log('[Results] No assessment data found, redirecting to /anamnese');
           navigate('/anamnese');
           return;
         }
 
-        // Fetch assessment from database
-        const { data: assessment, error } = await supabase
-          .from('avaliacoes')
-          .select('*')
-          .eq('id', assessmentId)
-          .maybeSingle();
-
-        if (error || !assessment) {
-          console.error('Failed to load assessment:', error);
-          console.log('[Results] No assessment found, redirecting to /anamnese');
-          sessionStorage.removeItem('assessmentId');
-          navigate('/anamnese');
-          return;
-        }
-
-        console.log('[Results] Assessment loaded:', assessment);
-
-        const respostas = assessment.respostas as QuizResponses;
         console.log('[Results] Respostas:', respostas);
         setQuizResponses(respostas);
         
