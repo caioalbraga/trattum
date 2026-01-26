@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { FileText, Calendar, Activity, ArrowRight, Sparkles } from 'lucide-react';
+import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock } from 'lucide-react';
 
 interface Tratamento {
   status: string;
@@ -16,36 +16,74 @@ interface Tratamento {
   observacoes: string | null;
 }
 
+interface Pedido {
+  id: string;
+  status: string;
+  valor: number;
+  descricao: string | null;
+  created_at: string;
+}
+
+interface Avaliacao {
+  id: string;
+  status: string;
+  created_at: string;
+}
+
 export default function DashboardTratamento() {
   const { user } = useAuth();
   const [tratamento, setTratamento] = useState<Tratamento | null>(null);
+  const [pedidoPendente, setPedidoPendente] = useState<Pedido | null>(null);
+  const [avaliacaoFeita, setAvaliacaoFeita] = useState<Avaliacao | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchTratamento();
+      fetchData();
     }
   }, [user]);
 
-  const fetchTratamento = async () => {
+  const fetchData = async () => {
     if (!user) return;
 
     try {
-      const { data } = await supabase
-        .from('tratamentos')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      // Fetch tratamento, pedido pendente e avaliação em paralelo
+      const [tratamentoRes, pedidoRes, avaliacaoRes] = await Promise.all([
+        supabase
+          .from('tratamentos')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('pedidos')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'pendente')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('avaliacoes')
+          .select('id, status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ]);
 
-      setTratamento(data);
+      setTratamento(tratamentoRes.data);
+      setPedidoPendente(pedidoRes.data);
+      setAvaliacaoFeita(avaliacaoRes.data);
     } catch (error) {
-      console.error('Error fetching tratamento:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const isTratamentoAtivo = tratamento?.status === 'ativo';
+  const hasPendingPayment = pedidoPendente !== null;
+  const hasCompletedAssessment = avaliacaoFeita !== null;
 
   if (loading) {
     return (
@@ -151,6 +189,46 @@ export default function DashboardTratamento() {
               </CardContent>
             </Card>
           </>
+        ) : hasPendingPayment || hasCompletedAssessment ? (
+          /* Has assessment or pending order - Show continue payment CTA */
+          <Card className="card-elevated border-2 border-coral/30 bg-gradient-to-br from-coral/5 to-transparent">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-coral/10 flex items-center justify-center mb-6">
+                <CreditCard className="w-8 h-8 text-coral" />
+              </div>
+              <h2 className="font-serif text-2xl font-semibold mb-2">
+                Finalize sua compra
+              </h2>
+              <p className="text-muted-foreground max-w-md mb-4">
+                Sua avaliação foi concluída com sucesso! Complete o pagamento para iniciar seu tratamento personalizado.
+              </p>
+              
+              {pedidoPendente && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    Pedido iniciado em {new Date(pedidoPendente.created_at).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              )}
+              
+              <Button asChild size="lg" variant="coral">
+                <Link to="/checkout">
+                  Finalizar Pagamento
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              
+              <p className="text-xs text-muted-foreground mt-4">
+                Você também pode refazer a avaliação se preferir
+              </p>
+              <Button asChild variant="ghost" size="sm" className="mt-2">
+                <Link to="/anamnese">
+                  Refazer Avaliação
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           /* No Treatment - CTA Card */
           <Card className="card-elevated border-2 border-dashed border-primary/20">
