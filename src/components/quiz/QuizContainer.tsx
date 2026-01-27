@@ -1,6 +1,5 @@
 import { useQuiz } from "@/hooks/useQuiz";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
-import { QuizProgress } from "./QuizProgress";
 import { SingleQuestion } from "./questions/SingleQuestion";
 import { MultipleQuestion } from "./questions/MultipleQuestion";
 import { NumberQuestion } from "./questions/NumberQuestion";
@@ -9,6 +8,29 @@ import { TextQuestion } from "./questions/TextQuestion";
 import { InfoScreen } from "./questions/InfoScreen";
 import { StopScreen } from "./questions/StopScreen";
 import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect } from "react";
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
+
+const springTransition = {
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 30,
+};
 
 export function QuizContainer() {
   const navigate = useNavigate();
@@ -23,16 +45,34 @@ export function QuizContainer() {
     resetQuiz,
   } = useQuiz();
 
+  const [direction, setDirection] = useState(1);
+  const [questionKey, setQuestionKey] = useState(currentQuestion?.id || "loading");
+
+  useEffect(() => {
+    if (currentQuestion) {
+      setQuestionKey(currentQuestion.id);
+    }
+  }, [currentQuestion]);
+
   if (!currentQuestion) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Carregando questionário...</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-4"
+        >
+          <div className="w-16 h-16 mx-auto rounded-full bg-muted animate-pulse" />
+          <div className="h-4 w-48 mx-auto rounded bg-muted animate-pulse" />
+          <div className="h-3 w-32 mx-auto rounded bg-muted animate-pulse" />
+        </motion.div>
       </div>
     );
   }
 
   // Handle final_results navigation with server-side validation
   const handleNext = async (nextId: string) => {
+    setDirection(1);
     if (nextId === 'final_results') {
       // Submit assessment to database (requires auth)
       const result = await submitAssessment(answers);
@@ -45,6 +85,11 @@ export function QuizContainer() {
     goNext(nextId);
   };
 
+  const handleBack = () => {
+    setDirection(-1);
+    goBack();
+  };
+
   const renderQuestion = () => {
     switch (currentQuestion.type) {
       case 'single':
@@ -54,7 +99,7 @@ export function QuizContainer() {
             answer={answers[currentQuestion.id] as string | undefined}
             onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -66,7 +111,7 @@ export function QuizContainer() {
             answer={answers[currentQuestion.id] as string[] | undefined}
             onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -78,7 +123,7 @@ export function QuizContainer() {
             answer={answers[currentQuestion.id] as number | undefined}
             onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -90,7 +135,7 @@ export function QuizContainer() {
             answer={answers[currentQuestion.id] as { [fieldId: string]: number } | undefined}
             onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -102,7 +147,7 @@ export function QuizContainer() {
             answer={answers[currentQuestion.id] as string | undefined}
             onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -112,7 +157,7 @@ export function QuizContainer() {
           <InfoScreen
             screen={currentQuestion}
             onNext={handleNext}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -122,7 +167,7 @@ export function QuizContainer() {
           <StopScreen
             screen={currentQuestion}
             onRestart={resetQuiz}
-            onBack={goBack}
+            onBack={handleBack}
             canGoBack={canGoBack}
           />
         );
@@ -133,8 +178,20 @@ export function QuizContainer() {
   };
 
   return (
-    <div className="max-w-xl mx-auto">
-      {renderQuestion()}
+    <div className="max-w-xl mx-auto overflow-hidden">
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={questionKey}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={springTransition}
+        >
+          {renderQuestion()}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

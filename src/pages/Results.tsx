@@ -7,9 +7,11 @@ import { HelpTimeline } from "@/components/results/HelpTimeline";
 import { TreatmentCard } from "@/components/results/TreatmentCard";
 import { DiscountModal } from "@/components/results/DiscountModal";
 import { FloatingCTA } from "@/components/layout/FloatingCTA";
+import { ResultsLoadingScreen } from "@/components/ui/loading-skeleton";
 import { AssessmentData, TreatmentType } from "@/types/assessment";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import {
   determineTier,
@@ -209,14 +211,7 @@ export default function Results() {
   }, [data, quizResponses, calculatedValues]);
 
   if (isLoading || !data || !tierInfo || !calculatedValues) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando seus resultados...</p>
-        </div>
-      </div>
-    );
+    return <ResultsLoadingScreen />;
   }
 
   const treatment = getTreatmentDetails(tierInfo.treatmentType);
@@ -277,8 +272,15 @@ export default function Results() {
           </button>
         </div>
 
+        <AnimatePresence mode="wait">
         {activeTab === 'metas' && (
-          <div className="animate-fade-in">
+          <motion.div
+            key="metas"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
             {/* Dynamic Header */}
             <div className="text-center mb-10">
               <div className="flex items-center justify-center gap-2 mb-3">
@@ -316,14 +318,21 @@ export default function Results() {
               
               <HelpTimeline />
             </div>
-          </div>
+          </motion.div>
         )}
 
         {activeTab === 'tratamento' && (
-          <div className="animate-fade-in max-w-2xl mx-auto">
+          <motion.div
+            key="tratamento"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="max-w-2xl mx-auto"
+          >
             <div className="text-center mb-10">
               <Badge 
-                variant="outline" 
+                variant="outline"
                 className={`mb-3 text-xs tracking-widest uppercase ${
                   tierInfo.tierNumber === 1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                   tierInfo.tierNumber === 2 ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -341,8 +350,9 @@ export default function Results() {
             </div>
 
             <TreatmentCard treatment={treatment} onSelect={handleSelectTreatment} />
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </main>
 
       <FloatingCTA
