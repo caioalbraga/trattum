@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Activity, Calendar, CheckCircle2 } from 'lucide-react';
 import { decryptProfile } from '@/lib/crypto-client';
+import { DashboardPageSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { FadeInContent } from '@/components/dashboard/FadeInContent';
 
 interface Profile {
   nome: string | null;
@@ -90,22 +92,28 @@ export default function Dashboard() {
     }
   };
 
-  const userName = profile?.nome?.split(' ')[0] || 'Paciente';
-  const greeting = getGreeting(userName);
   const isTratamentoAtivo = tratamento?.status === 'ativo';
+
+  // Only compute greeting when we have real data
+  const userName = profile?.nome?.split(' ')[0];
+  const greeting = userName ? getGreeting(userName) : null;
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Greeting */}
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
-            {greeting}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Acompanhe sua jornada de saúde e bem-estar.
-          </p>
-        </div>
+      {loading ? (
+        <DashboardPageSkeleton />
+      ) : (
+        <FadeInContent>
+          <div className="space-y-8">
+            {/* Greeting */}
+            <div>
+              <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
+                {greeting || getGreeting('')}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Acompanhe sua jornada de saúde e bem-estar.
+              </p>
+            </div>
 
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
@@ -166,39 +174,41 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Metas Section - Only show if treatment is active */}
-        {isTratamentoAtivo && (
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle className="font-serif text-xl">Metas para hoje</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {metas.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhuma meta cadastrada para hoje.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {metas.map((meta) => (
-                    <div
-                      key={meta.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-secondary/50 transition-colors"
-                    >
-                      <Checkbox
-                        checked={meta.concluida}
-                        onCheckedChange={() => toggleMeta(meta.id, meta.concluida)}
-                      />
-                      <span className={meta.concluida ? 'line-through text-muted-foreground' : ''}>
-                        {meta.titulo}
-                      </span>
+            {/* Metas Section - Only show if treatment is active */}
+            {isTratamentoAtivo && (
+              <Card className="card-elevated">
+                <CardHeader>
+                  <CardTitle className="font-serif text-xl">Metas para hoje</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {metas.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      Nenhuma meta cadastrada para hoje.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {metas.map((meta) => (
+                        <div
+                          key={meta.id}
+                          className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-secondary/50 transition-colors"
+                        >
+                          <Checkbox
+                            checked={meta.concluida}
+                            onCheckedChange={() => toggleMeta(meta.id, meta.concluida)}
+                          />
+                          <span className={meta.concluida ? 'line-through text-muted-foreground' : ''}>
+                            {meta.titulo}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </FadeInContent>
+      )}
     </DashboardLayout>
   );
 }
