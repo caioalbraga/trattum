@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MultipleQuestion as MultipleQuestionType } from "@/types/quiz";
 import { QuizOption } from "../QuizOption";
 import { QuizNavigation } from "../QuizNavigation";
+import { motion } from "framer-motion";
 
 interface MultipleQuestionProps {
   question: MultipleQuestionType;
@@ -44,33 +45,45 @@ export function MultipleQuestion({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="space-y-2">
+    <div className="space-y-6">
+      <motion.div 
+        className="space-y-2"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      >
         <h2 className="text-2xl font-semibold text-foreground">{question.question}</h2>
         {question.description && (
           <p className="text-muted-foreground">{question.description}</p>
         )}
         <p className="text-sm text-muted-foreground">Selecione uma ou mais opções</p>
-      </div>
+      </motion.div>
 
       <div className="space-y-3">
-        {question.options.map((option) => (
+        {question.options.map((option, index) => (
           <QuizOption
             key={option.value}
             label={option.label}
             selected={selected.includes(option.value)}
             onClick={() => handleToggle(option.value)}
             multiSelect
+            index={index}
           />
         ))}
       </div>
 
-      <QuizNavigation
-        onBack={onBack}
-        onNext={handleNext}
-        canGoBack={canGoBack}
-        canGoNext={selected.length > 0}
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: question.options.length * 0.08 + 0.2 }}
+      >
+        <QuizNavigation
+          onBack={onBack}
+          onNext={handleNext}
+          canGoBack={canGoBack}
+          canGoNext={selected.length > 0}
+        />
+      </motion.div>
     </div>
   );
 }

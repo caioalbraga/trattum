@@ -1,10 +1,19 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useState } from "react";
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollY } = useScroll();
+
+  // Track scroll position to toggle header style
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 50);
+  });
 
   const scrollToAbout = () => {
     if (location.pathname !== "/") {
@@ -20,31 +29,61 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border/40 transition-colors duration-300">
+    <motion.header
+      initial={false}
+      animate={{
+        backgroundColor: isScrolled 
+          ? "hsl(var(--background) / 0.85)" 
+          : "hsl(var(--background))",
+        backdropFilter: isScrolled ? "blur(12px)" : "blur(0px)",
+        borderBottomColor: isScrolled 
+          ? "hsl(var(--border) / 0.4)" 
+          : "hsl(var(--border) / 0)",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+      }}
+      className="sticky top-0 z-50 border-b"
+    >
       <div className="container flex h-16 items-center justify-between">
         {/* Logo - Left */}
         <Link to="/" className="flex items-center">
-          <h1 className="text-xl font-semibold text-foreground tracking-wide">
+          <motion.h1 
+            className="text-xl font-semibold text-foreground tracking-wide"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             TRATTUM
-          </h1>
+          </motion.h1>
         </Link>
         
         {/* Right Navigation */}
         <nav className="hidden md:flex items-center gap-4">
-          <button 
+          <motion.button 
             onClick={scrollToAbout}
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors uppercase tracking-wide"
+            className="text-sm font-medium text-foreground hover:text-primary uppercase tracking-wide"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             Quem Somos
-          </button>
+          </motion.button>
           <ThemeToggle />
-          <Button 
-            variant="ghost" 
-            className="text-sm font-medium uppercase tracking-wide"
-            onClick={() => navigate('/auth')}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            Entrar
-          </Button>
+            <Button 
+              variant="ghost" 
+              className="text-sm font-medium uppercase tracking-wide"
+              onClick={() => navigate('/auth')}
+            >
+              Entrar
+            </Button>
+          </motion.div>
         </nav>
 
         {/* Mobile Navigation */}
@@ -59,6 +98,6 @@ export function Header() {
           </Button>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }
