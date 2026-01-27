@@ -35,6 +35,8 @@ import {
   encryptEndereco, 
   decryptEndereco 
 } from '@/lib/crypto-client';
+import { ContaSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { FadeInContent } from '@/components/dashboard/FadeInContent';
 
 interface Pedido {
   id: string;
@@ -46,6 +48,7 @@ interface Pedido {
 
 export default function DashboardConta() {
   const { user, signOut } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
@@ -130,6 +133,8 @@ export default function DashboardConta() {
       setPedidos(pedidosData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -267,17 +272,26 @@ export default function DashboardConta() {
 
   const initials = profileForm.watch('nome')?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
+  if (pageLoading) {
+    return (
+      <DashboardLayout>
+        <ContaSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
-            Minha Conta
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie suas informações pessoais e configurações.
-          </p>
-        </div>
+      <FadeInContent>
+        <div className="space-y-8">
+          <div>
+            <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
+              Minha Conta
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Gerencie suas informações pessoais e configurações.
+            </p>
+          </div>
 
         <Tabs defaultValue="dados" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
@@ -631,6 +645,7 @@ export default function DashboardConta() {
           </TabsContent>
         </Tabs>
       </div>
+      </FadeInContent>
     </DashboardLayout>
   );
 }

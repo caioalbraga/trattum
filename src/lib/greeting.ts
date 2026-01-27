@@ -12,14 +12,19 @@ export function getGreeting(name: string): string {
   const time1800 = 18 * 60;       // 18:00 = 1080 minutes
   const time0100 = 1 * 60;        // 01:00 = 60 minutes
 
+  // Format the name part - if empty, don't include comma
+  const namePart = name ? `, ${name}` : '';
+
   if (totalMinutes >= time0430 && totalMinutes < time1200) {
-    return `Bom dia, ${name}!`;
+    return `Bom dia${namePart}!`;
   } else if (totalMinutes >= time1200 && totalMinutes < time1800) {
-    return `Boa tarde, ${name}!`;
+    return `Boa tarde${namePart}!`;
   } else if (totalMinutes >= time1800 || totalMinutes <= time0100) {
-    return `Boa noite, ${name}!`;
+    return `Boa noite${namePart}!`;
   } else {
     // 01:01 - 04:29
-    return `Você por aqui essas horas, ${name}?`;
+    return name 
+      ? `Você por aqui essas horas, ${name}?`
+      : `Você por aqui essas horas?`;
   }
 }

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock } from 'lucide-react';
+import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { FadeInContent } from '@/components/dashboard/FadeInContent';
 
 interface Tratamento {
   status: string;
@@ -88,25 +90,23 @@ export default function DashboardTratamento() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse space-y-8">
-          <div className="h-10 w-48 bg-muted rounded" />
-          <div className="h-64 bg-muted rounded-xl" />
-        </div>
+        <TratamentoSkeleton />
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
-            Tratamento
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Acompanhe a evolução do seu plano de saúde.
-          </p>
-        </div>
+      <FadeInContent>
+        <div className="space-y-8">
+          <div>
+            <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">
+              Tratamento
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Acompanhe a evolução do seu plano de saúde.
+            </p>
+          </div>
 
         {isTratamentoAtivo ? (
           <>
@@ -251,8 +251,9 @@ export default function DashboardTratamento() {
               </Button>
             </CardContent>
           </Card>
-        )}
-      </div>
+          )}
+        </div>
+      </FadeInContent>
     </DashboardLayout>
   );
 }
