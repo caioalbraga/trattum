@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -32,18 +25,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
-  Eye, 
   CheckCircle, 
   XCircle,
   Clock,
   Loader2,
   User,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle,
+  Shield,
+  Activity,
+  Scale,
+  Heart,
+  Utensils
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { impedimentNoteSchema } from '@/lib/validation-schemas';
 import { decryptProfiles } from '@/lib/crypto-client';
+import { cn } from '@/lib/utils';
 
 interface Avaliacao {
   id: string;
@@ -60,18 +59,53 @@ interface Avaliacao {
   };
 }
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pendente: { label: 'Pendente', variant: 'secondary' },
-  aprovado: { label: 'Aprovado', variant: 'default' },
-  bloqueado: { label: 'Bloqueado', variant: 'destructive' },
-  em_revisao: { label: 'Em Revisão', variant: 'outline' },
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; color: string }> = {
+  pendente: { label: 'Pendente', variant: 'secondary', color: 'bg-amber-500' },
+  aprovado: { label: 'Aprovado', variant: 'default', color: 'bg-emerald-500' },
+  bloqueado: { label: 'Bloqueado', variant: 'destructive', color: 'bg-red-500' },
+  em_revisao: { label: 'Em Revisão', variant: 'outline', color: 'bg-blue-500' },
 };
 
-const questionCategories: Record<string, string[]> = {
-  'Dados Biométricos': ['altura', 'peso', 'imc', 'idade', 'sexo'],
-  'Histórico de Saúde': ['condicoes', 'medicamentos', 'alergias', 'cirurgias'],
-  'Hábitos de Vida': ['exercicios', 'alimentacao', 'sono', 'estresse'],
-  'Objetivos': ['objetivo', 'expectativa', 'motivacao'],
+const questionCategories: Record<string, { keys: string[]; icon: any; label: string }> = {
+  biometria: { keys: ['altura', 'peso', 'imc', 'idade', 'sexo'], icon: Scale, label: 'Biometria' },
+  historico: { keys: ['condicoes', 'medicamentos', 'alergias', 'cirurgias', 'doencas'], icon: Heart, label: 'Histórico de Saúde' },
+  habitos: { keys: ['exercicios', 'alimentacao', 'sono', 'estresse', 'alcool', 'fumo'], icon: Utensils, label: 'Hábitos de Vida' },
+  objetivos: { keys: ['objetivo', 'expectativa', 'motivacao', 'meta'], icon: Activity, label: 'Objetivos' },
+};
+
+// Risk level based on IMC and responses
+const getRiskLevel = (imc: number | null, respostas: any): { level: 'low' | 'medium' | 'high' | 'critical'; label: string; color: string } => {
+  const hasContraindication = respostas?.condicoes_graves || respostas?.medicamentos_restritos;
+  
+  if (hasContraindication) {
+    return { level: 'critical', label: 'Crítico', color: 'text-red-600 bg-red-50 border-red-200' };
+  }
+  
+  if (imc === null) {
+    return { level: 'medium', label: 'Atenção', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+  }
+  
+  if (imc >= 40) {
+    return { level: 'high', label: 'Alto', color: 'text-orange-600 bg-orange-50 border-orange-200' };
+  }
+  
+  if (imc >= 30) {
+    return { level: 'medium', label: 'Moderado', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+  }
+  
+  return { level: 'low', label: 'Baixo', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' };
+};
+
+const RiskIndicator = ({ imc, respostas }: { imc: number | null; respostas: any }) => {
+  const risk = getRiskLevel(imc, respostas);
+  const Icon = risk.level === 'critical' ? AlertCircle : risk.level === 'high' ? AlertTriangle : Shield;
+  
+  return (
+    <div className={cn('flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium', risk.color)}>
+      <Icon className="w-3 h-3" />
+      {risk.label}
+    </div>
+  );
 };
 
 export default function AdminInbox() {
@@ -79,11 +113,12 @@ export default function AdminInbox() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAvaliacao, setSelectedAvaliacao] = useState<Avaliacao | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [impedimentNote, setImpedimentNote] = useState('');
   const [noteError, setNoteError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,14 +134,12 @@ export default function AdminInbox() {
 
       if (error) throw error;
       
-      // Fetch profiles separately
       const userIds = data?.map(a => a.user_id) || [];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, nome, whatsapp')
         .in('user_id', userIds);
 
-      // Decrypt profiles in batch
       const decryptedProfiles = await decryptProfiles(profiles || []);
 
       const mergedData = (data || []).map(avaliacao => ({
@@ -115,6 +148,12 @@ export default function AdminInbox() {
       }));
 
       setAvaliacoes(mergedData as Avaliacao[]);
+      
+      // Auto-select first pending if none selected
+      if (!selectedAvaliacao) {
+        const firstPending = mergedData.find(a => a.status === 'pendente');
+        if (firstPending) setSelectedAvaliacao(firstPending as Avaliacao);
+      }
     } catch (error) {
       console.error('Error fetching avaliacoes:', error);
       toast({
@@ -127,10 +166,16 @@ export default function AdminInbox() {
     }
   };
 
+  const handleSelectAvaliacao = (avaliacao: Avaliacao) => {
+    setDetailLoading(true);
+    setSelectedAvaliacao(avaliacao);
+    // Simulate loading for smooth transition
+    setTimeout(() => setDetailLoading(false), 300);
+  };
+
   const handleApprove = async (avaliacao: Avaliacao) => {
     setProcessing(true);
     try {
-      // Update status to approved
       const { error: updateError } = await supabase
         .from('avaliacoes')
         .update({ status: 'aprovado' })
@@ -138,7 +183,6 @@ export default function AdminInbox() {
 
       if (updateError) throw updateError;
 
-      // Create prescription record
       const { error: prescError } = await supabase
         .from('prescricoes')
         .insert({
@@ -151,7 +195,6 @@ export default function AdminInbox() {
 
       if (prescError) throw prescError;
 
-      // Update tratamentos status
       await supabase
         .from('tratamentos')
         .update({ status: 'ativo' })
@@ -163,7 +206,6 @@ export default function AdminInbox() {
       });
 
       fetchAvaliacoes();
-      setViewDialogOpen(false);
     } catch (error) {
       console.error('Error approving:', error);
       toast({
@@ -179,7 +221,6 @@ export default function AdminInbox() {
   const handleBlock = async () => {
     if (!selectedAvaliacao) return;
 
-    // Validate the note using zod schema
     const validation = impedimentNoteSchema.safeParse({ nota: impedimentNote });
     
     if (!validation.success) {
@@ -197,7 +238,6 @@ export default function AdminInbox() {
     setProcessing(true);
     
     try {
-      // Update status to blocked
       const { error: updateError } = await supabase
         .from('avaliacoes')
         .update({ status: 'bloqueado' })
@@ -205,19 +245,18 @@ export default function AdminInbox() {
 
       if (updateError) throw updateError;
 
-      // Create impediment note with validated/trimmed data
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { error: noteError } = await supabase
+      const { error: noteErr } = await supabase
         .from('notas_impedimento')
         .insert({
           user_id: selectedAvaliacao.user_id,
           avaliacao_id: selectedAvaliacao.id,
-          nota: validation.data.nota, // Use validated/trimmed data
+          nota: validation.data.nota,
           criado_por: user?.id,
         });
 
-      if (noteError) throw noteError;
+      if (noteErr) throw noteErr;
 
       toast({
         title: "Impedimento registrado",
@@ -227,7 +266,6 @@ export default function AdminInbox() {
       setBlockDialogOpen(false);
       setImpedimentNote('');
       fetchAvaliacoes();
-      setViewDialogOpen(false);
     } catch (error) {
       console.error('Error blocking:', error);
       toast({
@@ -240,41 +278,55 @@ export default function AdminInbox() {
     }
   };
 
-  const filteredAvaliacoes = avaliacoes.filter(a => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    const nome = (a.profile?.nome || a.user_id).toLowerCase();
-    return nome.includes(searchLower) || a.status.includes(searchLower);
-  });
+  const filteredAvaliacoes = useMemo(() => {
+    return avaliacoes.filter(a => {
+      const matchesSearch = !searchTerm || 
+        (a.profile?.nome || a.user_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.status.includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = !statusFilter || a.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [avaliacoes, searchTerm, statusFilter]);
 
-  const getScoreColor = (score: number | null) => {
-    if (score === null) return 'text-muted-foreground';
-    if (score <= 30) return 'text-emerald-600';
-    if (score <= 60) return 'text-amber-600';
-    return 'text-red-600';
-  };
+  const statusCounts = useMemo(() => {
+    return {
+      pendente: avaliacoes.filter(a => a.status === 'pendente').length,
+      aprovado: avaliacoes.filter(a => a.status === 'aprovado').length,
+      bloqueado: avaliacoes.filter(a => a.status === 'bloqueado').length,
+      em_revisao: avaliacoes.filter(a => a.status === 'em_revisao').length,
+    };
+  }, [avaliacoes]);
 
   const renderAnswersByCategory = (respostas: Record<string, any>) => {
     return (
-      <Accordion type="multiple" className="w-full">
-        {Object.entries(questionCategories).map(([category, keys]) => {
-          const categoryAnswers = Object.entries(respostas).filter(([key]) => 
-            keys.some(k => key.toLowerCase().includes(k))
+      <Accordion type="multiple" className="w-full" defaultValue={['biometria']}>
+        {Object.entries(questionCategories).map(([key, category]) => {
+          const categoryAnswers = Object.entries(respostas).filter(([k]) => 
+            category.keys.some(ck => k.toLowerCase().includes(ck))
           );
           
           if (categoryAnswers.length === 0) return null;
+          const Icon = category.icon;
           
           return (
-            <AccordionItem key={category} value={category}>
-              <AccordionTrigger className="text-sm font-medium">
-                {category} ({categoryAnswers.length})
+            <AccordionItem key={key} value={key} className="border-b border-border/50">
+              <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  {category.label}
+                  <Badge variant="outline" className="ml-2 text-[10px]">
+                    {categoryAnswers.length}
+                  </Badge>
+                </div>
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent className="pb-4">
                 <div className="space-y-2">
-                  {categoryAnswers.map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
-                      <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                      <span className="font-medium">
+                  {categoryAnswers.map(([k, value]) => (
+                    <div key={k} className="flex justify-between text-sm py-1.5 px-2 rounded-md bg-muted/30">
+                      <span className="text-muted-foreground capitalize text-xs">{k.replace(/_/g, ' ')}</span>
+                      <span className="font-medium font-mono-numbers text-xs">
                         {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                       </span>
                     </div>
@@ -284,27 +336,6 @@ export default function AdminInbox() {
             </AccordionItem>
           );
         })}
-        
-        {/* Outras respostas */}
-        <AccordionItem value="outras">
-          <AccordionTrigger className="text-sm font-medium">
-            Outras Respostas
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {Object.entries(respostas)
-                .filter(([key]) => !Object.values(questionCategories).flat().some(k => key.toLowerCase().includes(k)))
-                .map(([key, value]) => (
-                  <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
-                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                    <span className="font-medium">
-                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
       </Accordion>
     );
   };
@@ -321,247 +352,271 @@ export default function AdminInbox() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="h-[calc(100vh-8rem)]">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-serif text-3xl font-bold">Inbox de Avaliações</h1>
-            <p className="text-muted-foreground">
-              Fila de triagem clínica
+            <h1 className="font-serif text-3xl font-bold tracking-tight">Inbox Clínico</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Triagem e aprovação de avaliações
             </p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou status..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+          
+          {/* Status filters */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setStatusFilter(null)}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                !statusFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Todos ({avaliacoes.length})
+            </button>
+            {Object.entries(statusConfig).map(([status, config]) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(statusFilter === status ? null : status)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5',
+                  statusFilter === status ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <div className={cn('w-2 h-2 rounded-full', config.color)} />
+                {statusCounts[status as keyof typeof statusCounts]}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(statusConfig).map(([status, config]) => {
-            const count = avaliacoes.filter(a => a.status === status).length;
-            return (
-              <Card key={status} className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSearchTerm(status)}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <Badge variant={config.variant}>{config.label}</Badge>
-                    <span className="text-2xl font-bold">{count}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Fila de Espera</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Paciente</TableHead>
-                  <TableHead>IMC</TableHead>
-                  <TableHead>Score de Risco</TableHead>
-                  <TableHead>Tempo de Espera</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAvaliacoes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Nenhuma avaliação encontrada
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAvaliacoes.map((avaliacao) => (
-                    <TableRow key={avaliacao.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                            <User className="h-4 w-4" />
-                          </div>
-                          <span className="font-medium">
+        {/* Master-Detail Layout */}
+        <div className="grid lg:grid-cols-5 gap-6 h-[calc(100%-4rem)]">
+          {/* Master List */}
+          <div className="lg:col-span-2 card-glass overflow-hidden flex flex-col">
+            {/* Search */}
+            <div className="p-4 border-b border-border/50">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar paciente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 bg-background/50"
+                />
+              </div>
+            </div>
+            
+            {/* List */}
+            <ScrollArea className="flex-1">
+              {filteredAvaliacoes.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  Nenhuma avaliação encontrada
+                </div>
+              ) : (
+                filteredAvaliacoes.map((avaliacao) => (
+                  <div
+                    key={avaliacao.id}
+                    onClick={() => handleSelectAvaliacao(avaliacao)}
+                    className={cn(
+                      'master-list-item',
+                      selectedAvaliacao?.id === avaliacao.id && 'active'
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
                             {avaliacao.profile?.nome || 'Paciente'}
-                          </span>
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDistanceToNow(new Date(avaliacao.created_at), {
+                                addSuffix: true,
+                                locale: ptBR
+                              })}
+                            </span>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {avaliacao.imc?.toFixed(1) || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <span className={getScoreColor(avaliacao.score_risco)}>
-                          {avaliacao.score_risco ?? 'N/A'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(avaliacao.created_at), {
-                            addSuffix: true,
-                            locale: ptBR
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusConfig[avaliacao.status]?.variant || 'secondary'}>
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1.5">
+                        <Badge 
+                          variant={statusConfig[avaliacao.status]?.variant || 'secondary'}
+                          className="text-[10px]"
+                        >
                           {statusConfig[avaliacao.status]?.label || avaliacao.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedAvaliacao(avaliacao);
-                            setViewDialogOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                        <RiskIndicator imc={avaliacao.imc} respostas={avaliacao.respostas} />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </div>
 
-        {/* View Dialog */}
-        <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-serif">
-                Avaliação de {selectedAvaliacao?.profile?.nome || 'Paciente'}
-              </DialogTitle>
-              <DialogDescription>
-                Visualização 360° das respostas do questionário
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedAvaliacao && (
-              <div className="space-y-4">
-                {/* Quick Info */}
+          {/* Detail Panel */}
+          <div className="lg:col-span-3 card-glass overflow-hidden flex flex-col">
+            {!selectedAvaliacao ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                Selecione uma avaliação para visualizar
+              </div>
+            ) : detailLoading ? (
+              <div className="p-6 space-y-6">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-12 h-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-xs text-muted-foreground">IMC</p>
-                      <p className="text-xl font-bold">{selectedAvaliacao.imc?.toFixed(1) || 'N/A'}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-xs text-muted-foreground">Score de Risco</p>
-                      <p className={`text-xl font-bold ${getScoreColor(selectedAvaliacao.score_risco)}`}>
+                  <Skeleton className="h-20 rounded-lg" />
+                  <Skeleton className="h-20 rounded-lg" />
+                  <Skeleton className="h-20 rounded-lg" />
+                </div>
+                <Skeleton className="h-40 rounded-lg" />
+              </div>
+            ) : (
+              <>
+                {/* Detail Header */}
+                <div className="p-6 border-b border-border/50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h2 className="font-serif text-xl font-semibold">
+                          {selectedAvaliacao.profile?.nome || 'Paciente'}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedAvaliacao.profile?.whatsapp || 'WhatsApp não informado'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={statusConfig[selectedAvaliacao.status]?.variant}>
+                      {statusConfig[selectedAvaliacao.status]?.label}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="p-6 border-b border-border/50">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="metric-card p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">IMC</p>
+                      <p className="text-2xl font-mono-numbers font-semibold mt-1">
+                        {selectedAvaliacao.imc?.toFixed(1) || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="metric-card p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Score Risco</p>
+                      <p className={cn(
+                        'text-2xl font-mono-numbers font-semibold mt-1',
+                        (selectedAvaliacao.score_risco || 0) > 60 ? 'text-red-600' :
+                        (selectedAvaliacao.score_risco || 0) > 30 ? 'text-amber-600' : 'text-emerald-600'
+                      )}>
                         {selectedAvaliacao.score_risco ?? 'N/A'}
                       </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-4">
-                      <p className="text-xs text-muted-foreground">Status</p>
-                      <Badge variant={statusConfig[selectedAvaliacao.status]?.variant}>
-                        {statusConfig[selectedAvaliacao.status]?.label}
-                      </Badge>
-                    </CardContent>
-                  </Card>
+                    </div>
+                    <div className="metric-card p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Risco</p>
+                      <div className="mt-2">
+                        <RiskIndicator 
+                          imc={selectedAvaliacao.imc} 
+                          respostas={selectedAvaliacao.respostas} 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Answers */}
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-3">Respostas do Questionário</h4>
+                <ScrollArea className="flex-1 p-6">
+                  <h3 className="text-sm font-semibold mb-4">Respostas do Questionário</h3>
                   {renderAnswersByCategory(selectedAvaliacao.respostas)}
-                </div>
+                </ScrollArea>
 
                 {/* Actions */}
                 {selectedAvaliacao.status === 'pendente' && (
-                  <DialogFooter className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setBlockDialogOpen(true);
-                      }}
-                      disabled={processing}
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Sinalizar Impedimento
-                    </Button>
-                    <Button
-                      onClick={() => handleApprove(selectedAvaliacao)}
-                      disabled={processing}
-                    >
-                      {processing ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                      )}
-                      Aprovar
-                    </Button>
-                  </DialogFooter>
+                  <div className="p-6 border-t border-border/50 bg-muted/30">
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => handleApprove(selectedAvaliacao)}
+                        disabled={processing}
+                        className="flex-1 gap-2"
+                      >
+                        {processing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                        Aprovar Tratamento
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setBlockDialogOpen(true)}
+                        disabled={processing}
+                        className="gap-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Bloquear
+                      </Button>
+                    </div>
+                  </div>
                 )}
-              </div>
+              </>
             )}
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
 
         {/* Block Dialog */}
         <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Sinalizar Impedimento
-              </DialogTitle>
+              <DialogTitle className="font-serif">Registrar Impedimento</DialogTitle>
               <DialogDescription>
-                Descreva o motivo do impedimento. O paciente receberá esta nota e precisará revisar seu plano.
+                Informe o motivo pelo qual este paciente não pode prosseguir com o tratamento.
               </DialogDescription>
             </DialogHeader>
-
-            <div className="space-y-2">
-              <Textarea
-                placeholder="Ex: Necessário ajuste de dosagem devido a..."
-                value={impedimentNote}
-                onChange={(e) => {
-                  setImpedimentNote(e.target.value);
-                  setNoteError(null); // Clear error on input change
-                }}
-                rows={5}
-                className={noteError ? 'border-destructive' : ''}
-              />
-              {noteError && (
-                <p className="text-sm text-destructive">{noteError}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Mínimo 10 caracteres, máximo 1000.
-              </p>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="note">Nota de Impedimento</Label>
+                <Textarea
+                  id="note"
+                  value={impedimentNote}
+                  onChange={(e) => {
+                    setImpedimentNote(e.target.value);
+                    setNoteError(null);
+                  }}
+                  placeholder="Descreva o motivo do impedimento..."
+                  rows={4}
+                  className={noteError ? 'border-destructive' : ''}
+                />
+                {noteError && (
+                  <p className="text-sm text-destructive">{noteError}</p>
+                )}
+              </div>
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleBlock}
                 disabled={processing || !impedimentNote.trim()}
               >
                 {processing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" />
-                )}
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
                 Confirmar Bloqueio
               </Button>
             </DialogFooter>
