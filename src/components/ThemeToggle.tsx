@@ -1,11 +1,16 @@
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { User } from "@supabase/supabase-js";
+import { useThemePreference } from "@/hooks/useThemePreference";
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+interface ThemeToggleProps {
+  user?: User | null;
+}
+
+export function ThemeToggle({ user = null }: ThemeToggleProps) {
+  const { theme, setTheme } = useThemePreference(user);
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch

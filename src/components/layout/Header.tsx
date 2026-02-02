@@ -1,14 +1,32 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { useState } from "react";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const { scrollY } = useScroll();
+
+  // Check auth state
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Track scroll position to toggle header style
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -70,7 +88,7 @@ export function Header() {
           >
             Quem Somos
           </motion.button>
-          <ThemeToggle />
+          <ThemeToggle user={user} />
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -79,22 +97,22 @@ export function Header() {
             <Button 
               variant="ghost" 
               className="text-sm font-medium uppercase tracking-wide"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate(user ? '/dashboard/conta' : '/auth')}
             >
-              Entrar
+              {user ? 'Conta' : 'Entrar'}
             </Button>
           </motion.div>
         </nav>
 
         {/* Mobile Navigation */}
         <div className="flex md:hidden items-center gap-2">
-          <ThemeToggle />
+          <ThemeToggle user={user} />
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate(user ? '/dashboard/conta' : '/auth')}
           >
-            Entrar
+            {user ? 'Conta' : 'Entrar'}
           </Button>
         </div>
       </div>

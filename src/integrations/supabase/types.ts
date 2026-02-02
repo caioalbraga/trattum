@@ -346,6 +346,7 @@ export type Database = {
           foto_url: string | null
           id: string
           nome: string | null
+          tema_preferencia: string | null
           updated_at: string
           user_id: string
           whatsapp: string | null
@@ -356,6 +357,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           nome?: string | null
+          tema_preferencia?: string | null
           updated_at?: string
           user_id: string
           whatsapp?: string | null
@@ -366,6 +368,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           nome?: string | null
+          tema_preferencia?: string | null
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
