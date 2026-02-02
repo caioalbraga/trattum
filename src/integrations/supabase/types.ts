@@ -236,6 +236,69 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_otp_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_settings: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          id: string
+          mfa_enabled: boolean
+          preferred_method: string | null
+          totp_secret: string | null
+          totp_verified: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          mfa_enabled?: boolean
+          preferred_method?: string | null
+          totp_secret?: string | null
+          totp_verified?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          mfa_enabled?: boolean
+          preferred_method?: string | null
+          totp_secret?: string | null
+          totp_verified?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notas_impedimento: {
         Row: {
           avaliacao_id: string | null
@@ -414,6 +477,45 @@ export type Database = {
         }
         Relationships: []
       }
+      trusted_devices: {
+        Row: {
+          created_at: string
+          device_fingerprint: string
+          device_name: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          last_used_at: string
+          trusted_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint: string
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          last_used_at?: string
+          trusted_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          last_used_at?: string
+          trusted_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -440,6 +542,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_mfa_data: { Args: never; Returns: undefined }
       get_public_profile: {
         Args: { target_user_id: string }
         Returns: {

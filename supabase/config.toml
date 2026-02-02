@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.validate-coupon]
 verify_jwt = false
+
+[functions.mfa-send-otp]
+verify_jwt = false
+
+[functions.mfa-verify-otp]
+verify_jwt = false
+
+[functions.mfa-check-device]
+verify_jwt = false

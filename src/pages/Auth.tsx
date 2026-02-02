@@ -14,10 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, Mail } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Mail, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { MFAVerification } from "@/components/auth/MFAVerification";
+import { useMFA } from "@/hooks/useMFA";
+import { generateDeviceFingerprint } from "@/lib/device-fingerprint";
 
 const emailSchema = z.string().email("E-mail inválido");
 const passwordSchema = z.string().min(6, "Senha deve ter pelo menos 6 caracteres");
@@ -26,6 +29,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showMFADialog, setShowMFADialog] = useState(false);
+  const [pendingUserEmail, setPendingUserEmail] = useState<string>("");
+  const { checkMFARequired } = useMFA();
   
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -46,19 +52,33 @@ export default function Auth() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/dashboard');
+        // Check if MFA is required for this device
+        const mfaResult = await checkMFARequired();
+        if (mfaResult?.mfa_required) {
+          setPendingUserEmail(session.user.email || "");
+          setShowMFADialog(true);
+        } else {
+          navigate('/dashboard');
+        }
       }
     };
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate('/dashboard');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session && !showMFADialog) {
+        // Check if MFA is required
+        const mfaResult = await checkMFARequired();
+        if (mfaResult?.mfa_required) {
+          setPendingUserEmail(session.user.email || "");
+          setShowMFADialog(true);
+        } else {
+          navigate('/dashboard');
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, showMFADialog]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,7 +203,32 @@ export default function Auth() {
     }
   };
 
+  const handleMFASuccess = () => {
+    setShowMFADialog(false);
+    toast.success('Verificação concluída!');
+    navigate('/dashboard');
+  };
+
+  const handleMFACancel = async () => {
+    // Sign out if MFA is cancelled
+    await supabase.auth.signOut();
+    setShowMFADialog(false);
+    toast.info('Login cancelado');
+  };
+
   return (
+    <>
+      {/* MFA Verification Dialog */}
+      <Dialog open={showMFADialog} onOpenChange={(open) => !open && handleMFACancel()}>
+        <DialogContent className="sm:max-w-md">
+          <MFAVerification
+            onSuccess={handleMFASuccess}
+            onCancel={handleMFACancel}
+            userEmail={pendingUserEmail}
+          />
+        </DialogContent>
+      </Dialog>
+
     <div className="min-h-screen bg-background flex flex-col">
       {/* Simple Header */}
       <header className="border-b border-border/40 bg-background/98 backdrop-blur-sm">
@@ -349,5 +394,6 @@ export default function Auth() {
         </Card>
       </main>
     </div>
+    </>
   );
 }
