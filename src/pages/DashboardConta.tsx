@@ -37,6 +37,7 @@ import {
 } from '@/lib/crypto-client';
 import { ContaSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
+import { MFASettings } from '@/components/auth/MFASettings';
 
 interface Pedido {
   id: string;
@@ -479,7 +480,8 @@ export default function DashboardConta() {
           </TabsContent>
 
           {/* Segurança */}
-          <TabsContent value="seguranca" className="mt-6">
+          <TabsContent value="seguranca" className="mt-6 space-y-6">
+            {/* Password Change Card */}
             <Card className="card-elevated">
               <CardHeader>
                 <CardTitle className="font-serif text-xl">Alterar Senha</CardTitle>
@@ -540,6 +542,9 @@ export default function DashboardConta() {
                 </form>
               </CardContent>
             </Card>
+
+            {/* MFA Settings */}
+            <MFASettings />
           </TabsContent>
 
           {/* Faturamento */}
