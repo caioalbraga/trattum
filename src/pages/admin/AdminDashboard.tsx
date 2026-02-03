@@ -1,46 +1,50 @@
 import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { MetricCard } from '@/components/admin/dashboard/MetricCard';
+import { EvaluationsTable, type Evaluation } from '@/components/admin/dashboard/EvaluationsTable';
+import { EvaluationSlideOver } from '@/components/admin/dashboard/EvaluationSlideOver';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
+  DollarSign, 
   TrendingUp, 
   Users, 
-  CheckCircle, 
-  DollarSign,
-  Activity,
-  Loader2
+  ClipboardList
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
 
 interface Metrics {
   mrr: number;
   ticketMedio: number;
-  taxaAprovacao: number;
-  ltv: number;
+  pacientesAtivos: number;
   avaliacoesPendentes: number;
-  pedidosHoje: number;
 }
 
-interface FunnelData {
-  data: string;
-  acessos: number;
-  vendas: number;
+// Helper to decrypt patient name
+async function decryptName(encryptedName: string | null): Promise<string> {
+  if (!encryptedName) return 'Nome não disponível';
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('decrypt-data', {
+      body: { data: encryptedName, field: 'nome' }
+    });
+    
+    if (error || !data?.decrypted) {
+      return encryptedName;
+    }
+    return data.decrypted;
+  } catch {
+    return encryptedName;
+  }
 }
 
 export default function AdminDashboard() {
+  const { toast } = useToast();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [funnelData, setFunnelData] = useState<FunnelData[]>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
+  const [slideOverOpen, setSlideOverOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -49,16 +53,22 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       // Fetch orders for MRR and Ticket Médio
-      const { data: pedidos, error: pedidosError } = await supabase
+      const { data: pedidos } = await supabase
         .from('pedidos')
         .select('valor, created_at, status');
 
-      if (pedidosError) throw pedidosError;
-
-      // Fetch assessments for approval rate
-      const { data: avaliacoes, error: avaliacoesError } = await supabase
+      // Fetch assessments
+      const { data: avaliacoes } = await supabase
         .from('avaliacoes')
-        .select('status, created_at');
+        .select('id, user_id, status, imc, created_at, respostas')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      // Fetch active treatments count
+      const { count: tratamentosAtivos } = await supabase
+        .from('tratamentos')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'ativo');
 
       // Calculate metrics
       const now = new Date();
@@ -75,236 +85,187 @@ export default function AdminDashboard() {
         ? mrr / pedidosThisMonth.length 
         : 0;
 
-      const totalAvaliacoes = avaliacoes?.length || 0;
-      const aprovadas = avaliacoes?.filter(a => a.status === 'aprovado').length || 0;
-      const taxaAprovacao = totalAvaliacoes > 0 
-        ? (aprovadas / totalAvaliacoes) * 100 
-        : 0;
-
       const avaliacoesPendentes = avaliacoes?.filter(a => a.status === 'pendente').length || 0;
-
-      const today = now.toISOString().split('T')[0];
-      const pedidosHoje = pedidos?.filter(p => 
-        p.created_at.startsWith(today)
-      ).length || 0;
-
-      // LTV estimation (average order value * estimated repeat purchases)
-      const avgOrderValue = pedidos && pedidos.length > 0
-        ? pedidos.reduce((acc, p) => acc + Number(p.valor), 0) / pedidos.length
-        : 0;
-      const ltv = avgOrderValue * 6; // Assuming 6 months average retention
 
       setMetrics({
         mrr,
         ticketMedio,
-        taxaAprovacao,
-        ltv,
-        avaliacoesPendentes,
-        pedidosHoje
+        pacientesAtivos: tratamentosAtivos || 0,
+        avaliacoesPendentes
       });
 
-      // Fetch funnel metrics for chart
-      const { data: metricas } = await supabase
-        .from('metricas_funil')
-        .select('*')
-        .order('data', { ascending: true })
-        .limit(30);
+      // Fetch patient names for evaluations
+      if (avaliacoes && avaliacoes.length > 0) {
+        const userIds = [...new Set(avaliacoes.map(a => a.user_id))];
+        
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
 
-      if (metricas && metricas.length > 0) {
-        // Group by date
-        const grouped = metricas.reduce((acc: Record<string, FunnelData>, m) => {
-          if (!acc[m.data]) {
-            acc[m.data] = { data: m.data, acessos: 0, vendas: 0 };
-          }
-          if (m.tipo === 'acesso_quiz') acc[m.data].acessos += 1;
-          if (m.tipo === 'venda') acc[m.data].vendas += 1;
-          return acc;
-        }, {});
-        setFunnelData(Object.values(grouped));
-      } else {
-        // Sample data for visualization
-        setFunnelData([
-          { data: '15/01', acessos: 45, vendas: 12 },
-          { data: '16/01', acessos: 52, vendas: 15 },
-          { data: '17/01', acessos: 38, vendas: 8 },
-          { data: '18/01', acessos: 61, vendas: 18 },
-          { data: '19/01', acessos: 55, vendas: 14 },
-          { data: '20/01', acessos: 48, vendas: 11 },
-        ]);
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p.nome]) || []);
+
+        // Decrypt names
+        const evaluationsWithNames = await Promise.all(
+          avaliacoes.map(async (a) => {
+            const encryptedName = profileMap.get(a.user_id) || null;
+            const decryptedName = await decryptName(encryptedName);
+            return {
+              id: a.id,
+              patient_name: decryptedName,
+              imc: a.imc,
+              status: a.status,
+              created_at: a.created_at,
+              respostas: a.respostas as Record<string, unknown>
+            };
+          })
+        );
+
+        setEvaluations(evaluationsWithNames);
       }
-
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar dados',
+        description: 'Não foi possível carregar os dados do dashboard.'
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectEvaluation = (evaluation: Evaluation) => {
+    setSelectedEvaluation(evaluation);
+    setSlideOverOpen(true);
+  };
+
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('avaliacoes')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Status atualizado',
+        description: `Avaliação marcada como ${newStatus}.`
+      });
+
+      // Update local state
+      setEvaluations(prev => 
+        prev.map(e => e.id === id ? { ...e, status: newStatus } : e)
+      );
+      setSelectedEvaluation(prev => 
+        prev?.id === id ? { ...prev, status: newStatus } : prev
+      );
+
+      // Update pending count
+      if (metrics) {
+        const newPendingCount = evaluations.filter(e => 
+          e.id === id ? newStatus === 'pendente' : e.status === 'pendente'
+        ).length;
+        setMetrics({ ...metrics, avaliacoesPendentes: newPendingCount });
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao atualizar',
+        description: 'Não foi possível atualizar o status.'
+      });
     }
   };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(value);
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="font-serif text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Visão geral das métricas e performance
+        <header>
+          <h1 className="font-serif text-2xl font-semibold text-foreground">
+            Visão Geral
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe as métricas e avaliações da clínica.
           </p>
-        </div>
+        </header>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                MRR (Receita Mensal)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(metrics?.mrr || 0)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Este mês</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Ticket Médio
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(metrics?.ticketMedio || 0)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Por pedido</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Taxa de Aprovação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{metrics?.taxaAprovacao.toFixed(1)}%</p>
-              <p className="text-xs text-muted-foreground mt-1">Avaliações aprovadas</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-amber-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                LTV Estimado
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(metrics?.ltv || 0)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Lifetime Value médio</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Avaliações Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold">{metrics?.avaliacoesPendentes || 0}</p>
-                {(metrics?.avaliacoesPendentes || 0) > 0 && (
-                  <Badge variant="destructive" className="text-xs">Ação necessária</Badge>
-                )}
+        {/* KPI Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border/60 rounded-xl p-6">
+                <Skeleton className="h-4 w-24 mb-3" />
+                <Skeleton className="h-8 w-20" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Aguardando triagem</p>
-            </CardContent>
-          </Card>
+            ))
+          ) : (
+            <>
+              <MetricCard
+                title="Faturamento Mensal"
+                value={formatCurrency(metrics?.mrr || 0)}
+                subtitle="Este mês"
+                icon={<DollarSign className="h-5 w-5" />}
+              />
+              <MetricCard
+                title="Ticket Médio"
+                value={formatCurrency(metrics?.ticketMedio || 0)}
+                subtitle="Por pedido"
+                icon={<TrendingUp className="h-5 w-5" />}
+              />
+              <MetricCard
+                title="Pacientes Ativos"
+                value={metrics?.pacientesAtivos || 0}
+                subtitle="Em tratamento"
+                icon={<Users className="h-5 w-5" />}
+              />
+              <MetricCard
+                title="Avaliações Pendentes"
+                value={metrics?.avaliacoesPendentes || 0}
+                subtitle="Aguardando triagem"
+                icon={<ClipboardList className="h-5 w-5" />}
+                alert={(metrics?.avaliacoesPendentes || 0) > 0}
+              />
+            </>
+          )}
+        </section>
 
-          <Card className="border-l-4 border-l-teal-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Pedidos Hoje
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{metrics?.pedidosHoje || 0}</p>
-              <p className="text-xs text-muted-foreground mt-1">Novos pedidos</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Funnel Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Funil de Conversão</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Comparativo: Acessos ao Quiz vs Vendas Finalizadas
+        {/* Evaluations Table */}
+        <section className="bg-card border border-border/60 rounded-xl overflow-hidden">
+          <header className="px-6 py-5 border-b border-border/60">
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              Avaliações Recentes
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Clique em uma linha para ver os detalhes completos.
             </p>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={funnelData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="data" 
-                    className="text-xs" 
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="acessos" 
-                    name="Acessos ao Quiz"
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="vendas" 
-                    name="Vendas"
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10b981' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+          </header>
+          
+          <EvaluationsTable
+            evaluations={evaluations}
+            loading={loading}
+            onSelectEvaluation={handleSelectEvaluation}
+          />
+        </section>
+
+        {/* Slide-over for Evaluation Details */}
+        <EvaluationSlideOver
+          evaluation={selectedEvaluation}
+          open={slideOverOpen}
+          onClose={() => setSlideOverOpen(false)}
+          onUpdateStatus={handleUpdateStatus}
+        />
       </div>
     </AdminLayout>
   );
