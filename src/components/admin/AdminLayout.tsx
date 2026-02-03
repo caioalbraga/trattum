@@ -28,9 +28,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-muted/30">
+      <div className="min-h-screen flex w-full bg-[hsl(40,20%,97%)] dark:bg-background">
         <AdminSidebar />
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-8 lg:p-10 overflow-auto">
           {children}
         </main>
       </div>

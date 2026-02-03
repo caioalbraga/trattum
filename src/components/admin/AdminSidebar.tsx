@@ -1,12 +1,11 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Inbox, 
-  ShoppingCart, 
-  Users, 
+  ClipboardList, 
+  ShoppingBag, 
   Settings,
   LogOut,
-  Shield
+  MessageCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +14,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -26,17 +24,16 @@ import {
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 const menuItems = [
   { title: 'Dashboard', url: '/trattum-admin', icon: LayoutDashboard },
-  { title: 'Inbox de Avaliações', url: '/trattum-admin/inbox', icon: Inbox },
-  { title: 'Gestão de Pedidos', url: '/trattum-admin/pedidos', icon: ShoppingCart },
-  { title: 'CRM de Pacientes', url: '/trattum-admin/crm', icon: Users },
+  { title: 'Triagem', url: '/trattum-admin/inbox', icon: ClipboardList },
+  { title: 'Pedidos', url: '/trattum-admin/pedidos', icon: ShoppingBag },
   { title: 'Configurações', url: '/trattum-admin/configuracoes', icon: Settings },
 ];
 
 export function AdminSidebar() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,41 +46,47 @@ export function AdminSidebar() {
     navigate('/');
   };
 
+  const openWhatsApp = () => {
+    window.open('https://wa.me/5511999999999?text=Preciso%20de%20suporte%20técnico', '_blank');
+  };
+
   return (
-    <Sidebar className="border-r border-border/50">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary" />
-          </div>
+    <Sidebar className="border-r border-border/60 bg-card w-[220px]">
+      <SidebarHeader className="p-5">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-serif text-lg font-semibold">Trattum</h1>
-            <p className="text-xs text-muted-foreground">Painel Admin</p>
+            <h1 className="font-serif text-lg font-semibold text-foreground">
+              Trattum
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Painel Clínico
+            </p>
           </div>
+          <SidebarTrigger className="h-8 w-8" />
         </div>
-        <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
       
-      <Separator />
+      <Separator className="bg-border/60" />
       
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-3">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground px-2">
-            Menu Principal
-          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end={item.url === '/trattum-admin'}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors"
-                      activeClassName="bg-primary/10 text-primary font-medium"
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg",
+                        "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                        "transition-colors duration-150"
+                      )}
+                      activeClassName="bg-primary/5 text-foreground font-medium border border-border/60"
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-[18px] w-[18px]" />
+                      <span className="text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -93,14 +96,27 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-3 mt-auto">
+        <Separator className="bg-border/60 mb-3" />
+        
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-muted-foreground hover:text-destructive"
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 mb-1"
+          onClick={openWhatsApp}
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          <span className="text-sm">Suporte WhatsApp</span>
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sair
+          <span className="text-sm">Sair</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
