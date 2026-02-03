@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -55,21 +55,8 @@
     --teal: 166 45% 35%;
     --teal-light: 166 35% 92%;
 
-    /* Slaty Greens for Admin Dashboard */
-    --slate-forest-50: 166 20% 97%;
-    --slate-forest-100: 166 18% 92%;
-    --slate-forest-200: 166 16% 85%;
-    --slate-forest-300: 166 14% 70%;
-    --slate-forest-400: 166 18% 50%;
-    --slate-forest-500: 166 22% 38%;
-    --slate-forest-600: 166 26% 28%;
-    --slate-forest-700: 166 29% 20%;
-    --slate-forest-800: 166 29% 14%;
-    --slate-forest-900: 166 30% 8%;
-
     /* Gradients */
     --gradient-chart: linear-gradient(180deg, hsl(166 45% 35% / 0.3) 0%, hsl(166 45% 35% / 0.05) 100%);
-    --gradient-area: linear-gradient(180deg, hsl(166 35% 40% / 0.4) 0%, hsl(166 35% 40% / 0.02) 100%);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -150,36 +137,6 @@
     @apply bg-card rounded-xl shadow-[0_1px_4px_-1px_rgba(0,0,0,0.04)] border border-border/30;
   }
 
-  /* Glass morphism card for admin dashboard */
-  .card-glass {
-    @apply rounded-xl border border-black/5 dark:border-white/10;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  .dark .card-glass {
-    background: rgba(26, 46, 42, 0.6);
-  }
-
-  /* Metric card style */
-  .metric-card {
-    @apply rounded-xl border border-black/5 dark:border-white/10 p-5;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  .dark .metric-card {
-    background: rgba(26, 46, 42, 0.4);
-  }
-
-  /* Monospace numbers */
-  .font-mono-numbers {
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    font-variant-numeric: tabular-nums;
-  }
-
   .icon-container {
     @apply w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary;
   }
@@ -226,19 +183,6 @@
 
   .treatment-card-hover:hover {
     @apply border-primary/40 shadow-lg;
-  }
-
-  /* Master-detail layout */
-  .master-list-item {
-    @apply px-4 py-3 cursor-pointer transition-colors border-l-2 border-transparent;
-  }
-
-  .master-list-item:hover {
-    @apply bg-muted/50;
-  }
-
-  .master-list-item.active {
-    @apply bg-muted border-l-primary;
   }
 }
 
