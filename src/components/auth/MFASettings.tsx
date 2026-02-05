@@ -178,16 +178,20 @@ export function MFASettings() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="mfa-toggle">Ativar 2FA</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="mfa-toggle">Ativar 2FA</Label>
+                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                  Em breve
+                </span>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Exigir código de verificação em novos dispositivos
               </p>
             </div>
             <Switch
               id="mfa-toggle"
-              checked={isEnabled}
-              onCheckedChange={(checked) => toggleMFA.mutate(checked)}
-              disabled={loadingSettings || toggleMFA.isPending}
+              checked={false}
+              disabled={true}
             />
           </div>
 
