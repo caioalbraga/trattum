@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
+import { encryptProfile, encryptEndereco } from "@/lib/crypto-client";
 
 type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
@@ -248,14 +249,15 @@ export default function Checkout() {
         return;
       }
 
-      // Update profile with additional data
+      // Update profile with additional data (encrypted)
       const { data: { user: newUser } } = await supabase.auth.getUser();
       if (newUser) {
-        await supabase.from('profiles').update({
+        const encryptedProfile = await encryptProfile({
           nome: `${formData.nome} ${formData.sobrenome}`.trim(),
           whatsapp: formData.whatsapp,
           cpf: formData.cpf,
-        }).eq('user_id', newUser.id);
+        });
+        await supabase.from('profiles').update(encryptedProfile).eq('user_id', newUser.id);
       }
 
       toast.success('Conta criada com sucesso!');
@@ -278,17 +280,20 @@ export default function Checkout() {
         return;
       }
 
-      // Save or update address
+      // Save or update address (encrypted)
+      const encryptedAddress = await encryptEndereco({
+        cep: enderecoData.cep,
+        logradouro: enderecoData.logradouro,
+        numero: enderecoData.numero,
+        complemento: enderecoData.complemento,
+        bairro: enderecoData.bairro,
+        cidade: enderecoData.cidade,
+      });
       const { error } = await supabase
         .from('enderecos')
         .upsert({
+          ...encryptedAddress,
           user_id: user.id,
-          cep: enderecoData.cep,
-          logradouro: enderecoData.logradouro,
-          numero: enderecoData.numero,
-          complemento: enderecoData.complemento,
-          bairro: enderecoData.bairro,
-          cidade: enderecoData.cidade,
           estado: enderecoData.estado,
           is_default: true,
         });
