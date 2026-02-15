@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { ClinicalDisclaimer } from "@/components/consent/ClinicalDisclaimer";
 import {
   determineTier,
   getTreatmentDetails,
@@ -376,6 +377,8 @@ export default function Results() {
           setShowDiscountModal(false);
         }}
       />
+
+      <ClinicalDisclaimer />
     </div>
   );
 }

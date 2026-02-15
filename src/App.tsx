@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import NotEligible from "./pages/NotEligible";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import TermsPage from "./pages/TermsPage";
 import Dashboard from "./pages/Dashboard";
 import DashboardAtendimento from "./pages/DashboardAtendimento";
 import DashboardTratamento from "./pages/DashboardTratamento";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/results" element={<Results />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/termos" element={<TermsPage />} />
             <Route path="/not-eligible" element={<NotEligible />} />
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<Dashboard />} />
