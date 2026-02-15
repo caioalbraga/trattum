@@ -107,6 +107,63 @@ export type Database = {
         }
         Relationships: []
       }
+      consent_logs: {
+        Row: {
+          checkboxes_accepted: Json
+          consent_timestamp: string
+          created_at: string
+          document_hash: string
+          email_resend_id: string | null
+          email_sent: boolean
+          email_sent_at: string | null
+          id: string
+          ip_address: string
+          revocation_reason: string | null
+          revoked_at: string | null
+          scroll_completed: boolean
+          terms_version: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          checkboxes_accepted?: Json
+          consent_timestamp: string
+          created_at?: string
+          document_hash: string
+          email_resend_id?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          ip_address: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          scroll_completed?: boolean
+          terms_version?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          checkboxes_accepted?: Json
+          consent_timestamp?: string
+          created_at?: string
+          document_hash?: string
+          email_resend_id?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          ip_address?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          scroll_completed?: boolean
+          terms_version?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cupons: {
         Row: {
           ativo: boolean
@@ -407,9 +464,12 @@ export type Database = {
           cpf: string | null
           created_at: string
           foto_url: string | null
+          has_accepted_terms: boolean | null
           id: string
           nome: string | null
           tema_preferencia: string | null
+          terms_accepted_at: string | null
+          terms_version_accepted: string | null
           updated_at: string
           user_id: string
           whatsapp: string | null
@@ -418,9 +478,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           foto_url?: string | null
+          has_accepted_terms?: boolean | null
           id?: string
           nome?: string | null
           tema_preferencia?: string | null
+          terms_accepted_at?: string | null
+          terms_version_accepted?: string | null
           updated_at?: string
           user_id: string
           whatsapp?: string | null
@@ -429,9 +492,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           foto_url?: string | null
+          has_accepted_terms?: boolean | null
           id?: string
           nome?: string | null
           tema_preferencia?: string | null
+          terms_accepted_at?: string | null
+          terms_version_accepted?: string | null
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
