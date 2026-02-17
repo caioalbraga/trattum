@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { CONSENT_TEXTS } from "@/lib/consent.texts";
 import { CONSENT_CONFIG } from "@/lib/consent.config";
 import {
@@ -116,7 +116,7 @@ export function ConsentModal({
 
         {/* Scrollable Content */}
         <div className="relative flex-1 min-h-0">
-          <ScrollArea className="h-full max-h-[50vh]" ref={scrollContainerRef}>
+        <div className="h-full max-h-[50vh] overflow-y-auto" ref={scrollContainerRef}>
             <div className="px-6 py-5 space-y-6">
               {/* Section 1: Data Usage */}
               <section>
@@ -211,7 +211,7 @@ export function ConsentModal({
               {/* Sentinel for scroll detection */}
               <div ref={sentinelRef} className="h-1" aria-hidden="true" />
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Scroll hint overlay */}
           <AnimatePresence>
@@ -246,6 +246,7 @@ export function ConsentModal({
                 id="terms-checkbox"
                 checked={termsCheckbox}
                 onCheckedChange={(v) => onTermsChange(v === true)}
+                onClick={(e) => e.stopPropagation()}
                 aria-required="true"
                 className="mt-0.5 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
               />
@@ -258,6 +259,7 @@ export function ConsentModal({
                 id="age-checkbox"
                 checked={ageCheckbox}
                 onCheckedChange={(v) => onAgeChange(v === true)}
+                onClick={(e) => e.stopPropagation()}
                 aria-required="true"
                 className="mt-0.5 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
               />
