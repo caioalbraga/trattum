@@ -59,26 +59,27 @@ export function ConsentModal({
   onAgeChange,
   onAccept,
 }: ConsentModalProps) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollHint, setShowScrollHint] = useState(true);
 
-  // IntersectionObserver for scroll sentinel
+  // Scroll event listener to detect when user reaches bottom
   useEffect(() => {
-    if (!sentinelRef.current) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          onScrollComplete();
-          setShowScrollHint(false);
-        }
-      },
-      { threshold: 0.5 }
-    );
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        onScrollComplete();
+        setShowScrollHint(false);
+      }
+    };
 
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
+    // Check immediately in case content fits without scrolling
+    handleScroll();
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [onScrollComplete]);
 
   return (
@@ -208,8 +209,6 @@ export function ConsentModal({
                 {t.termsLink}
               </a>
 
-              {/* Sentinel for scroll detection */}
-              <div ref={sentinelRef} className="h-1" aria-hidden="true" />
             </div>
           </div>
 
