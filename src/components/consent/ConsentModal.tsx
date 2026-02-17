@@ -241,32 +241,38 @@ export function ConsentModal({
         <div className="px-6 pb-6 pt-4 border-t border-border/40 flex-shrink-0 space-y-4">
           {/* Checkboxes */}
           <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer group">
+            <div
+              className="flex items-start gap-3 cursor-pointer group"
+              onClick={() => onTermsChange(!termsCheckbox)}
+            >
               <Checkbox
                 id="terms-checkbox"
                 checked={termsCheckbox}
                 onCheckedChange={(v) => onTermsChange(v === true)}
                 onClick={(e) => e.stopPropagation()}
                 aria-required="true"
-                className="mt-0.5 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
+                className="mt-0.5 shrink-0 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
               />
-              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors">
+              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors select-none">
                 {t.checkbox1}
               </span>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer group">
+            </div>
+            <div
+              className="flex items-start gap-3 cursor-pointer group"
+              onClick={() => onAgeChange(!ageCheckbox)}
+            >
               <Checkbox
                 id="age-checkbox"
                 checked={ageCheckbox}
                 onCheckedChange={(v) => onAgeChange(v === true)}
                 onClick={(e) => e.stopPropagation()}
                 aria-required="true"
-                className="mt-0.5 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
+                className="mt-0.5 shrink-0 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
               />
-              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors">
+              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors select-none">
                 {t.checkbox2}
               </span>
-            </label>
+            </div>
           </div>
 
           {/* Error */}
