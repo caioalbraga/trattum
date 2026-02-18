@@ -240,38 +240,36 @@ export function ConsentModal({
         <div className="px-6 pb-6 pt-4 border-t border-border/40 flex-shrink-0 space-y-4">
           {/* Checkboxes */}
           <div className="space-y-3">
-            <div
-              className="flex items-start gap-3 cursor-pointer group"
-              onClick={() => onTermsChange(!termsCheckbox)}
+            <label
+              htmlFor="terms-cb"
+              className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-border/30 hover:bg-white/60 transition-colors select-none"
             >
-              <Checkbox
-                id="terms-checkbox"
+              <input
+                id="terms-cb"
+                type="checkbox"
                 checked={termsCheckbox}
-                onCheckedChange={(v) => onTermsChange(v === true)}
-                onClick={(e) => e.stopPropagation()}
-                aria-required="true"
-                className="mt-0.5 shrink-0 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
+                onChange={(e) => onTermsChange(e.target.checked)}
+                className="mt-0.5 shrink-0 h-5 w-5 accent-[#1B5E8C] cursor-pointer"
               />
-              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors select-none">
+              <span className="text-sm text-gray-700 leading-snug">
                 {t.checkbox1}
               </span>
-            </div>
-            <div
-              className="flex items-start gap-3 cursor-pointer group"
-              onClick={() => onAgeChange(!ageCheckbox)}
+            </label>
+            <label
+              htmlFor="age-cb"
+              className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-border/30 hover:bg-white/60 transition-colors select-none"
             >
-              <Checkbox
-                id="age-checkbox"
+              <input
+                id="age-cb"
+                type="checkbox"
                 checked={ageCheckbox}
-                onCheckedChange={(v) => onAgeChange(v === true)}
-                onClick={(e) => e.stopPropagation()}
-                aria-required="true"
-                className="mt-0.5 shrink-0 border-[#1B5E8C] data-[state=checked]:bg-[#1B5E8C] data-[state=checked]:border-[#1B5E8C]"
+                onChange={(e) => onAgeChange(e.target.checked)}
+                className="mt-0.5 shrink-0 h-5 w-5 accent-[#1B5E8C] cursor-pointer"
               />
-              <span className="text-sm text-gray-700 leading-snug group-hover:text-gray-900 transition-colors select-none">
+              <span className="text-sm text-gray-700 leading-snug">
                 {t.checkbox2}
               </span>
-            </div>
+            </label>
           </div>
 
           {/* Error */}
@@ -283,10 +281,11 @@ export function ConsentModal({
 
           {/* Actions */}
           <div className="flex flex-col gap-2">
-            <Button
+            <button
+              type="button"
               onClick={onAccept}
               disabled={!canAccept || isLoading}
-              className="bg-[#1B5E8C] hover:bg-[#154A6E] text-white font-medium py-3 px-8 rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed h-auto"
+              className="w-full bg-[#1B5E8C] hover:bg-[#154A6E] text-white font-medium py-3 px-8 rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -296,7 +295,7 @@ export function ConsentModal({
               ) : (
                 t.acceptButton
               )}
-            </Button>
+            </button>
             <a
               href={CONSENT_CONFIG.SUPPORT_WHATSAPP}
               target="_blank"
