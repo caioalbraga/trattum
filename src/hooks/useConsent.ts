@@ -48,7 +48,7 @@ export function useConsent() {
   const [ageCheckbox, setAgeCheckbox] = useState(false);
   const [hasValidConsent, setHasValidConsent] = useState(false);
 
-  const canAccept = scrollCompleted && termsCheckbox && ageCheckbox;
+  const canAccept = termsCheckbox && ageCheckbox;
 
   // Check if user already has valid consent
   useEffect(() => {
