@@ -198,17 +198,8 @@ export function ConsentModal({
                 </div>
               </section>
 
-              {/* Link to full terms */}
-              <a
-                href={CONSENT_CONFIG.TERMS_ROUTE}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-[#1B5E8C] hover:underline font-medium"
-              >
-                <ExternalLink className="w-4 h-4" />
-                {t.termsLink}
-              </a>
-
+              {/* Bottom spacer so content doesn't hide behind scroll hint */}
+              <div className="h-4" />
             </div>
           </div>
 
@@ -236,8 +227,19 @@ export function ConsentModal({
           </AnimatePresence>
         </div>
 
-        {/* Checkboxes + Footer */}
-        <div className="px-6 pb-6 pt-5 border-t border-border/40 flex-shrink-0 space-y-5">
+        {/* Fixed Footer: Link + Checkboxes + Button */}
+        <div className="px-6 pb-6 pt-4 border-t-2 border-border/50 flex-shrink-0 space-y-4 bg-[hsl(43_43%_98%)]">
+          {/* Link to full terms */}
+          <a
+            href={CONSENT_CONFIG.TERMS_ROUTE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 text-xs text-[#1B5E8C] hover:underline font-medium py-1"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            {t.termsLink}
+          </a>
+
           {/* Checkboxes */}
           <div className="space-y-2.5">
             <label
