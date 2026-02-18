@@ -237,36 +237,36 @@ export function ConsentModal({
         </div>
 
         {/* Checkboxes + Footer */}
-        <div className="px-6 pb-6 pt-4 border-t border-border/40 flex-shrink-0 space-y-4">
+        <div className="px-6 pb-6 pt-5 border-t border-border/40 flex-shrink-0 space-y-5">
           {/* Checkboxes */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <label
               htmlFor="terms-cb"
-              className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-border/30 hover:bg-white/60 transition-colors select-none"
+              className="flex items-center gap-3 cursor-pointer p-3.5 rounded-xl border border-border/40 bg-white hover:border-[#1B5E8C]/30 hover:shadow-sm transition-all select-none"
             >
               <input
                 id="terms-cb"
                 type="checkbox"
                 checked={termsCheckbox}
                 onChange={(e) => onTermsChange(e.target.checked)}
-                className="mt-0.5 shrink-0 h-5 w-5 accent-[#1B5E8C] cursor-pointer"
+                className="shrink-0 h-[18px] w-[18px] accent-[#1B5E8C] cursor-pointer rounded"
               />
-              <span className="text-sm text-gray-700 leading-snug">
+              <span className="text-[13px] text-gray-700 leading-relaxed">
                 {t.checkbox1}
               </span>
             </label>
             <label
               htmlFor="age-cb"
-              className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-border/30 hover:bg-white/60 transition-colors select-none"
+              className="flex items-center gap-3 cursor-pointer p-3.5 rounded-xl border border-border/40 bg-white hover:border-[#1B5E8C]/30 hover:shadow-sm transition-all select-none"
             >
               <input
                 id="age-cb"
                 type="checkbox"
                 checked={ageCheckbox}
                 onChange={(e) => onAgeChange(e.target.checked)}
-                className="mt-0.5 shrink-0 h-5 w-5 accent-[#1B5E8C] cursor-pointer"
+                className="shrink-0 h-[18px] w-[18px] accent-[#1B5E8C] cursor-pointer rounded"
               />
-              <span className="text-sm text-gray-700 leading-snug">
+              <span className="text-[13px] text-gray-700 leading-relaxed">
                 {t.checkbox2}
               </span>
             </label>
@@ -280,30 +280,32 @@ export function ConsentModal({
           )}
 
           {/* Actions */}
-          <div className="flex flex-col gap-2">
+          <div className="space-y-3">
             <button
               type="button"
               onClick={onAccept}
               disabled={!canAccept || isLoading}
-              className="w-full bg-[#1B5E8C] hover:bg-[#154A6E] text-white font-medium py-3 px-8 rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#1B5E8C] hover:bg-[#154A6E] text-white font-semibold py-3.5 px-8 rounded-xl transition-all duration-200 disabled:opacity-35 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-[15px] shadow-sm hover:shadow-md"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Registrando...
                 </>
               ) : (
                 t.acceptButton
               )}
             </button>
-            <a
-              href={CONSENT_CONFIG.SUPPORT_WHATSAPP}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-center text-sm text-gray-500 hover:text-[#1B5E8C] transition-colors py-1"
-            >
-              {t.supportLink}
-            </a>
+            <p className="text-center">
+              <a
+                href={CONSENT_CONFIG.SUPPORT_WHATSAPP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-[#1B5E8C] transition-colors"
+              >
+                {t.supportLink}
+              </a>
+            </p>
           </div>
         </div>
       </DialogContent>
