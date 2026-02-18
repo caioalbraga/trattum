@@ -227,24 +227,6 @@ export function ConsentModal({
                 </div>
               </section>
 
-              {/* Clinical Warning */}
-              <section className="bg-amber-50/80 border border-amber-200/60 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-bold text-amber-900 mb-1.5">
-                      {t.section4Title}
-                    </h3>
-                    <p className="text-[13px] text-amber-800/90 mb-2 leading-relaxed">
-                      {t.section4Body}
-                    </p>
-                    <p className="text-[13px] font-bold text-red-600">
-                      {t.section4Warning}
-                    </p>
-                  </div>
-                </div>
-              </section>
-
               <div className="h-2" />
             </div>
           </div>
