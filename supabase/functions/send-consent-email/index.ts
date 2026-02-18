@@ -10,6 +10,7 @@ interface ConsentEmailRequest {
   user_id: string;
   user_name: string;
   user_email: string;
+  user_cpf?: string;
   consent_timestamp: string;
   ip_address: string;
   terms_version: string;
@@ -31,101 +32,167 @@ function formatTime(isoString: string): string {
   return date.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     timeZone: "America/Sao_Paulo",
   });
 }
 
-function buildEmailHtml(data: ConsentEmailRequest): string {
+function maskCPF(cpf: string): string {
+  // Remove non-digits
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return "***.***.***-**";
+  // Show only middle digits: ***.456.789-**
+  return `***.${digits.substring(3, 6)}.${digits.substring(6, 9)}-**`;
+}
+
+function buildTCLEEmailHtml(data: ConsentEmailRequest): string {
   const formattedDate = formatDate(data.consent_timestamp);
   const formattedTime = formatTime(data.consent_timestamp);
-  const shortHash = data.document_hash.substring(0, 16) + "...";
+  const shortHash = data.document_hash.substring(0, 16);
+  const maskedCpf = data.user_cpf ? maskCPF(data.user_cpf) : "Não informado";
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmação de Consentimento - Trattum</title>
+<title>TCLE — Termo de Consentimento Livre e Esclarecido</title>
 </head>
-<body style="margin:0;padding:0;background-color:#FFFDF9;font-family:Arial,Helvetica,sans-serif;color:#333333;">
-<div style="display:none;max-height:0;overflow:hidden;">Seu consentimento foi registrado com sucesso na Trattum</div>
+<body style="margin:0;padding:0;background-color:#F5F5F0;font-family:'Georgia','Times New Roman',serif;color:#1A1A1A;">
+<div style="display:none;max-height:0;overflow:hidden;">Cópia do seu Termo de Consentimento Livre e Esclarecido — Trattum</div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFDF9;">
-<tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F5F0;">
+<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background-color:#FFFFFF;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
 
 <!-- Header -->
-<tr><td align="center" style="padding:24px 0 16px;">
-<h1 style="margin:0;font-size:22px;font-weight:700;color:#333;letter-spacing:2px;">TRATTUM</h1>
-</td></tr>
-<tr><td><hr style="border:none;border-top:2px solid #1B5E8C;margin:0 0 24px;"></td></tr>
-
-<!-- Greeting -->
-<tr><td style="padding:0 24px;">
-<p style="font-size:16px;color:#333;margin:0 0 8px;">Olá, <strong>${data.user_name}</strong></p>
-<p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 24px;">
-Este e-mail confirma que você aceitou os Termos de Uso e a Política de Privacidade da plataforma Trattum em <strong>${formattedDate}</strong> às <strong>${formattedTime}</strong> (horário de Brasília).
-</p>
+<tr><td style="padding:40px 48px 24px;border-bottom:2px solid #1B5E8C;">
+  <h1 style="margin:0 0 4px;font-size:13px;font-weight:400;color:#1B5E8C;letter-spacing:3px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Trattum Saúde Digital</h1>
+  <h2 style="margin:0;font-size:22px;font-weight:700;color:#1A1A1A;line-height:1.3;">Termo de Consentimento Livre e Esclarecido</h2>
+  <p style="margin:8px 0 0;font-size:12px;color:#888;font-family:Arial,Helvetica,sans-serif;">TCLE • Versão ${data.terms_version} • Documento gerado automaticamente</p>
 </td></tr>
 
-<!-- Summary Card -->
-<tr><td style="padding:0 24px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F7F5;border:1px solid #E8E8E5;border-radius:12px;">
-<tr><td style="padding:20px;">
-<p style="margin:0 0 12px;font-size:14px;color:#333;">
-📋 <strong>Documento aceito:</strong> Termos de Uso, Política de Privacidade e TCLE
-</p>
-<p style="margin:0 0 12px;font-size:14px;color:#333;">
-📅 <strong>Data e hora:</strong> ${formattedDate} às ${formattedTime}
-</p>
-<p style="margin:0 0 12px;font-size:14px;color:#333;">
-🔢 <strong>Versão do documento:</strong> ${data.terms_version}
-</p>
-<p style="margin:0 0 12px;font-size:14px;color:#333;">
-🌐 <strong>IP registrado:</strong> ${data.ip_address}
-</p>
-<p style="margin:0;font-size:14px;color:#333;">
-🔒 <strong>Hash de integridade:</strong> <code style="background:#E8E8E5;padding:2px 6px;border-radius:4px;font-size:12px;">${shortHash}</code>
-</p>
+<!-- Identification -->
+<tr><td style="padding:32px 48px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E5E0;border-radius:8px;overflow:hidden;">
+    <tr><td style="padding:16px 20px;background-color:#FAFAF8;border-bottom:1px solid #E5E5E0;">
+      <p style="margin:0;font-size:11px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Identificação do Titular</p>
+    </td></tr>
+    <tr><td style="padding:20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:0 0 12px;width:50%;vertical-align:top;">
+            <p style="margin:0 0 2px;font-size:11px;color:#999;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;">Nome</p>
+            <p style="margin:0;font-size:15px;color:#1A1A1A;font-weight:600;">${data.user_name}</p>
+          </td>
+          <td style="padding:0 0 12px;width:50%;vertical-align:top;">
+            <p style="margin:0 0 2px;font-size:11px;color:#999;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;">CPF</p>
+            <p style="margin:0;font-size:15px;color:#1A1A1A;font-weight:600;font-family:'Courier New',monospace;">${maskedCpf}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0;width:50%;vertical-align:top;">
+            <p style="margin:0 0 2px;font-size:11px;color:#999;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;">E-mail</p>
+            <p style="margin:0;font-size:14px;color:#1A1A1A;">${data.user_email}</p>
+          </td>
+          <td style="padding:0;width:50%;vertical-align:top;">
+            <p style="margin:0 0 2px;font-size:11px;color:#999;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;">Data do Aceite</p>
+            <p style="margin:0;font-size:14px;color:#1A1A1A;">${formattedDate}</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
 </td></tr>
-</table>
+
+<!-- Declaration -->
+<tr><td style="padding:28px 48px 0;">
+  <h3 style="margin:0 0 12px;font-size:15px;color:#1A1A1A;font-weight:700;">Declaração de Consentimento</h3>
+  <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">
+    Eu, <strong>${data.user_name}</strong>, portador(a) do CPF <strong>${maskedCpf}</strong>, declaro que em <strong>${formattedDate}</strong> às <strong>${formattedTime}</strong> (horário de Brasília), li integralmente e aceito os seguintes documentos da plataforma Trattum:
+  </p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td style="padding:8px 0 8px 16px;font-size:14px;color:#333;border-left:3px solid #1B5E8C;">
+      ✓ &nbsp;Termos de Uso da Plataforma Trattum
+    </td></tr>
+    <tr><td style="padding:8px 0 8px 16px;font-size:14px;color:#333;border-left:3px solid #1B5E8C;">
+      ✓ &nbsp;Política de Privacidade e Proteção de Dados (LGPD)
+    </td></tr>
+    <tr><td style="padding:8px 0 8px 16px;font-size:14px;color:#333;border-left:3px solid #1B5E8C;">
+      ✓ &nbsp;Termo de Consentimento Livre e Esclarecido (TCLE)
+    </td></tr>
+  </table>
+
+  <p style="margin:16px 0 0;font-size:14px;color:#333;line-height:1.7;">
+    Declaro ainda ter mais de 18 (dezoito) anos de idade e que todas as informações biométricas e clínicas fornecidas são verídicas e atualizadas.
+  </p>
+</td></tr>
+
+<!-- Consent Details -->
+<tr><td style="padding:28px 48px 0;">
+  <h3 style="margin:0 0 12px;font-size:15px;color:#1A1A1A;font-weight:700;">Dados Coletados para Tratamento</h3>
+  <p style="margin:0 0 8px;font-size:13px;color:#555;line-height:1.6;">
+    Autorizo a coleta e o tratamento dos seguintes dados pessoais, exclusivamente para fins de avaliação clínica personalizada e acompanhamento de saúde:
+  </p>
+  <ul style="margin:0 0 0 0;padding:0 0 0 20px;font-size:13px;color:#555;line-height:2;">
+    <li>Dados pessoais de identificação (nome, CPF, e-mail, telefone)</li>
+    <li>Dados sensíveis de saúde (peso, altura, histórico clínico, sintomas, hábitos)</li>
+    <li>Dados técnicos para segurança (IP, timestamps, logs de navegação)</li>
+  </ul>
 </td></tr>
 
 <!-- Rights -->
-<tr><td style="padding:24px;">
-<h3 style="margin:0 0 8px;font-size:15px;color:#333;">Seus Direitos</h3>
-<p style="font-size:13px;color:#555;line-height:1.6;margin:0 0 4px;">
-Você pode revogar este consentimento a qualquer momento.
-</p>
-<p style="font-size:13px;color:#555;line-height:1.6;margin:0;">
-Para exercer seus direitos, entre em contato: <a href="mailto:dpo@trattum.com.br" style="color:#1B5E8C;">dpo@trattum.com.br</a>
-</p>
+<tr><td style="padding:28px 48px 0;">
+  <h3 style="margin:0 0 12px;font-size:15px;color:#1A1A1A;font-weight:700;">Seus Direitos como Titular</h3>
+  <p style="margin:0;font-size:13px;color:#555;line-height:1.7;">
+    Conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018), você pode a qualquer momento: acessar, corrigir, portar ou solicitar a exclusão dos seus dados. Você também pode revogar este consentimento sem prejuízo da legalidade do tratamento já realizado.
+  </p>
+  <p style="margin:12px 0 0;font-size:13px;color:#555;line-height:1.7;">
+    Para exercer seus direitos, entre em contato com nosso DPO: <a href="mailto:dpo@trattum.com.br" style="color:#1B5E8C;text-decoration:none;font-weight:600;">dpo@trattum.com.br</a>
+  </p>
 </td></tr>
 
-<!-- Clinical Warning -->
-<tr><td style="padding:0 24px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #F59E0B;border-radius:12px;background-color:#FFFBEB;">
-<tr><td style="padding:16px;">
-<p style="margin:0;font-size:13px;color:#92400E;line-height:1.5;">
-⚠️ As indicações de tratamento estão sujeitas a revisão médica.<br>
-<strong>NÃO SE AUTOMEDIQUE.</strong> Em caso de emergência, ligue para o SAMU: 192.
-</p>
-</td></tr>
-</table>
+<!-- Audit Trail -->
+<tr><td style="padding:28px 48px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E5E0;border-radius:8px;overflow:hidden;">
+    <tr><td style="padding:14px 20px;background-color:#FAFAF8;border-bottom:1px solid #E5E5E0;">
+      <p style="margin:0;font-size:11px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Registro de Auditoria</p>
+    </td></tr>
+    <tr><td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#555;">
+        <tr>
+          <td style="padding:4px 0;width:40%;color:#999;">Versão do documento</td>
+          <td style="padding:4px 0;font-weight:600;">${data.terms_version}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#999;">Timestamp UTC</td>
+          <td style="padding:4px 0;font-family:'Courier New',monospace;font-size:11px;">${data.consent_timestamp}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#999;">IP registrado</td>
+          <td style="padding:4px 0;font-family:'Courier New',monospace;font-size:11px;">${data.ip_address}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#999;">Hash SHA-256</td>
+          <td style="padding:4px 0;font-family:'Courier New',monospace;font-size:11px;">${shortHash}…</td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
 </td></tr>
 
-<!-- Footer -->
-<tr><td style="padding:24px;text-align:center;border-top:1px solid #E8E8E5;margin-top:24px;">
-<p style="font-size:11px;color:#999;line-height:1.5;margin:0 0 8px;">
-Este é um documento gerado automaticamente para sua segurança jurídica.<br>
-O aceite eletrônico possui validade conforme MP 2.200-2/2001.
-</p>
-<p style="font-size:11px;color:#999;margin:0 0 8px;">
-<a href="https://trattum.com.br/termos" style="color:#1B5E8C;">Ver termos completos</a>
-</p>
-<p style="font-size:10px;color:#BBB;margin:0;">
-Trattum Saúde Digital · Fortaleza, CE
-</p>
+<!-- Legal Footer -->
+<tr><td style="padding:32px 48px;border-top:1px solid #E5E5E0;margin-top:32px;">
+  <p style="margin:0 0 8px;font-size:11px;color:#999;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">
+    Este documento eletrônico possui validade jurídica conforme a Medida Provisória nº 2.200-2/2001, que equipara documentos eletrônicos assinados digitalmente a documentos originais. Os dados de saúde serão armazenados pelo período mínimo de 20 anos, conforme Resolução CFM nº 1.821/2007.
+  </p>
+  <p style="margin:0 0 12px;font-size:11px;color:#999;font-family:Arial,Helvetica,sans-serif;">
+    <a href="https://trattum.com.br/termos" style="color:#1B5E8C;text-decoration:none;">Ver termos completos</a>
+  </p>
+  <hr style="border:none;border-top:1px solid #E8E8E5;margin:16px 0;">
+  <p style="margin:0;font-size:10px;color:#BBB;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Trattum Saúde Digital · Fortaleza, CE · CNPJ: XX.XXX.XXX/0001-XX
+  </p>
 </td></tr>
 
 </table>
@@ -141,7 +208,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -158,7 +224,6 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify user
     const token = authHeader.replace("Bearer ", "");
     const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
     if (claimsError || !claims?.claims) {
@@ -170,11 +235,9 @@ Deno.serve(async (req) => {
 
     const authenticatedUserId = claims.claims.sub;
 
-    // Parse body
     const body: ConsentEmailRequest = await req.json();
-    const { user_id, user_name, user_email, consent_timestamp, ip_address, terms_version, document_hash } = body;
+    const { user_id, user_name, user_email, user_cpf, consent_timestamp, ip_address, terms_version, document_hash } = body;
 
-    // Validate required fields
     if (!user_id || !user_email || !consent_timestamp || !ip_address || !terms_version || !document_hash) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -182,7 +245,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate user_id matches authenticated user
     if (user_id !== authenticatedUserId) {
       return new Response(
         JSON.stringify({ error: "Forbidden: user_id mismatch" }),
@@ -203,7 +265,6 @@ Deno.serve(async (req) => {
 
     let consentId = existingLog?.id;
 
-    // Insert consent log if not exists
     if (!existingLog) {
       const { data: newLog, error: insertError } = await supabase
         .from("consent_logs")
@@ -240,12 +301,12 @@ Deno.serve(async (req) => {
       })
       .eq("user_id", user_id);
 
-    // Send email via Resend
+    // Send TCLE email via Resend
     let emailWarning: string | undefined;
 
     if (resendApiKey && !(existingLog?.email_sent)) {
       try {
-        const emailHtml = buildEmailHtml(body);
+        const emailHtml = buildTCLEEmailHtml(body);
 
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -256,7 +317,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Trattum <noreply@trattum.com.br>",
             to: [user_email],
-            subject: "Trattum — Cópia do seu Termo de Consentimento",
+            subject: "Trattum — Cópia do seu Termo de Consentimento (TCLE)",
             html: emailHtml,
           }),
         });
@@ -264,7 +325,6 @@ Deno.serve(async (req) => {
         const resendData = await resendRes.json();
 
         if (resendRes.ok) {
-          // Update consent log with email status
           await supabase
             .from("consent_logs")
             .update({
