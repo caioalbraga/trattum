@@ -177,11 +177,11 @@ export function useConsent() {
         })
         .eq("user_id", user.id);
 
-      // Send confirmation email (non-blocking)
+      // Send TCLE confirmation email (non-blocking)
       try {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("nome")
+          .select("nome, cpf")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -190,6 +190,7 @@ export function useConsent() {
             user_id: user.id,
             user_name: profile?.nome || user.email,
             user_email: user.email,
+            user_cpf: profile?.cpf || undefined,
             consent_timestamp: consentTimestamp,
             ip_address: ip,
             terms_version: CONSENT_CONFIG.CURRENT_VERSION,
