@@ -1,43 +1,20 @@
 import { Header } from "@/components/layout/Header";
 import { QuizContainer } from "@/components/quiz/QuizContainer";
-import { ConsentModal } from "@/components/consent/ConsentModal";
+import { ConsentInlineStep } from "@/components/consent/ConsentInlineStep";
 import { useConsent } from "@/hooks/useConsent";
 
 export default function Anamnese() {
   const {
-    showModal,
     isLoading,
     isChecking,
     error,
-    scrollCompleted,
-    termsCheckbox,
-    ageCheckbox,
-    canAccept,
     hasValidConsent,
-    setTermsCheckbox,
-    setAgeCheckbox,
-    onScrollComplete,
     acceptConsent,
   } = useConsent();
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
-      {/* Consent gate modal */}
-      <ConsentModal
-        open={showModal}
-        scrollCompleted={scrollCompleted}
-        termsCheckbox={termsCheckbox}
-        ageCheckbox={ageCheckbox}
-        canAccept={canAccept}
-        isLoading={isLoading}
-        error={error}
-        onScrollComplete={onScrollComplete}
-        onTermsChange={setTermsCheckbox}
-        onAgeChange={setAgeCheckbox}
-        onAccept={acceptConsent}
-      />
 
       <main className="container py-8 pb-24">
         <div className="text-center mb-8">
@@ -49,8 +26,19 @@ export default function Anamnese() {
           </p>
         </div>
 
-        {/* Only show quiz when consent is valid or still checking */}
-        {(hasValidConsent || isChecking) && <QuizContainer />}
+        {isChecking ? (
+          <div className="max-w-xl mx-auto text-center py-12">
+            <div className="w-16 h-16 mx-auto rounded-full bg-muted animate-pulse" />
+          </div>
+        ) : hasValidConsent ? (
+          <QuizContainer />
+        ) : (
+          <ConsentInlineStep
+            isLoading={isLoading}
+            error={error}
+            onAccept={acceptConsent}
+          />
+        )}
       </main>
     </div>
   );
