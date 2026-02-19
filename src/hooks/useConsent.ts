@@ -5,19 +5,11 @@ import { CONSENT_TEXTS } from "@/lib/consent.texts";
 import { toast } from "sonner";
 
 interface UseConsentReturn {
-  showModal: boolean;
   isLoading: boolean;
   isChecking: boolean;
   error: string | null;
-  scrollCompleted: boolean;
-  termsCheckbox: boolean;
-  ageCheckbox: boolean;
   hasValidConsent: boolean;
-  setTermsCheckbox: (v: boolean) => void;
-  setAgeCheckbox: (v: boolean) => void;
-  onScrollComplete: () => void;
   acceptConsent: () => Promise<void>;
-  canAccept: boolean;
 }
 
 async function generateHash(text: string): Promise<string> {
@@ -39,16 +31,10 @@ async function fetchIP(): Promise<string> {
 }
 
 export function useConsent() {
-  const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [scrollCompleted, setScrollCompleted] = useState(false);
-  const [termsCheckbox, setTermsCheckbox] = useState(false);
-  const [ageCheckbox, setAgeCheckbox] = useState(false);
   const [hasValidConsent, setHasValidConsent] = useState(false);
-
-  const canAccept = termsCheckbox && ageCheckbox;
 
   // Check if user already has valid consent
   useEffect(() => {
@@ -57,8 +43,11 @@ export function useConsent() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          // Guest users — show modal, they'll need to consent
-          setShowModal(true);
+          // Check session storage for guest consent
+          const pending = sessionStorage.getItem("pendingConsent");
+          if (pending === "true") {
+            setHasValidConsent(true);
+          }
           setIsChecking(false);
           return;
         }
@@ -74,12 +63,9 @@ export function useConsent() {
           profile?.terms_version_accepted === CONSENT_CONFIG.CURRENT_VERSION
         ) {
           setHasValidConsent(true);
-          setShowModal(false);
-        } else {
-          setShowModal(true);
         }
       } catch {
-        setShowModal(true);
+        // If check fails, show consent
       } finally {
         setIsChecking(false);
       }
@@ -88,28 +74,21 @@ export function useConsent() {
     checkConsent();
   }, []);
 
-  const onScrollComplete = useCallback(() => {
-    setScrollCompleted(true);
-  }, []);
-
   const acceptConsent = useCallback(async () => {
-    if (!canAccept) return;
     setIsLoading(true);
     setError(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // For guest users, store consent in session and proceed
+        // Guest: store in session
         sessionStorage.setItem("pendingConsent", "true");
         sessionStorage.setItem("pendingConsentVersion", CONSENT_CONFIG.CURRENT_VERSION);
         setHasValidConsent(true);
-        setShowModal(false);
         setIsLoading(false);
         return;
       }
 
-      // Generate document hash from terms content
       const termsText = CONSENT_TEXTS.terms.sections
         .map((s) => `${s.number}. ${s.title}\n${s.content}`)
         .join("\n\n");
@@ -120,7 +99,7 @@ export function useConsent() {
 
       const consentTimestamp = new Date().toISOString();
 
-      // Check idempotency — already accepted this version?
+      // Idempotency check
       const { data: existing } = await supabase
         .from("consent_logs")
         .select("id")
@@ -130,7 +109,6 @@ export function useConsent() {
         .maybeSingle();
 
       if (existing) {
-        // Already consented, just update profile and proceed
         await supabase
           .from("profiles")
           .update({
@@ -141,7 +119,6 @@ export function useConsent() {
           .eq("user_id", user.id);
 
         setHasValidConsent(true);
-        setShowModal(false);
         setIsLoading(false);
         return;
       }
@@ -158,7 +135,7 @@ export function useConsent() {
           user_agent: navigator.userAgent,
           checkboxes_accepted: {
             terms_accepted: true,
-            age_verification: true,
+            lgpd_consent: true,
           },
           scroll_completed: true,
         });
@@ -177,7 +154,7 @@ export function useConsent() {
         })
         .eq("user_id", user.id);
 
-      // Send TCLE confirmation email (non-blocking)
+      // Send TCLE email (non-blocking)
       try {
         const { data: profile } = await supabase
           .from("profiles")
@@ -204,7 +181,6 @@ export function useConsent() {
       }
 
       setHasValidConsent(true);
-      setShowModal(false);
     } catch (err) {
       const message =
         err instanceof Error
@@ -215,21 +191,13 @@ export function useConsent() {
     } finally {
       setIsLoading(false);
     }
-  }, [canAccept]);
+  }, []);
 
   return {
-    showModal,
     isLoading,
     isChecking,
     error,
-    scrollCompleted,
-    termsCheckbox,
-    ageCheckbox,
     hasValidConsent,
-    setTermsCheckbox,
-    setAgeCheckbox,
-    onScrollComplete,
     acceptConsent,
-    canAccept,
   } satisfies UseConsentReturn;
 }
