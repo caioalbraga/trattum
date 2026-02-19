@@ -102,20 +102,36 @@ export default function AdminConfiguracoes() {
     
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('configuracoes_produtos')
-        .update({
-          preco: editingProduct.preco,
-          preco_original: editingProduct.preco_original,
-          ativo: editingProduct.ativo,
-        })
-        .eq('id', editingProduct.id);
+      if (editingProduct.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('configuracoes_produtos')
+          .update({
+            nome: editingProduct.nome,
+            preco: editingProduct.preco,
+            preco_original: editingProduct.preco_original,
+            ativo: editingProduct.ativo,
+          })
+          .eq('id', editingProduct.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('configuracoes_produtos')
+          .insert({
+            nome: editingProduct.nome,
+            preco: editingProduct.preco,
+            preco_original: editingProduct.preco_original,
+            ativo: editingProduct.ativo,
+          });
+
+        if (error) throw error;
+      }
 
       toast({
-        title: "Produto atualizado",
-        description: `${editingProduct.nome} foi atualizado com sucesso.`,
+        title: "Produto salvo",
+        description: `${editingProduct.nome} foi salvo com sucesso.`,
       });
 
       setProductDialogOpen(false);
@@ -257,14 +273,33 @@ export default function AdminConfiguracoes() {
 
         {/* Products */}
         <Card>
-          <CardHeader>
-            <CardTitle className="font-serif flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Produtos e Preços
-            </CardTitle>
-            <CardDescription>
-              Altere preços sem necessidade de redeploy
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="font-serif flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Produtos do Pacote
+              </CardTitle>
+              <CardDescription>
+                Gerencie os produtos incluídos no pacote Trattum
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingProduct({
+                  id: '',
+                  nome: '',
+                  preco: 0,
+                  preco_original: null,
+                  ativo: true,
+                  updated_at: new Date().toISOString(),
+                });
+                setProductDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Produto
+            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -385,14 +420,21 @@ export default function AdminConfiguracoes() {
         <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Editar Produto</DialogTitle>
+              <DialogTitle>{editingProduct?.id ? 'Editar' : 'Novo'} Produto</DialogTitle>
             </DialogHeader>
             
             {editingProduct && (
               <div className="space-y-4">
                 <div>
                   <Label>Nome do Produto</Label>
-                  <Input value={editingProduct.nome} disabled />
+                  <Input 
+                    value={editingProduct.nome}
+                    onChange={(e) => setEditingProduct({
+                      ...editingProduct,
+                      nome: e.target.value
+                    })}
+                    placeholder="Ex: Semaglutida 2,4mg"
+                  />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">

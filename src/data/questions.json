@@ -429,7 +429,7 @@
     "type": "single",
     "options": [
       { "label": "Sim", "value": "sim", "next": "etapa_41" },
-      { "label": "Não", "value": "nao", "next": "etapa_42" }
+      { "label": "Não", "value": "nao", "next": "etapa_43" }
     ]
   },
   {
@@ -438,36 +438,17 @@
     "type": "text",
     "question": "Conte-nos mais detalhes",
     "placeholder": "CAMPO DE TEXTO",
-    "next": "etapa_42"
-  },
-  {
-    "id": "etapa_42",
-    "step": 41,
-    "question": "Qual plano te atende melhor?",
-    "type": "single",
-    "options": [
-      { "label": "Orais (A partir R$ 380/mês)", "value": "oral", "next": "etapa_43" },
-      { "label": "Injetáveis (A partir R$ 1400/mês)", "value": "injetavel", "next": "etapa_43" }
-    ]
+    "next": "etapa_43"
   },
   {
     "id": "etapa_43",
-    "step": 42,
+    "step": 41,
     "question": "Como se sente sobre injetáveis?",
+    "description": "Nosso pacote de tratamento pode incluir medicamentos injetáveis.",
     "type": "single",
     "options": [
-      { "label": "Não me importo", "value": "aceita", "next": "etapa_44" },
-      { "label": "Sem agulhas", "value": "recusa", "next": "stop_page" }
-    ]
-  },
-  {
-    "id": "etapa_44",
-    "step": 43,
-    "question": "Preferência de tratamento?",
-    "type": "single",
-    "options": [
-      { "label": "Wegovy (1x p/ semana)", "value": "wegovy", "next": "final_results" },
-      { "label": "Saxenda (Diário)", "value": "saxenda", "next": "final_results" }
+      { "label": "Não me importo", "value": "aceita", "next": "final_results" },
+      { "label": "Sem agulhas, por favor", "value": "recusa", "next": "stop_page" }
     ]
   },
   {

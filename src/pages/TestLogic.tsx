@@ -244,17 +244,14 @@ export default function TestLogic() {
 
                 {/* Treatment Details */}
                 <div className="p-4 border border-border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Tratamento Recomendado</p>
-                  <p className="font-semibold text-lg">{simulation.treatmentDetails.name}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Pacote Recomendado</p>
+                  <p className="font-semibold text-lg">{simulation.packageDetails.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {simulation.treatmentDetails.description}
+                    {simulation.packageDetails.description}
                   </p>
                   <div className="mt-3 flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-primary">
-                      R$ {simulation.treatmentDetails.price}
-                    </span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      R$ {simulation.treatmentDetails.originalPrice}
+                      R$ {simulation.packageDetails.price}
                     </span>
                   </div>
                 </div>
