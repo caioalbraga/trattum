@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { MetricCard } from '@/components/admin/dashboard/MetricCard';
 import { EvaluationsTable, type Evaluation } from '@/components/admin/dashboard/EvaluationsTable';
-import { EvaluationSlideOver } from '@/components/admin/dashboard/EvaluationSlideOver';
+import { ClinicalDossier } from '@/components/admin/dashboard/ClinicalDossier';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
     setSlideOverOpen(true);
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: string, _note?: string) => {
     try {
       const { error } = await supabase
         .from('avaliacoes')
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
         </section>
 
         {/* Slide-over for Evaluation Details */}
-        <EvaluationSlideOver
+        <ClinicalDossier
           evaluation={selectedEvaluation}
           open={slideOverOpen}
           onClose={() => setSlideOverOpen(false)}
