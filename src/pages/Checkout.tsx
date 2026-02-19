@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import { encryptProfile, encryptEndereco } from "@/lib/crypto-client";
+import { useConsent } from "@/hooks/useConsent";
+import { ConsentInlineStep } from "@/components/consent/ConsentInlineStep";
 
 type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
@@ -51,6 +53,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { submitAssessment } = useSubmitAssessment();
+  const { hasValidConsent, isLoading: consentLoading, isChecking: consentChecking, error: consentError, acceptConsent } = useConsent();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -535,10 +538,9 @@ export default function Checkout() {
                         onCheckedChange={(checked) => handleChange('termos', checked as boolean)}
                       />
                       <Label htmlFor="termos" className="text-sm leading-relaxed cursor-pointer">
-                        Eu concordo com{" "}
-                        <a href="#" className="text-primary hover:underline">Termos & Condições</a>
-                        {" "}e com a{" "}
-                        <a href="#" className="text-primary hover:underline">Política de Privacidade</a>
+                        Li e concordo com os{" "}
+                        <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Termos de Uso e Política de Privacidade</a>
+                        {" "}e autorizo o uso dos meus dados para fins de acompanhamento de saúde, conforme a LGPD.
                       </Label>
                     </div>
 
@@ -562,7 +564,21 @@ export default function Checkout() {
                 </>
               )}
 
-              {currentStep === 'entrega' && (
+              {currentStep === 'entrega' && !hasValidConsent && !consentChecking && (
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold mb-2">Consentimento necessário</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Antes de continuar, precisamos do seu consentimento para uso dos dados.
+                  </p>
+                  <ConsentInlineStep
+                    isLoading={consentLoading}
+                    error={consentError}
+                    onAccept={acceptConsent}
+                  />
+                </div>
+              )}
+
+              {currentStep === 'entrega' && (hasValidConsent || consentChecking) && (
                 <>
                   <h2 className="text-xl font-semibold mb-6">2. Endereço de entrega</h2>
                   

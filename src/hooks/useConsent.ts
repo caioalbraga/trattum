@@ -162,7 +162,7 @@ export function useConsent() {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        await supabase.functions.invoke("send-consent-email", {
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke("send-consent-email", {
           body: {
             user_id: user.id,
             user_name: profile?.nome || user.email,
@@ -174,7 +174,18 @@ export function useConsent() {
             document_hash: documentHash,
           },
         });
-      } catch {
+
+        if (emailError) {
+          console.error("[useConsent] Edge function error:", emailError);
+          toast.info("Seu aceite foi registrado. O e-mail de confirmação pode demorar alguns minutos.");
+        } else {
+          console.log("[useConsent] Email result:", emailResult);
+          if (emailResult?.email_warning) {
+            toast.info(emailResult.email_warning);
+          }
+        }
+      } catch (emailErr) {
+        console.error("[useConsent] Email send failed:", emailErr);
         toast.info(
           "Seu aceite foi registrado. O e-mail de confirmação pode demorar alguns minutos."
         );
