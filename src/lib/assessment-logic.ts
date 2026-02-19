@@ -86,13 +86,14 @@ export function determineTier(bmi: number, hasComorbidities: boolean): TierInfo 
 // SINGLE PACKAGE DETAILS
 // ============================================
 
-export function getPackageDetails(): TreatmentRecommendation {
+/** @deprecated Use usePackagePrice hook instead for dynamic DB pricing */
+export function getPackageDetails(price = 0): TreatmentRecommendation {
   return {
     type: 'injectable',
     name: 'Pacote Trattum',
     description: 'Pacote completo de tratamento com todos os medicamentos e acompanhamento necessários para o seu resultado.',
-    price: 3000,
-    originalPrice: 3000,
+    price,
+    originalPrice: price,
     features: [
       'Produto 1',
       'Produto 2',
