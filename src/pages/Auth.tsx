@@ -49,35 +49,45 @@ export default function Auth() {
 
   // Check if user is already logged in
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Check if MFA is required for this device
-        const mfaResult = await checkMFARequired();
+    let isMounted = true;
+
+    const handleMFACheck = async (session: any) => {
+      try {
+        const mfaResult = await Promise.race([
+          checkMFARequired(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
+        ]);
+        if (!isMounted) return;
         if (mfaResult?.mfa_required) {
           setPendingUserEmail(session.user.email || "");
           setShowMFADialog(true);
         } else {
           navigate('/dashboard');
         }
+      } catch {
+        if (isMounted) navigate('/dashboard');
+      }
+    };
+
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && isMounted) {
+        await handleMFACheck(session);
       }
     };
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session && !showMFADialog) {
-        // Check if MFA is required
-        const mfaResult = await checkMFARequired();
-        if (mfaResult?.mfa_required) {
-          setPendingUserEmail(session.user.email || "");
-          setShowMFADialog(true);
-        } else {
-          navigate('/dashboard');
-        }
+        // Use setTimeout to avoid deadlock in onAuthStateChange
+        setTimeout(() => handleMFACheck(session), 0);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, showMFADialog]);
 
   const handleLogin = async (e: React.FormEvent) => {
