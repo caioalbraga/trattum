@@ -263,6 +263,11 @@ export default function Checkout() {
         await supabase.from('profiles').update(encryptedProfile).eq('user_id', newUser.id);
       }
 
+      // Register consent since user accepted terms checkbox during signup
+      if (formData.termos) {
+        await acceptConsent();
+      }
+
       toast.success('Conta criada com sucesso!');
       setCurrentStep('entrega');
     } catch (err) {

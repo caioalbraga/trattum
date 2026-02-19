@@ -20,7 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { User, MapPin, CreditCard, AlertTriangle, Camera, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, MapPin, CreditCard, AlertTriangle, Camera, Lock, Eye, EyeOff, FileText, Download, ExternalLink } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
@@ -38,6 +38,16 @@ import {
 import { ContaSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
 import { MFASettings } from '@/components/auth/MFASettings';
+import { CONSENT_CONFIG } from '@/lib/consent.config';
+
+interface ConsentLog {
+  id: string;
+  consent_timestamp: string;
+  terms_version: string;
+  document_hash: string;
+  ip_address: string;
+  email_sent: boolean;
+}
 
 interface Pedido {
   id: string;
@@ -52,6 +62,7 @@ export default function DashboardConta() {
   const [pageLoading, setPageLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [consentLogs, setConsentLogs] = useState<ConsentLog[]>([]);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   
   // Password change state
@@ -132,6 +143,16 @@ export default function DashboardConta() {
         .order('created_at', { ascending: false });
 
       setPedidos(pedidosData || []);
+
+      // Fetch consent logs
+      const { data: consentData } = await supabase
+        .from('consent_logs')
+        .select('id, consent_timestamp, terms_version, document_hash, ip_address, email_sent')
+        .eq('user_id', user.id)
+        .is('revoked_at', null)
+        .order('consent_timestamp', { ascending: false });
+
+      setConsentLogs(consentData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -295,7 +316,7 @@ export default function DashboardConta() {
           </div>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="dados" className="py-3">
               <User className="w-4 h-4 mr-2" />
               Dados Pessoais
@@ -303,6 +324,10 @@ export default function DashboardConta() {
             <TabsTrigger value="endereco" className="py-3">
               <MapPin className="w-4 h-4 mr-2" />
               Endereço
+            </TabsTrigger>
+            <TabsTrigger value="documentos" className="py-3">
+              <FileText className="w-4 h-4 mr-2" />
+              Documentos
             </TabsTrigger>
             <TabsTrigger value="seguranca" className="py-3">
               <Lock className="w-4 h-4 mr-2" />
@@ -475,6 +500,68 @@ export default function DashboardConta() {
                     {loading ? 'Salvando...' : 'Salvar Endereço'}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Documentos */}
+          <TabsContent value="documentos" className="mt-6">
+            <Card className="card-elevated">
+              <CardHeader>
+                <CardTitle className="font-serif text-xl">Meus Documentos</CardTitle>
+                <CardDescription>
+                  Termos aceitos e documentos do seu tratamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {consentLogs.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Nenhum documento disponível ainda.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {consentLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border/40"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="size-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              Termo de Consentimento (TCLE)
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Versão {log.terms_version} — Aceito em{' '}
+                              {new Date(log.consent_timestamp).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Hash: {log.document_hash.slice(0, 16)}...
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(CONSENT_CONFIG.TERMS_ROUTE, '_blank')}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Visualizar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
