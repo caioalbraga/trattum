@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock } from 'lucide-react';
+import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock, Shield } from 'lucide-react';
 import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
+import { TCLEModal } from '@/components/consent/TCLEModal';
+import { decryptProfile } from '@/lib/crypto-client';
+
 
 interface Tratamento {
   status: string;
@@ -32,11 +36,32 @@ interface Avaliacao {
   created_at: string;
 }
 
+interface ConsentLog {
+  id: string;
+  consent_timestamp: string;
+  terms_version: string;
+  document_hash: string;
+  ip_address: string;
+  email_sent: boolean;
+  user_agent?: string | null;
+}
+
+interface UserProfile {
+  nome?: string | null;
+  cpf?: string | null;
+  email?: string;
+}
+
 export default function DashboardTratamento() {
   const { user } = useAuth();
   const [tratamento, setTratamento] = useState<Tratamento | null>(null);
   const [pedidoPendente, setPedidoPendente] = useState<Pedido | null>(null);
   const [avaliacaoFeita, setAvaliacaoFeita] = useState<Avaliacao | null>(null);
+  const [consentLogs, setConsentLogs] = useState<ConsentLog[]>([]);
+  const [consentLoading, setConsentLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [selectedConsent, setSelectedConsent] = useState<ConsentLog | null>(null);
+  const [tcleModalOpen, setTcleModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,38 +74,43 @@ export default function DashboardTratamento() {
     if (!user) return;
 
     try {
-      // Fetch tratamento, pedido pendente e avaliação em paralelo
-      const [tratamentoRes, pedidoRes, avaliacaoRes] = await Promise.all([
-        supabase
-          .from('tratamentos')
-          .select('*')
-          .eq('user_id', user.id)
-          .single(),
-        supabase
-          .from('pedidos')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('status', 'pendente')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from('avaliacoes')
-          .select('id, status, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+      const [tratamentoRes, pedidoRes, avaliacaoRes, consentRes, profileRes] = await Promise.all([
+        supabase.from('tratamentos').select('*').eq('user_id', user.id).single(),
+        supabase.from('pedidos').select('*').eq('user_id', user.id).eq('status', 'pendente')
+          .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('avaliacoes').select('id, status, created_at').eq('user_id', user.id)
+          .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('consent_logs')
+          .select('id, consent_timestamp, terms_version, document_hash, ip_address, email_sent, user_agent')
+          .eq('user_id', user.id).is('revoked_at', null)
+          .order('consent_timestamp', { ascending: false }),
+        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
       ]);
 
       setTratamento(tratamentoRes.data);
       setPedidoPendente(pedidoRes.data);
       setAvaliacaoFeita(avaliacaoRes.data);
+      setConsentLogs(consentRes.data || []);
+
+      if (profileRes.data) {
+        const decrypted = await decryptProfile(profileRes.data);
+        setUserProfile({
+          nome: decrypted?.nome || null,
+          cpf: decrypted?.cpf || null,
+          email: user.email,
+        });
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+      setConsentLoading(false);
     }
+  };
+
+  const handleOpenTCLE = (log: ConsentLog) => {
+    setSelectedConsent(log);
+    setTcleModalOpen(true);
   };
 
   const isTratamentoAtivo = tratamento?.status === 'ativo';
@@ -172,22 +202,62 @@ export default function DashboardTratamento() {
                   <FileText className="w-5 h-5" />
                   Documentos
                 </CardTitle>
+                <CardDescription>
+                  Seus comprovantes jurídicos e termos aceitos
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {tratamento?.documento_pdf_url ? (
-                  <Button asChild variant="outline">
-                    <a href={tratamento.documento_pdf_url} target="_blank" rel="noopener noreferrer">
-                      <FileText className="w-4 h-4 mr-2" />
-                      Ver Documento de Tratamento (PDF)
-                    </a>
-                  </Button>
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">
+                {consentLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-20 w-full rounded-lg" />
+                  </div>
+                ) : consentLogs.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4 text-sm">
                     Nenhum documento disponível no momento.
                   </p>
+                ) : (
+                  <div className="space-y-3">
+                    {consentLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border/40 hover:border-border transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="size-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">Termo de Consentimento (TCLE)</p>
+                            <p className="text-xs text-muted-foreground">
+                              Versão {log.terms_version} — {new Date(log.consent_timestamp).toLocaleDateString('pt-BR')}
+                            </p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Shield className="size-3 text-muted-foreground" />
+                              <p className="text-xs font-mono text-muted-foreground">
+                                {log.document_hash.slice(0, 12)}…
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handleOpenTCLE(log)}>
+                          <FileText className="w-4 h-4 mr-1" />
+                          Ver Documento
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
+
+            {/* TCLE Modal */}
+            <TCLEModal
+              open={tcleModalOpen}
+              onClose={() => setTcleModalOpen(false)}
+              consentLog={selectedConsent}
+              userProfile={userProfile}
+              isLoading={consentLoading}
+            />
           </>
         ) : hasPendingPayment || hasCompletedAssessment ? (
           /* Has assessment or pending order - Show continue payment CTA */
