@@ -16,7 +16,6 @@ import { AlertTriangle } from "lucide-react";
 import { ClinicalDisclaimer } from "@/components/consent/ClinicalDisclaimer";
 import {
   determineTier,
-  getPackageDetails,
   calculateWeightProjection,
   calculateBMI,
   getGoalMotivation,
@@ -24,6 +23,7 @@ import {
   calculatePotentialWeightLoss,
   TierInfo,
 } from "@/lib/assessment-logic";
+import { usePackagePrice } from "@/hooks/usePackagePrice";
 
 interface QuizResponses {
   altura_peso?: { altura?: number; peso?: number };
@@ -38,6 +38,7 @@ interface QuizResponses {
 
 export default function Results() {
   const navigate = useNavigate();
+  const { packageInfo, isLoading: priceLoading } = usePackagePrice();
   const [activeTab, setActiveTab] = useState<'metas' | 'tratamento'>('metas');
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [data, setData] = useState<AssessmentData | null>(null);
@@ -211,11 +212,18 @@ export default function Results() {
     return `Vimos que você deseja perder ${weightToLose}kg para ${motivation}`;
   }, [data, quizResponses, calculatedValues]);
 
-  if (isLoading || !data || !tierInfo || !calculatedValues) {
+  if (isLoading || priceLoading || !data || !tierInfo || !calculatedValues) {
     return <ResultsLoadingScreen />;
   }
 
-  const treatment = getPackageDetails();
+  const treatment = {
+    type: 'injectable' as const,
+    name: packageInfo?.nome || 'Pacote Trattum',
+    description: 'Pacote completo de tratamento com todos os medicamentos e acompanhamento necessários para o seu resultado.',
+    price: packageInfo?.preco ?? 0,
+    originalPrice: packageInfo?.preco_original ?? packageInfo?.preco ?? 0,
+    features: ['Produto 1', 'Produto 2', 'Produto 3', 'Produto 4', 'Produto 5'],
+  };
 
   const handleSelectTreatment = () => {
     sessionStorage.setItem('selectedTreatment', 'pacote_trattum');

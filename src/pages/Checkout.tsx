@@ -49,8 +49,6 @@ interface PagamentoData {
   cpfTitular: string;
 }
 
-const PACKAGE_PRICE = 3000;
-
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -59,7 +57,7 @@ export default function Checkout() {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [packagePrice, setPackagePrice] = useState(PACKAGE_PRICE);
+  const [packagePrice, setPackagePrice] = useState<number | null>(null);
   const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
   const [existingAddress, setExistingAddress] = useState<EnderecoData | null>(null);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
@@ -407,7 +405,9 @@ export default function Checkout() {
   const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
   const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
 
-  if (authLoading || isLoadingData) {
+  const displayPrice = packagePrice ?? 0;
+
+  if (authLoading || isLoadingData || packagePrice === null) {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -810,12 +810,12 @@ export default function Checkout() {
                         <SelectContent>
                           {[1,2,3,4,5,6].map(n => (
                             <SelectItem key={n} value={String(n)}>
-                              {n}x de R$ {(packagePrice / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (sem juros)
+                              {n}x de R$ {(displayPrice / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (sem juros)
                             </SelectItem>
                           ))}
                           {[7,8,9,10,11,12].map(n => (
                             <SelectItem key={n} value={String(n)}>
-                              {n}x de R$ {(packagePrice * 1.03 / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (com juros)
+                              {n}x de R$ {(displayPrice * 1.03 / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (com juros)
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -847,7 +847,7 @@ export default function Checkout() {
                           Processando pagamento...
                         </>
                       ) : (
-                        `Pagar R$ ${packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        `Pagar R$ ${displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       )}
                     </Button>
                   </form>
@@ -872,7 +872,7 @@ export default function Checkout() {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
-                    R$ {packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -888,7 +888,7 @@ export default function Checkout() {
                 <div className="flex justify-between items-baseline">
                   <span className="font-bold text-lg">Total</span>
                   <p className="font-bold text-xl">
-                    R$ {packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
