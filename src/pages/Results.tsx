@@ -8,7 +8,7 @@ import { TreatmentCard } from "@/components/results/TreatmentCard";
 import { DiscountModal } from "@/components/results/DiscountModal";
 import { FloatingCTA } from "@/components/layout/FloatingCTA";
 import { ResultsLoadingScreen } from "@/components/ui/loading-skeleton";
-import { AssessmentData, TreatmentType } from "@/types/assessment";
+import { AssessmentData } from "@/types/assessment";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,7 @@ import { AlertTriangle } from "lucide-react";
 import { ClinicalDisclaimer } from "@/components/consent/ClinicalDisclaimer";
 import {
   determineTier,
-  getTreatmentDetails,
+  getPackageDetails,
   calculateWeightProjection,
   calculateBMI,
   getGoalMotivation,
@@ -215,11 +215,10 @@ export default function Results() {
     return <ResultsLoadingScreen />;
   }
 
-  const treatment = getTreatmentDetails(tierInfo.treatmentType);
+  const treatment = getPackageDetails();
 
   const handleSelectTreatment = () => {
-    // Store treatment selection for checkout
-    sessionStorage.setItem('selectedTreatment', tierInfo.treatmentType);
+    sessionStorage.setItem('selectedTreatment', 'pacote_trattum');
     navigate('/checkout');
   };
 
