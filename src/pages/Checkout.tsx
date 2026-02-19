@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, X, Stethoscope, Loader2, UserCircle, CreditCard, Lock, ShieldCheck } from "lucide-react";
+import { ChevronRight, Loader2, UserCircle, CreditCard, Lock, ShieldCheck, Package } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +49,8 @@ interface PagamentoData {
   cpfTitular: string;
 }
 
+const PACKAGE_PRICE = 3000;
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -57,6 +59,7 @@ export default function Checkout() {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [packagePrice, setPackagePrice] = useState(PACKAGE_PRICE);
   const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
   const [existingAddress, setExistingAddress] = useState<EnderecoData | null>(null);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
@@ -92,9 +95,22 @@ export default function Checkout() {
     cpfTitular: '',
   });
 
-  // Load user data and determine where to resume
+  // Load package price and user data
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadData = async () => {
+      // Always fetch package price from DB
+      const { data: produto } = await supabase
+        .from('configuracoes_produtos')
+        .select('preco')
+        .eq('ativo', true)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (produto?.preco) {
+        setPackagePrice(produto.preco);
+      }
+
       if (!user) {
         setIsLoadingData(false);
         return;
@@ -133,7 +149,6 @@ export default function Checkout() {
               cpf: profile.cpf || '',
               email: user.email || '',
             }));
-            // Pre-fill CPF for payment if available
             if (profile.cpf) {
               setPagamentoData(prev => ({ ...prev, cpfTitular: profile.cpf || '' }));
             }
@@ -176,16 +191,8 @@ export default function Checkout() {
           setPendingOrderId(pendingOrder.id);
         }
 
-        // Determine which step to show based on existing data
         const hasAddress = address && address.cep && address.logradouro;
-        
-        if (hasAddress) {
-          // User has address, go to payment
-          setCurrentStep('pagamento');
-        } else {
-          // User needs to add address
-          setCurrentStep('entrega');
-        }
+        setCurrentStep(hasAddress ? 'pagamento' : 'entrega');
 
       } catch (err) {
         console.error('Error loading user data:', err);
@@ -195,7 +202,7 @@ export default function Checkout() {
     };
 
     if (!authLoading) {
-      loadUserData();
+      loadData();
     }
   }, [user, authLoading]);
 
@@ -314,14 +321,13 @@ export default function Checkout() {
 
       // Create or update pending order
       if (!pendingOrderId) {
-        const treatment = sessionStorage.getItem('selectedTreatment') || 'wegovy';
         const { data: newOrder, error: orderError } = await supabase
           .from('pedidos')
           .insert({
             user_id: user.id,
-            valor: 910.00,
+            valor: packagePrice,
             status: 'pendente',
-            descricao: `Tratamento ${treatment} - 1 mês`,
+            descricao: 'Pacote Trattum',
           })
           .select('id')
           .single();
@@ -363,14 +369,13 @@ export default function Checkout() {
           .eq('id', orderId);
       } else {
         // Create order if doesn't exist
-        const treatment = sessionStorage.getItem('selectedTreatment') || 'wegovy';
         await supabase
           .from('pedidos')
           .insert({
             user_id: user.id,
-            valor: 910.00,
+            valor: packagePrice,
             status: 'pago',
-            descricao: `Tratamento ${treatment} - 1 mês`,
+            descricao: 'Pacote Trattum',
           });
       }
 
@@ -379,9 +384,9 @@ export default function Checkout() {
         .from('tratamentos')
         .update({
           status: 'ativo',
-          plano: sessionStorage.getItem('selectedTreatment') || 'wegovy',
+          plano: 'Pacote Trattum',
           data_inicio: new Date().toISOString().split('T')[0],
-          data_proxima_renovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          data_proxima_renovacao: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         })
         .eq('user_id', user.id);
 
@@ -803,18 +808,16 @@ export default function Checkout() {
                           <SelectValue placeholder="Selecione o número de parcelas" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">1x de R$ 910,00 (sem juros)</SelectItem>
-                          <SelectItem value="2">2x de R$ 455,00 (sem juros)</SelectItem>
-                          <SelectItem value="3">3x de R$ 303,33 (sem juros)</SelectItem>
-                          <SelectItem value="4">4x de R$ 227,50 (sem juros)</SelectItem>
-                          <SelectItem value="5">5x de R$ 182,00 (sem juros)</SelectItem>
-                          <SelectItem value="6">6x de R$ 151,67 (sem juros)</SelectItem>
-                          <SelectItem value="7">7x de R$ 137,14 (com juros)</SelectItem>
-                          <SelectItem value="8">8x de R$ 121,25 (com juros)</SelectItem>
-                          <SelectItem value="9">9x de R$ 109,11 (com juros)</SelectItem>
-                          <SelectItem value="10">10x de R$ 99,00 (com juros)</SelectItem>
-                          <SelectItem value="11">11x de R$ 91,00 (com juros)</SelectItem>
-                          <SelectItem value="12">12x de R$ 84,17 (com juros)</SelectItem>
+                          {[1,2,3,4,5,6].map(n => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}x de R$ {(packagePrice / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (sem juros)
+                            </SelectItem>
+                          ))}
+                          {[7,8,9,10,11,12].map(n => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}x de R$ {(packagePrice * 1.03 / n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (com juros)
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -844,7 +847,7 @@ export default function Checkout() {
                           Processando pagamento...
                         </>
                       ) : (
-                        `Pagar R$ 910,00`
+                        `Pagar R$ ${packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       )}
                     </Button>
                   </form>
@@ -857,65 +860,36 @@ export default function Checkout() {
           <div className="lg:col-span-2">
             <Card className="p-6 sticky top-24">
               <h2 className="font-semibold mb-2">Resumo da compra</h2>
-              <p className="text-sm text-muted-foreground mb-6">3 meses de tratamento</p>
+              <p className="text-sm text-muted-foreground mb-6">Pacote completo de tratamento</p>
 
               <div className="flex gap-4 pb-4 border-b">
                 <div className="w-16 h-20 bg-secondary rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">💉</span>
+                  <Package className="w-7 h-7 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Wegovy</h3>
-                  <p className="text-xs text-muted-foreground">Tratamento para um mês</p>
+                  <h3 className="font-semibold">Pacote Trattum</h3>
+                  <p className="text-xs text-muted-foreground">Medicamentos + Acompanhamento clínico</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">R$ 910,00/mês</p>
-                  <p className="text-xs text-muted-foreground line-through">R$ 1300,00/mês</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 py-4 border-b">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-sm">Avaliação Médica</h3>
-                  <p className="text-xs text-muted-foreground">(assíncrona)</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-sm">R$ 10,00</p>
+                  <p className="font-semibold">
+                    R$ {packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3 py-4 text-sm">
-                <div className="flex justify-between text-primary">
-                  <span className="flex items-center gap-2">
-                    30% desconto no primeiro pedido
-                    <X className="w-4 h-4 cursor-pointer hover:text-destructive" />
-                  </span>
-                  <span>-R$ 390,00</span>
-                </div>
-
                 <div className="flex justify-between">
                   <span>Entrega</span>
                   <span className="text-primary">Grátis</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>Presente MANUAL</span>
-                  <span className="text-primary">-R$ 10,00</span>
                 </div>
               </div>
 
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="font-bold text-lg">Total</span>
-                    <span className="text-sm text-muted-foreground ml-2">(1 mês de tratamento)</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-xl">R$ 910,00</p>
-                    <p className="text-xs text-muted-foreground">Valor do plano</p>
-                  </div>
+                  <span className="font-bold text-lg">Total</span>
+                  <p className="font-bold text-xl">
+                    R$ {packagePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
               </div>
 
