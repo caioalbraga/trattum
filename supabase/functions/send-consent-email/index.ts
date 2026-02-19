@@ -187,7 +187,7 @@ function buildTCLEEmailHtml(data: ConsentEmailRequest): string {
     Este documento eletrônico possui validade jurídica conforme a Medida Provisória nº 2.200-2/2001, que equipara documentos eletrônicos assinados digitalmente a documentos originais. Os dados de saúde serão armazenados pelo período mínimo de 20 anos, conforme Resolução CFM nº 1.821/2007.
   </p>
   <p style="margin:0 0 12px;font-size:11px;color:#999;font-family:Arial,Helvetica,sans-serif;">
-    <a href="https://trattum.com.br/termos" style="color:#1B5E8C;text-decoration:none;">Ver termos completos</a>
+    <a href="https://trattum.com/termos" style="color:#1B5E8C;text-decoration:none;">Ver termos completos</a>
   </p>
   <hr style="border:none;border-top:1px solid #E8E8E5;margin:16px 0;">
   <p style="margin:0;font-size:10px;color:#BBB;text-align:center;font-family:Arial,Helvetica,sans-serif;">
@@ -218,22 +218,29 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // User client - for auth validation
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
+    // Service role client - for consent_logs INSERT/UPDATE (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validate user with getUser (correct SDK method)
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claims?.claims) {
+    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
+    if (userError || !userData?.user) {
+      console.error("Auth error:", userError?.message);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const authenticatedUserId = claims.claims.sub;
+    const authenticatedUserId = userData.user.id;
 
     const body: ConsentEmailRequest = await req.json();
     const { user_id, user_name, user_email, user_cpf, consent_timestamp, ip_address, terms_version, document_hash } = body;
@@ -252,8 +259,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check idempotency
-    const { data: existingLog } = await supabase
+    // Check idempotency (using admin client to bypass RLS)
+    const { data: existingLog } = await supabaseAdmin
       .from("consent_logs")
       .select("id, email_sent")
       .eq("user_id", user_id)
@@ -266,7 +273,7 @@ Deno.serve(async (req) => {
     let consentId = existingLog?.id;
 
     if (!existingLog) {
-      const { data: newLog, error: insertError } = await supabase
+      const { data: newLog, error: insertError } = await supabaseAdmin
         .from("consent_logs")
         .insert({
           user_id,
@@ -291,8 +298,8 @@ Deno.serve(async (req) => {
       consentId = newLog.id;
     }
 
-    // Update profile
-    await supabase
+    // Update profile (using admin client)
+    await supabaseAdmin
       .from("profiles")
       .update({
         has_accepted_terms: true,
@@ -308,6 +315,9 @@ Deno.serve(async (req) => {
       try {
         const emailHtml = buildTCLEEmailHtml(body);
 
+        // Use onboarding@resend.dev for testing until domain is verified
+        const fromAddress = "Trattum <onboarding@resend.dev>";
+
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -315,7 +325,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Trattum <noreply@trattum.com.br>",
+            from: fromAddress,
             to: [user_email],
             subject: "Trattum — Cópia do seu Termo de Consentimento (TCLE)",
             html: emailHtml,
@@ -323,9 +333,10 @@ Deno.serve(async (req) => {
         });
 
         const resendData = await resendRes.json();
+        console.log("Resend response:", JSON.stringify(resendData));
 
         if (resendRes.ok) {
-          await supabase
+          await supabaseAdmin
             .from("consent_logs")
             .update({
               email_sent: true,
@@ -334,7 +345,7 @@ Deno.serve(async (req) => {
             })
             .eq("id", consentId);
         } else {
-          console.error("Resend error:", resendData);
+          console.error("Resend error:", JSON.stringify(resendData));
           emailWarning = "E-mail será reenviado em breve";
         }
       } catch (emailError) {
