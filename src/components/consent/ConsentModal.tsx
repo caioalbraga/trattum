@@ -16,7 +16,6 @@ import {
   UserCheck,
   ChevronDown,
   Loader2,
-  AlertTriangle,
   ExternalLink,
   Check,
 } from "lucide-react";
@@ -44,55 +43,6 @@ const iconMap: Record<string, typeof ClipboardList> = {
   shield: Shield,
 };
 
-function CustomCheckbox({
-  checked,
-  onChange,
-  id,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  id: string;
-  label: string;
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className={`
-        flex items-start gap-3.5 cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 select-none
-        ${checked
-          ? "border-[#1B5E8C] bg-[hsl(200_60%_35%/0.04)]"
-          : "border-gray-200 bg-white hover:border-gray-300"
-        }
-      `}
-    >
-      <div className="pt-0.5 shrink-0">
-        <div
-          className={`
-            w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200
-            ${checked
-              ? "bg-[#1B5E8C] border-[#1B5E8C]"
-              : "border-gray-300 bg-white"
-            }
-          `}
-        >
-          {checked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-        </div>
-      </div>
-      <span className="text-[13px] leading-relaxed text-gray-700">
-        {label}
-      </span>
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="sr-only"
-      />
-    </label>
-  );
-}
-
 export function ConsentModal({
   open,
   scrollCompleted,
@@ -106,230 +56,283 @@ export function ConsentModal({
   onAgeChange,
   onAccept,
 }: ConsentModalProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showScrollHint, setShowScrollHint] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(false);
 
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+    const el = scrollRef.current;
+    if (!el) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      if (scrollTop + clientHeight >= scrollHeight - 10) {
+    const check = () => {
+      const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+      if (isBottom) {
+        setAtBottom(true);
         onScrollComplete();
-        setShowScrollHint(false);
       }
     };
 
-    handleScroll();
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    return () => el.removeEventListener("scroll", check);
   }, [onScrollComplete]);
 
   return (
     <Dialog open={open} onOpenChange={() => {}} modal>
       <DialogContent
-        className="bg-white rounded-2xl shadow-2xl max-w-[580px] w-[calc(100%-2rem)] max-h-[92vh] flex flex-col p-0 gap-0 [&>button]:hidden border-0"
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-[calc(100%-2rem)] p-0 gap-0 overflow-hidden [&>button]:hidden border-0"
+        style={{ maxHeight: "min(92vh, 720px)", display: "flex", flexDirection: "column" }}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         aria-labelledby="consent-title"
-        aria-describedby="consent-description"
+        aria-describedby="consent-desc"
       >
-        {/* ── Header ── */}
-        <div className="px-6 pt-6 pb-4 flex-shrink-0">
+        {/* ─── HEADER ─── */}
+        <header className="shrink-0 px-6 pt-6 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[hsl(200_60%_96%)] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-[#1B5E8C]" />
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <ShieldCheck className="size-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle
-                id="consent-title"
-                className="text-[17px] font-bold text-gray-900 leading-tight"
-              >
+              <DialogTitle id="consent-title" className="text-base font-bold text-foreground leading-tight">
                 {t.title}
               </DialogTitle>
-              <DialogDescription
-                id="consent-description"
-                className="text-[13px] text-gray-500 mt-0.5 leading-snug"
-              >
+              <DialogDescription id="consent-desc" className="text-xs text-muted-foreground mt-0.5">
                 {t.subtitle}
               </DialogDescription>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* ── Scrollable Terms Content ── */}
-        <div className="relative flex-1 min-h-0 border-y border-gray-100">
-          <div
-            className="h-full max-h-[40vh] overflow-y-auto overscroll-contain"
-            ref={scrollContainerRef}
-          >
-            <div className="px-6 py-5 space-y-5">
-              {/* Data Usage */}
+        {/* ─── SCROLLABLE TERMS ─── */}
+        <div className="relative flex-1 min-h-0">
+          <div ref={scrollRef} className="h-full overflow-y-auto overscroll-contain">
+            <div className="px-6 py-5 space-y-6">
+              {/* Section 1 — Data Usage */}
               <section>
-                <h3 className="text-sm font-bold text-gray-900 mb-2.5 uppercase tracking-wide">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-2 uppercase tracking-widest">
                   {t.section1Title}
                 </h3>
-                <p className="text-[13px] leading-relaxed text-gray-600 mb-3">
+                <p className="text-[13px] leading-relaxed text-muted-foreground mb-3">
                   {t.section1Body}
                 </p>
-                <div className="space-y-1.5 mb-3">
+                <ul className="space-y-1.5 mb-3">
                   {t.section1Items.map((item, i) => {
                     const Icon = iconMap[item.icon] || Shield;
                     return (
-                      <div
-                        key={i}
-                        className="flex items-start gap-2.5 py-2 px-3 rounded-lg bg-gray-50"
-                      >
-                        <Icon className="w-4 h-4 text-[#1B5E8C] mt-0.5 shrink-0" />
-                        <span className="text-[13px] text-gray-600">
-                          {item.text}
-                        </span>
-                      </div>
+                      <li key={i} className="flex items-start gap-2.5 py-2 px-3 rounded-lg bg-muted/50">
+                        <Icon className="size-4 text-primary mt-0.5 shrink-0" />
+                        <span className="text-[13px] text-foreground/70">{item.text}</span>
+                      </li>
                     );
                   })}
-                </div>
-                <div className="bg-[hsl(200_55%_96%)] rounded-lg px-3.5 py-2.5">
-                  <p className="text-[13px] font-semibold text-[#1B5E8C]">
-                    {t.section1Highlight}
-                  </p>
+                </ul>
+                <div className="bg-primary/5 rounded-lg px-3.5 py-2.5">
+                  <p className="text-[13px] font-semibold text-primary">{t.section1Highlight}</p>
                 </div>
               </section>
 
-              {/* Protection */}
+              {/* Section 2 — Protection */}
               <section>
-                <h3 className="text-sm font-bold text-gray-900 mb-2.5 uppercase tracking-wide">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-2 uppercase tracking-widest">
                   {t.section2Title}
                 </h3>
-                <div className="space-y-1.5">
+                <ul className="space-y-2">
                   {t.section2Items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <Lock className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-                      <span className="text-[13px] text-gray-600">{item}</span>
-                    </div>
+                    <li key={i} className="flex items-start gap-2.5">
+                      <Lock className="size-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
+                      <span className="text-[13px] text-foreground/70">{item}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </section>
 
-              {/* Rights */}
+              {/* Section 3 — Rights */}
               <section>
-                <h3 className="text-sm font-bold text-gray-900 mb-2.5 uppercase tracking-wide">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-2 uppercase tracking-widest">
                   {t.section3Title}
                 </h3>
-                <div className="space-y-1.5">
+                <ul className="space-y-2">
                   {t.section3Items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <UserCheck className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-                      <span className="text-[13px] text-gray-600">{item}</span>
-                    </div>
+                    <li key={i} className="flex items-start gap-2.5">
+                      <UserCheck className="size-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
+                      <span className="text-[13px] text-foreground/70">{item}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </section>
 
-              <div className="h-2" />
+              {/* Bottom breathing room */}
+              <div className="h-4" aria-hidden />
             </div>
           </div>
 
-          {/* Scroll hint */}
+          {/* Scroll-down indicator */}
           <AnimatePresence>
-            {showScrollHint && !scrollCompleted && (
+            {!atBottom && !scrollCompleted && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-2 pt-10 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none"
+                transition={{ duration: 0.2 }}
+                className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none flex items-end justify-center pb-2"
               >
                 <motion.div
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="flex flex-col items-center"
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+                  className="flex flex-col items-center gap-0.5"
                 >
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                  <span className="text-[11px] text-gray-400 font-medium mt-0.5">
-                    {t.scrollHint}
-                  </span>
+                  <ChevronDown className="size-4 text-muted-foreground/50" />
+                  <span className="text-[10px] text-muted-foreground/50 font-medium">{t.scrollHint}</span>
                 </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* ── Footer: Acceptance Area ── */}
-        <div className="px-6 pb-5 pt-5 flex-shrink-0 space-y-4 bg-gray-50/50">
-          {/* Link to full terms */}
-          <div className="flex justify-center">
-            <a
-              href={CONSENT_CONFIG.TERMS_ROUTE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[12px] text-[#1B5E8C]/70 hover:text-[#1B5E8C] hover:underline font-medium transition-colors"
+        {/* ─── FOOTER — ACCEPTANCE AREA ─── */}
+        <footer className="shrink-0 border-t border-gray-100 bg-muted/30">
+          <div className="px-6 py-5 space-y-4">
+            {/* Terms link */}
+            <div className="flex justify-center">
+              <a
+                href={CONSENT_CONFIG.TERMS_ROUTE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-primary/60 hover:text-primary hover:underline font-medium transition-colors"
+              >
+                <ExternalLink className="size-3" />
+                {t.termsLink}
+              </a>
+            </div>
+
+            {/* Checkboxes */}
+            <div className="space-y-2.5">
+              <CheckboxCard
+                id="cb-terms"
+                checked={termsCheckbox}
+                onChange={onTermsChange}
+                label={t.checkbox1}
+              />
+              <CheckboxCard
+                id="cb-age"
+                checked={ageCheckbox}
+                onChange={onAgeChange}
+                label={t.checkbox2}
+              />
+            </div>
+
+            {/* Error message */}
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-[13px] text-destructive bg-destructive/5 border border-destructive/10 rounded-lg px-3 py-2 overflow-hidden"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            {/* Accept button */}
+            <button
+              type="button"
+              onClick={onAccept}
+              disabled={!canAccept || isLoading}
+              className={`
+                w-full h-12 rounded-xl font-semibold text-sm transition-all duration-200
+                flex items-center justify-center gap-2
+                ${canAccept && !isLoading
+                  ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98]"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                }
+              `}
             >
-              <ExternalLink className="w-3 h-3" />
-              {t.termsLink}
-            </a>
-          </div>
+              {isLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Registrando...</span>
+                </>
+              ) : (
+                t.acceptButton
+              )}
+            </button>
 
-          {/* Checkboxes */}
-          <div className="space-y-2">
-            <CustomCheckbox
-              id="terms-cb"
-              checked={termsCheckbox}
-              onChange={onTermsChange}
-              label={t.checkbox1}
-            />
-            <CustomCheckbox
-              id="age-cb"
-              checked={ageCheckbox}
-              onChange={onAgeChange}
-              label={t.checkbox2}
-            />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <p className="text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {error}
+            {/* Support */}
+            <p className="text-center">
+              <a
+                href={CONSENT_CONFIG.SUPPORT_WHATSAPP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              >
+                {t.supportLink}
+              </a>
             </p>
-          )}
-
-          {/* Accept Button */}
-          <button
-            type="button"
-            onClick={onAccept}
-            disabled={!canAccept || isLoading}
-            className={`
-              w-full py-3.5 px-6 rounded-xl font-semibold text-[15px] transition-all duration-200
-              flex items-center justify-center gap-2
-              ${canAccept && !isLoading
-                ? "bg-[#1B5E8C] hover:bg-[#154A6E] text-white shadow-md hover:shadow-lg active:scale-[0.98]"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }
-            `}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Registrando...
-              </>
-            ) : (
-              t.acceptButton
-            )}
-          </button>
-
-          {/* Support link */}
-          <p className="text-center">
-            <a
-              href={CONSENT_CONFIG.SUPPORT_WHATSAPP}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {t.supportLink}
-            </a>
-          </p>
-        </div>
+          </div>
+        </footer>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ─── Checkbox Card ─── */
+function CheckboxCard({
+  id,
+  checked,
+  onChange,
+  label,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={`
+        flex items-start gap-3 cursor-pointer rounded-xl border-2 p-3.5 transition-all duration-200 select-none
+        ${checked
+          ? "border-primary bg-primary/[0.03] shadow-sm"
+          : "border-border bg-background hover:border-primary/30"
+        }
+      `}
+    >
+      <div className="pt-px shrink-0">
+        <div
+          className={`
+            size-[18px] rounded-[5px] border-2 flex items-center justify-center transition-all duration-150
+            ${checked
+              ? "bg-primary border-primary scale-100"
+              : "border-muted-foreground/30 bg-background scale-100"
+            }
+          `}
+        >
+          <AnimatePresence>
+            {checked && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              >
+                <Check className="size-3 text-primary-foreground" strokeWidth={3} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+      <span className="text-[13px] leading-relaxed text-foreground/80">{label}</span>
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only"
+      />
+    </label>
   );
 }
