@@ -169,24 +169,26 @@ export default function AdminDashboard() {
       };
 
       if (notifTitles[newStatus]) {
-        await (supabase.from as any)('notificacoes').insert({
+        const { error: notifError } = await (supabase.from as any)('notificacoes').insert({
           user_id: evaluation.user_id,
           avaliacao_id: id,
           tipo: newStatus,
           titulo: notifTitles[newStatus],
           mensagem: notifMsgs[newStatus],
         });
+        if (notifError) console.error('Notification insert error:', notifError);
       }
 
       // If adjustment, also create the thread message
       if (newStatus === 'ajuste' && note?.trim()) {
-        await (supabase.from as any)('ajustes_clinicos').insert({
+        const { error: ajusteError } = await (supabase.from as any)('ajustes_clinicos').insert({
           avaliacao_id: id,
           user_id: evaluation.user_id,
           autor: 'medico',
           mensagem: note.trim(),
           criado_por: adminUser?.id,
         });
+        if (ajusteError) console.error('Ajuste insert error:', ajusteError);
       }
 
       // If approved, run the full approval workflow
