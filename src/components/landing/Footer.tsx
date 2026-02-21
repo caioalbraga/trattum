@@ -1,15 +1,8 @@
 import { ChevronRight, Facebook, Instagram, Mail } from "lucide-react";
 
-const treatmentLinks = [
-  { label: "Gerenciamento de Peso", href: "#" },
-  { label: "Saúde Capilar", href: "#" },
-  { label: "Saúde Sexual", href: "#" },
-];
-
 const companyLinks = [
   { label: "Início", href: "/" },
   { label: "Quem Somos", href: "#" },
-  { label: "Central de Ajuda", href: "#" },
   { label: "Blog Clínico", href: "#" },
 ];
 
@@ -18,29 +11,9 @@ export function Footer() {
     <footer className="bg-primary text-primary-foreground">
       {/* Main Footer */}
       <div className="container py-16">
-        <div className="grid md:grid-cols-2 gap-12 mb-12">
-          {/* Treatment Links */}
-          <div>
-            <h3 className="font-semibold text-sm mb-6 uppercase tracking-wide text-primary-foreground/70">
-              Programas Clínicos
-            </h3>
-            <ul className="space-y-4">
-              {treatmentLinks.map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href}
-                    className="flex items-center justify-between text-primary-foreground/90 hover:text-primary-foreground transition-colors group"
-                  >
-                    {link.label}
-                    <ChevronRight className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+        <div className="mb-12">
           {/* Company Links */}
-          <div>
+          <div className="max-w-xs">
             <h3 className="font-semibold text-sm mb-6 uppercase tracking-wide text-primary-foreground/70">
               Trattum
             </h3>
@@ -117,7 +90,6 @@ export function Footer() {
           <p className="text-sm text-primary-foreground/50">
             © 2026 Trattum™. Todos os direitos reservados.
           </p>
-
         </div>
       </div>
     </footer>

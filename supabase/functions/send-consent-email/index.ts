@@ -75,7 +75,7 @@ function buildTCLEEmailHtml(data: ConsentEmailRequest): string {
 <!-- Identification -->
 <tr><td style="padding:32px 48px 0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E5E0;border-radius:8px;overflow:hidden;">
-    <tr><td style="padding:16px 20px;background-color:#FAFAF8;border-bottom:1px solid #E5E5E0;">
+    <tr><td style="padding:14px 20px;background-color:#FAFAF8;border-bottom:1px solid #E5E5E0;">
       <p style="margin:0;font-size:11px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Identificação do Titular</p>
     </td></tr>
     <tr><td style="padding:20px;">
@@ -148,7 +148,7 @@ function buildTCLEEmailHtml(data: ConsentEmailRequest): string {
     Conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018), você pode a qualquer momento: acessar, corrigir, portar ou solicitar a exclusão dos seus dados. Você também pode revogar este consentimento sem prejuízo da legalidade do tratamento já realizado.
   </p>
   <p style="margin:12px 0 0;font-size:13px;color:#555;line-height:1.7;">
-    Para exercer seus direitos, entre em contato com nosso DPO: <a href="mailto:dpo@trattum.com.br" style="color:#1B5E8C;text-decoration:none;font-weight:600;">dpo@trattum.com.br</a>
+    Para exercer seus direitos, entre em contato com nosso DPO: <a href="mailto:dpo@trattum.com" style="color:#1B5E8C;text-decoration:none;font-weight:600;">dpo@trattum.com</a>
   </p>
 </td></tr>
 
