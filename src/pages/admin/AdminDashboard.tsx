@@ -169,7 +169,7 @@ export default function AdminDashboard() {
       };
 
       if (notifTitles[newStatus]) {
-        await supabase.from('notificacoes').insert({
+        await (supabase.from as any)('notificacoes').insert({
           user_id: evaluation.user_id,
           avaliacao_id: id,
           tipo: newStatus,
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
 
       // If adjustment, also create the thread message
       if (newStatus === 'ajuste' && note?.trim()) {
-        await supabase.from('ajustes_clinicos').insert({
+        await (supabase.from as any)('ajustes_clinicos').insert({
           avaliacao_id: id,
           user_id: evaluation.user_id,
           autor: 'medico',
