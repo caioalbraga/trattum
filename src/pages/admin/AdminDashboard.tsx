@@ -141,7 +141,7 @@ export default function AdminDashboard() {
     setSlideOverOpen(true);
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string, _note?: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: string, note?: string) => {
     try {
       // Find the evaluation to get user_id
       const evaluation = evaluations.find(e => e.id === id);
@@ -153,6 +153,41 @@ export default function AdminDashboard() {
         .eq('id', id);
 
       if (error) throw error;
+
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+
+      // Create notification for patient
+      const notifTitles: Record<string, string> = {
+        aprovado: 'Tratamento Aprovado',
+        rejeitado: 'Avaliação Não Aprovada',
+        ajuste: 'Ajuste Solicitado pela Equipe Médica',
+      };
+      const notifMsgs: Record<string, string> = {
+        aprovado: 'Seu tratamento foi aprovado! Acesse seu painel para ver os próximos passos.',
+        rejeitado: 'Sua avaliação não foi aprovada neste momento. Entre em contato para mais informações.',
+        ajuste: note || 'A equipe médica solicitou informações adicionais. Por favor, responda o mais breve possível.',
+      };
+
+      if (notifTitles[newStatus]) {
+        await supabase.from('notificacoes').insert({
+          user_id: evaluation.user_id,
+          avaliacao_id: id,
+          tipo: newStatus,
+          titulo: notifTitles[newStatus],
+          mensagem: notifMsgs[newStatus],
+        });
+      }
+
+      // If adjustment, also create the thread message
+      if (newStatus === 'ajuste' && note?.trim()) {
+        await supabase.from('ajustes_clinicos').insert({
+          avaliacao_id: id,
+          user_id: evaluation.user_id,
+          autor: 'medico',
+          mensagem: note.trim(),
+          criado_por: adminUser?.id,
+        });
+      }
 
       // If approved, run the full approval workflow
       if (newStatus === 'aprovado') {

@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      ajustes_clinicos: {
+        Row: {
+          autor: string
+          avaliacao_id: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          mensagem: string
+          user_id: string
+        }
+        Insert: {
+          autor: string
+          avaliacao_id: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          mensagem: string
+          user_id: string
+        }
+        Update: {
+          autor?: string
+          avaliacao_id?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          mensagem?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ajustes_clinicos_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "avaliacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -428,6 +466,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notas_impedimento_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "avaliacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacoes: {
+        Row: {
+          avaliacao_id: string | null
+          created_at: string
+          id: string
+          lida: boolean
+          mensagem: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao_id?: string | null
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          avaliacao_id?: string | null
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_avaliacao_id_fkey"
             columns: ["avaliacao_id"]
             isOneToOne: false
             referencedRelation: "avaliacoes"

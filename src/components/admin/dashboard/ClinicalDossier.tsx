@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -23,6 +24,8 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardList,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Evaluation } from './EvaluationsTable';
@@ -263,6 +266,121 @@ function SectionBlock({
   );
 }
 
+// ── Sub-component: Adjustments Thread ────────────────────────────────────────
+function AdjustmentsThread({ evaluationId, evaluationStatus }: { evaluationId: string; evaluationStatus: string }) {
+  const [ajustes, setAjustes] = useState<{ id: string; autor: string; mensagem: string; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newMsg, setNewMsg] = useState('');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('ajustes_clinicos')
+        .select('id, autor, mensagem, created_at')
+        .eq('avaliacao_id', evaluationId)
+        .order('created_at', { ascending: true });
+      setAjustes(data || []);
+      setLoading(false);
+    };
+    fetch();
+  }, [evaluationId]);
+
+  const sendNewAdjustment = async () => {
+    if (!newMsg.trim()) return;
+    setSending(true);
+
+    const [{ data: { user } }, { data: evalData }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('avaliacoes').select('user_id').eq('id', evaluationId).single(),
+    ]);
+
+    if (!evalData) { setSending(false); return; }
+
+    await supabase.from('ajustes_clinicos').insert({
+      avaliacao_id: evaluationId,
+      user_id: evalData.user_id,
+      autor: 'medico',
+      mensagem: newMsg.trim(),
+      criado_por: user?.id,
+    });
+
+    await supabase.from('notificacoes').insert({
+      user_id: evalData.user_id,
+      avaliacao_id: evaluationId,
+      tipo: 'ajuste',
+      titulo: 'Nova Mensagem da Equipe Médica',
+      mensagem: newMsg.trim(),
+    });
+
+    setNewMsg('');
+    setSending(false);
+    // Refresh
+    const { data } = await supabase
+      .from('ajustes_clinicos')
+      .select('id, autor, mensagem, created_at')
+      .eq('avaliacao_id', evaluationId)
+      .order('created_at', { ascending: true });
+    setAjustes(data || []);
+  };
+
+  if (loading) return null;
+  if (ajustes.length === 0 && evaluationStatus !== 'ajuste') return null;
+
+  return (
+    <>
+      <Separator />
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            Ajustes Clínicos
+          </h3>
+        </div>
+
+        <div className="space-y-2">
+          {ajustes.map(a => (
+            <div
+              key={a.id}
+              className={cn(
+                'max-w-[85%] p-3 rounded-xl text-sm border',
+                a.autor === 'medico'
+                  ? 'bg-muted/50 border-border/50 mr-auto'
+                  : 'bg-primary/10 border-primary/20 ml-auto'
+              )}
+            >
+              <p className="text-[11px] font-medium text-muted-foreground mb-1">
+                {a.autor === 'medico' ? 'Equipe Médica' : 'Paciente'}
+                {' · '}
+                {format(new Date(a.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              </p>
+              <p className="text-foreground">{a.mensagem}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Admin can send new adjustment message */}
+        <div className="flex gap-2">
+          <Textarea
+            value={newMsg}
+            onChange={e => setNewMsg(e.target.value)}
+            placeholder="Enviar nova pergunta ao paciente..."
+            className="text-sm min-h-[60px] resize-none flex-1"
+          />
+          <Button
+            size="sm"
+            onClick={sendNewAdjustment}
+            disabled={sending || !newMsg.trim()}
+            className="self-end gap-1.5"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 export function ClinicalDossier({
   evaluation,
@@ -401,6 +519,9 @@ export function ClinicalDossier({
                 </div>
               )}
             </div>
+
+            {/* ── Adjustments Thread ── */}
+            <AdjustmentsThread evaluationId={evaluation.id} evaluationStatus={evaluation.status} />
           </div>
         </ScrollArea>
 
