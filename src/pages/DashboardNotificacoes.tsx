@@ -51,8 +51,7 @@ export default function DashboardNotificacoes() {
   }, [user]);
 
   const fetchNotificacoes = async () => {
-    const { data } = await supabase
-      .from('notificacoes')
+    const { data } = await (supabase.from as any)('notificacoes')
       .select('*')
       .eq('user_id', user!.id)
       .order('created_at', { ascending: false });
@@ -65,14 +64,13 @@ export default function DashboardNotificacoes() {
 
     // Mark as read
     if (!n.lida) {
-      await supabase.from('notificacoes').update({ lida: true }).eq('id', n.id);
+      await (supabase.from as any)('notificacoes').update({ lida: true }).eq('id', n.id);
       setNotificacoes(prev => prev.map(x => x.id === n.id ? { ...x, lida: true } : x));
     }
 
     // If adjustment, load thread
     if (n.tipo === 'ajuste' && n.avaliacao_id) {
-      const { data } = await supabase
-        .from('ajustes_clinicos')
+      const { data } = await (supabase.from as any)('ajustes_clinicos')
         .select('id, autor, mensagem, created_at')
         .eq('avaliacao_id', n.avaliacao_id)
         .order('created_at', { ascending: true });
@@ -85,7 +83,7 @@ export default function DashboardNotificacoes() {
   const sendResposta = async () => {
     if (!selected?.avaliacao_id || !resposta.trim() || !user) return;
     setSending(true);
-    const { error } = await supabase.from('ajustes_clinicos').insert({
+    const { error } = await (supabase.from as any)('ajustes_clinicos').insert({
       avaliacao_id: selected.avaliacao_id,
       user_id: user.id,
       autor: 'paciente',
@@ -97,8 +95,7 @@ export default function DashboardNotificacoes() {
       toast({ title: 'Resposta enviada com sucesso!' });
       setResposta('');
       // Refresh thread
-      const { data } = await supabase
-        .from('ajustes_clinicos')
+      const { data } = await (supabase.from as any)('ajustes_clinicos')
         .select('id, autor, mensagem, created_at')
         .eq('avaliacao_id', selected.avaliacao_id)
         .order('created_at', { ascending: true });

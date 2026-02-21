@@ -275,8 +275,7 @@ function AdjustmentsThread({ evaluationId, evaluationStatus }: { evaluationId: s
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
-        .from('ajustes_clinicos')
+      const { data } = await (supabase.from as any)('ajustes_clinicos')
         .select('id, autor, mensagem, created_at')
         .eq('avaliacao_id', evaluationId)
         .order('created_at', { ascending: true });
@@ -297,7 +296,7 @@ function AdjustmentsThread({ evaluationId, evaluationStatus }: { evaluationId: s
 
     if (!evalData) { setSending(false); return; }
 
-    await supabase.from('ajustes_clinicos').insert({
+    await (supabase.from as any)('ajustes_clinicos').insert({
       avaliacao_id: evaluationId,
       user_id: evalData.user_id,
       autor: 'medico',
@@ -305,7 +304,7 @@ function AdjustmentsThread({ evaluationId, evaluationStatus }: { evaluationId: s
       criado_por: user?.id,
     });
 
-    await supabase.from('notificacoes').insert({
+    await (supabase.from as any)('notificacoes').insert({
       user_id: evalData.user_id,
       avaliacao_id: evaluationId,
       tipo: 'ajuste',
@@ -316,8 +315,7 @@ function AdjustmentsThread({ evaluationId, evaluationStatus }: { evaluationId: s
     setNewMsg('');
     setSending(false);
     // Refresh
-    const { data } = await supabase
-      .from('ajustes_clinicos')
+    const { data } = await (supabase.from as any)('ajustes_clinicos')
       .select('id, autor, mensagem, created_at')
       .eq('avaliacao_id', evaluationId)
       .order('created_at', { ascending: true });

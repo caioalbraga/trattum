@@ -32,8 +32,7 @@ export function DashboardSidebar() {
   useEffect(() => {
     if (!user) return;
     const fetchUnread = async () => {
-      const { count } = await supabase
-        .from('notificacoes')
+      const { count } = await (supabase.from as any)('notificacoes')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('lida', false);
