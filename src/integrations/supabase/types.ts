@@ -197,6 +197,50 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos: {
+        Row: {
+          avaliacao_id: string | null
+          conteudo: Json
+          created_at: string
+          criado_por: string | null
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao_id?: string | null
+          conteudo?: Json
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avaliacao_id?: string | null
+          conteudo?: Json
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "avaliacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enderecos: {
         Row: {
           bairro: string | null

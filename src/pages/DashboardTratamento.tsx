@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock, Shield } from 'lucide-react';
+import { FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard, Clock, Shield, Pill } from 'lucide-react';
 import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
 import { TCLEModal } from '@/components/consent/TCLEModal';
+import { PrescriptionModal } from '@/components/documents/PrescriptionModal';
 import { decryptProfile } from '@/lib/crypto-client';
 
 
@@ -46,6 +47,14 @@ interface ConsentLog {
   user_agent?: string | null;
 }
 
+interface Documento {
+  id: string;
+  tipo: string;
+  titulo: string;
+  conteudo: Record<string, any>;
+  created_at: string;
+}
+
 interface UserProfile {
   nome?: string | null;
   cpf?: string | null;
@@ -58,10 +67,13 @@ export default function DashboardTratamento() {
   const [pedidoPendente, setPedidoPendente] = useState<Pedido | null>(null);
   const [avaliacaoFeita, setAvaliacaoFeita] = useState<Avaliacao | null>(null);
   const [consentLogs, setConsentLogs] = useState<ConsentLog[]>([]);
+  const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [consentLoading, setConsentLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedConsent, setSelectedConsent] = useState<ConsentLog | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<Documento | null>(null);
   const [tcleModalOpen, setTcleModalOpen] = useState(false);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,7 +86,7 @@ export default function DashboardTratamento() {
     if (!user) return;
 
     try {
-      const [tratamentoRes, pedidoRes, avaliacaoRes, consentRes, profileRes] = await Promise.all([
+      const [tratamentoRes, pedidoRes, avaliacaoRes, consentRes, profileRes, docRes] = await Promise.all([
         supabase.from('tratamentos').select('*').eq('user_id', user.id).single(),
         supabase.from('pedidos').select('*').eq('user_id', user.id).eq('status', 'pendente')
           .order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -85,12 +97,17 @@ export default function DashboardTratamento() {
           .eq('user_id', user.id).is('revoked_at', null)
           .order('consent_timestamp', { ascending: false }),
         supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+        supabase.from('documentos')
+          .select('id, tipo, titulo, conteudo, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
       ]);
 
       setTratamento(tratamentoRes.data);
       setPedidoPendente(pedidoRes.data);
       setAvaliacaoFeita(avaliacaoRes.data);
       setConsentLogs(consentRes.data || []);
+      setDocumentos((docRes.data as Documento[]) || []);
 
       if (profileRes.data) {
         const decrypted = await decryptProfile(profileRes.data);
@@ -203,28 +220,57 @@ export default function DashboardTratamento() {
                   Documentos
                 </CardTitle>
                 <CardDescription>
-                  Seus comprovantes jurídicos e termos aceitos
+                  Receitas, instruções de tratamento e termos aceitos
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {consentLoading ? (
                   <div className="space-y-3">
                     <Skeleton className="h-20 w-full rounded-lg" />
+                    <Skeleton className="h-20 w-full rounded-lg" />
                   </div>
-                ) : consentLogs.length === 0 ? (
+                ) : documentos.length === 0 && consentLogs.length === 0 ? (
                   <p className="text-muted-foreground text-center py-4 text-sm">
                     Nenhum documento disponível no momento.
                   </p>
                 ) : (
                   <div className="space-y-3">
+                    {/* Prescription documents */}
+                    {documentos.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border/40 hover:border-border transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Pill className="size-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{doc.titulo}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Emitido em {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => {
+                          setSelectedDoc(doc);
+                          setPrescriptionModalOpen(true);
+                        }}>
+                          <FileText className="w-4 h-4 mr-1" />
+                          Ver Receita
+                        </Button>
+                      </div>
+                    ))}
+
+                    {/* TCLE consent logs */}
                     {consentLogs.map((log) => (
                       <div
                         key={log.id}
                         className="flex items-center justify-between p-4 rounded-lg border border-border/40 hover:border-border transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <FileText className="size-4 text-primary" />
+                          <div className="size-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <FileText className="size-4 text-muted-foreground" />
                           </div>
                           <div>
                             <p className="font-medium text-sm">Termo de Consentimento (TCLE)</p>
@@ -257,6 +303,13 @@ export default function DashboardTratamento() {
               consentLog={selectedConsent}
               userProfile={userProfile}
               isLoading={consentLoading}
+            />
+
+            {/* Prescription Modal */}
+            <PrescriptionModal
+              open={prescriptionModalOpen}
+              onClose={() => setPrescriptionModalOpen(false)}
+              documento={selectedDoc}
             />
           </>
         ) : hasPendingPayment || hasCompletedAssessment ? (
