@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, User, Scale, Target } from 'lucide-react';
 
 export interface Evaluation {
   id: string;
@@ -37,7 +37,53 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Rejeitado', 
     className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' 
   },
+  em_revisao: {
+    label: 'Em Revisão',
+    className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300'
+  },
+  bloqueado: {
+    label: 'Bloqueado',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300'
+  },
 };
+
+// ── Helpers to format quiz data ──────────────────────────────────────────────
+function formatLabel(raw: string): string {
+  const lower = raw.toLowerCase().trim();
+  if (lower === 'false' || lower === 'nao' || lower === 'não') return 'Não';
+  if (lower === 'true' || lower === 'sim') return 'Sim';
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getPatientSummary(respostas: Record<string, unknown>) {
+  const parts: { icon: typeof User; text: string }[] = [];
+
+  // Gender + Age
+  const genero = respostas.genero_nascimento as string | undefined;
+  const idade = respostas.idade as string | undefined;
+  if (genero || idade) {
+    const gLabel = genero ? formatLabel(genero) : '';
+    const iLabel = idade ? formatLabel(idade) : '';
+    parts.push({ icon: User, text: [gLabel, iLabel].filter(Boolean).join(', ') });
+  }
+
+  // Weight / Height
+  const ap = respostas.altura_peso as { altura?: number; peso?: number } | undefined;
+  if (ap?.altura && ap?.peso) {
+    parts.push({ icon: Scale, text: `${ap.peso} kg / ${ap.altura} cm` });
+  }
+
+  // Goal
+  const motivos = respostas.motivos_emagrecer;
+  if (motivos) {
+    const mText = Array.isArray(motivos)
+      ? motivos.slice(0, 2).map(v => formatLabel(String(v))).join(', ')
+      : formatLabel(String(motivos));
+    parts.push({ icon: Target, text: mText });
+  }
+
+  return parts;
+}
 
 function TableSkeleton() {
   return (
@@ -92,21 +138,38 @@ export function EvaluationsTable({
               key={evaluation.id}
               onClick={() => onSelectEvaluation(evaluation)}
               className={cn(
-                "w-full grid grid-cols-[1fr,80px,140px,120px,32px] gap-4 px-4 py-4 text-left",
+                "w-full grid grid-cols-[1fr,80px,140px,120px,32px] gap-4 px-4 py-4 text-left items-start",
                 "hover:bg-muted/50 transition-colors duration-150",
                 "focus:outline-none focus:bg-muted/50",
                 "group"
               )}
             >
-              <span className="font-medium text-foreground truncate">
-                {evaluation.patient_name || 'Nome não disponível'}
-              </span>
+              <div className="min-w-0">
+                <span className="font-medium text-foreground truncate block">
+                  {evaluation.patient_name || 'Nome não disponível'}
+                </span>
+                {/* Formatted patient summary */}
+                {(() => {
+                  const summary = getPatientSummary(evaluation.respostas);
+                  if (summary.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                      {summary.map((item, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <item.icon className="h-3 w-3 shrink-0" />
+                          {item.text}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
               
-              <span className="text-right font-mono text-sm text-muted-foreground">
+              <span className="text-right font-mono text-sm text-muted-foreground pt-0.5">
                 {evaluation.imc ? evaluation.imc.toFixed(1) : '—'}
               </span>
               
-              <span>
+              <span className="pt-0.5">
                 <span className={cn(
                   "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
                   status.className
@@ -115,11 +178,11 @@ export function EvaluationsTable({
                 </span>
               </span>
               
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground pt-0.5">
                 {format(new Date(evaluation.created_at), "dd MMM yyyy", { locale: ptBR })}
               </span>
 
-              <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors pt-0.5" />
             </button>
           );
         })}
