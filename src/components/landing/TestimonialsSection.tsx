@@ -50,17 +50,6 @@ export function TestimonialsSection() {
             <h2 className="heading-section text-foreground mb-4">
               Resultados que transformam vidas
             </h2>
-            
-            {/* Reclame Aqui Badge */}
-            <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg">
-              <div className="flex items-center gap-1">
-                <div className="w-6 h-6 bg-primary-foreground rounded-full flex items-center justify-center">
-                  <Check className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-sm font-medium">RA 1000</span>
-              </div>
-              <span className="text-xs opacity-80">ReclameAQUI</span>
-            </div>
           </div>
 
           {/* Navigation */}
