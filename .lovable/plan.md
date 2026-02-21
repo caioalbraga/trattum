@@ -1,68 +1,113 @@
-# Correção do Envio de E-mail TCLE
-
-## Diagnóstico
-
-Investiguei os logs e o banco de dados e encontrei:
-
-1. **Zero registros em `consent_logs**` -- o consentimento nunca foi salvo no banco
-2. **Zero logs da Edge Function** -- a função nunca foi chamada
-3. **O usuário provavelmente não estava logado** ao aceitar os termos, fazendo o fluxo cair no caminho "guest" que salva apenas no `sessionStorage` e nunca envia e-mail
-
-Alem disso, a Edge Function usa `supabase.auth.getClaims()` que **não existe** no SDK do Supabase -- isso causaria erro silencioso se a função fosse chamada.
-
-Por fim, o dominio `trattum.com.br` precisa estar verificado no Resend para enviar e-mails de produção. Sem verificação, o Resend só envia para o e-mail do dono da conta.
-
-## Problemas Identificados
 
 
-| #   | Problema                                                                 | Impacto                                           |
-| --- | ------------------------------------------------------------------------ | ------------------------------------------------- |
-| 1   | Usuário não logado -> caminho guest -> sem registro no banco, sem e-mail | E-mail nunca é enviado                            |
-| 2   | `supabase.auth.getClaims(token)` não existe no SDK                       | Edge Function falharia com erro se chamada        |
-| 3   | Domínio possivelmente não verificado no Resend                           | E-mails rejeitados pela API                       |
-| 4   | `consent_logs` não permite UPDATE pelo usuário (RLS)                     | Edge Function não consegue atualizar `email_sent` |
+## Plano: Central de Notificações e Fluxo de Ajustes Clínicos
 
+### Visao Geral
 
-## Plano de Correção
+Vamos criar uma central de notificações no painel do paciente e um sistema de comunicação bidirecional entre médico e paciente para ajustes clínicos. O menu lateral será reorganizado na nova ordem solicitada.
 
-### 1. Corrigir a Edge Function (`send-consent-email`)
+---
 
-- Substituir `supabase.auth.getClaims(token)` por `supabase.auth.getUser(token)` que é o método correto do SDK
-- Usar um **service role client** para operações de INSERT/UPDATE em `consent_logs` (já que o usuário não tem permissão de UPDATE via RLS)
-- Manter a validação de que `user_id` do body bate com o usuário autenticado
+### 1. Reorganizar Menu Lateral do Paciente
 
-### 2. Garantir que o fluxo funciona para usuarios logados
+**Ordem atual:** Início, Atendimento, Tratamento, Minha Conta
 
-- Revisar `useConsent.ts` para garantir que quando o usuário está logado, todo o fluxo (insert consent_log + invoke edge function) executa corretamente
-- Melhorar o tratamento de erros para logar no console quando a Edge Function falha
+**Nova ordem:** Início, Tratamento, Notificações (com badge de contagem), Atendimento, Minha Conta
 
-### 3. Adicionar RLS de UPDATE em `consent_logs` (ou usar service role)
+**Arquivo:** `src/components/dashboard/DashboardSidebar.tsx`
 
-A Edge Function precisa fazer UPDATE em `consent_logs` para marcar `email_sent = true`. Como a tabela não permite UPDATE pelo usuário, a solução mais segura é usar o **service role client** dentro da Edge Function para essas operações.
+- Adicionar ícone `Bell` para Notificações
+- Rota: `/dashboard/notificacoes`
 
-### 4. Verificação de dominio (ação manual do usuario)
+---
 
-Para que e-mails cheguem em qualquer destinatário, o domínio `trattum.com.br` precisa estar verificado no painel do Resend com registros DNS (SPF/DKIM). Enquanto não estiver verificado, apenas e-mails para o dono da conta Resend funcionam.
+### 2. Criar Tabelas no Banco de Dados
 
-Como alternativa temporária para testes, pode-se usar `onboarding@resend.dev` como remetente.
+**Tabela `notificacoes`** -- notificações gerais do paciente (aprovação, rejeição, ajuste)
 
-## Resumo Tecnico das Alteracoes
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| user_id | uuid | Paciente destinatário |
+| avaliacao_id | uuid (nullable) | Avaliação relacionada |
+| tipo | text | 'aprovado', 'rejeitado', 'ajuste' |
+| titulo | text | Título da notificação |
+| mensagem | text | Corpo da notificação |
+| lida | boolean | Se foi lida |
+| created_at | timestamptz | Data de criação |
 
-```text
-supabase/functions/send-consent-email/index.ts
-  - Trocar getClaims() por getUser()
-  - Criar service role client para INSERT/UPDATE
-  - Usar from remetente condicional (resend.dev para testes)
+**Tabela `ajustes_clinicos`** -- thread de perguntas e respostas entre médico e paciente
 
-src/hooks/useConsent.ts
-  - Melhorar logging de erros na chamada da edge function
-  - Garantir que o email do usuario é passado corretamente
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| avaliacao_id | uuid | Avaliação relacionada |
+| user_id | uuid | Paciente |
+| autor | text | 'medico' ou 'paciente' |
+| mensagem | text | Texto da pergunta ou resposta |
+| criado_por | uuid (nullable) | ID do admin que criou (quando autor=medico) |
+| created_at | timestamptz | Data de criação |
 
-## Sobre o Dominio Resend
+**RLS:** Pacientes podem ler/atualizar suas notificações e inserir respostas nos ajustes. Admins podem gerenciar tudo.
 
-Voce precisa verificar o dominio `trattum.com.br` no painel do Resend adicionando os registros DNS que eles fornecem. Ate la, os e-mails so chegam no e-mail cadastrado na conta Resend. Para testes imediatos, posso configurar o remetente como `onboarding@resend.dev` que funciona sem verificação de dominio.  
-  
-Lovable, não é trattum.com.br, é apenas .com  
-  
-Outra coisa, veja que o usuario realmente pode n estar logado sempre de primeira. então conte que o banco pode receber o aceite de contrato somente no final. Então vamos fazer o seguinte, vamos remover esse aceite do começo do questionario e deixar o aceite funcionando somente na parte de criação de conta, ou se for um usuario logado, esse mesmo aceite aparece antes de passar para o endereço. Nosso plano vai ser esse
+---
+
+### 3. Criar Página de Notificações do Paciente
+
+**Arquivo novo:** `src/pages/DashboardNotificacoes.tsx`
+
+- Lista de notificações com ícone por tipo (aprovado = check verde, rejeitado = X vermelho, ajuste = alerta azul)
+- Ao clicar em uma notificação de ajuste, abre um painel com:
+  - A pergunta do médico
+  - Campo de texto para resposta
+  - Botão "Enviar Resposta"
+- Notificações de aprovação/rejeição mostram apenas a mensagem informativa
+- Badge com contagem de não lidas no menu lateral
+
+---
+
+### 4. Atualizar Fluxo do Admin (Solicitar Ajuste)
+
+**Arquivo:** `src/pages/admin/AdminDashboard.tsx` (handleUpdateStatus)
+
+Quando o admin clica "Solicitar Ajuste":
+- Cria registro em `ajustes_clinicos` com autor='medico' e a nota escrita
+- Cria registro em `notificacoes` para o paciente com tipo='ajuste'
+- Atualiza status da avaliação para 'ajuste'
+
+Quando o admin aprova ou rejeita:
+- Cria notificação correspondente para o paciente
+
+---
+
+### 5. Mostrar Thread de Ajustes no Dossiê Clínico do Admin
+
+**Arquivo:** `src/components/admin/dashboard/ClinicalDossier.tsx`
+
+- Adicionar nova seção "Ajustes Clínicos" abaixo do dossiê
+- Exibe toda a thread de mensagens (pergunta do médico + resposta do paciente) em ordem cronológica
+- Formato de chat simples: mensagens do médico alinhadas à esquerda, do paciente à direita
+- Se a avaliação estiver em status 'ajuste', permitir enviar nova pergunta
+- O admin pode continuar pedindo ajustes (thread cresce)
+
+---
+
+### 6. Rota e Integração
+
+**Arquivo:** `src/App.tsx`
+
+- Adicionar rota `/dashboard/notificacoes` apontando para `DashboardNotificacoes`
+
+---
+
+### Resumo Tecnico dos Arquivos
+
+| Ação | Arquivo |
+|------|---------|
+| Editar | `src/components/dashboard/DashboardSidebar.tsx` (reordenar menu + adicionar Notificações) |
+| Criar | Migration SQL (tabelas `notificacoes` e `ajustes_clinicos` com RLS) |
+| Criar | `src/pages/DashboardNotificacoes.tsx` |
+| Editar | `src/App.tsx` (nova rota) |
+| Editar | `src/pages/admin/AdminDashboard.tsx` (criar notificações + ajustes ao mudar status) |
+| Editar | `src/components/admin/dashboard/ClinicalDossier.tsx` (seção de thread de ajustes) |
+
