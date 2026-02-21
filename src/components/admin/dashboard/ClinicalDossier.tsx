@@ -159,16 +159,27 @@ const sections: Section[] = [
 ];
 
 // ── Helper: pretty-print a value ─────────────────────────────────────────────
+function formatLabel(raw: string): string {
+  // Boolean translations
+  const lower = raw.toLowerCase().trim();
+  if (lower === 'false' || lower === 'nao' || lower === 'não') return 'Não';
+  if (lower === 'true' || lower === 'sim') return 'Sim';
+  // Replace underscores, capitalize first letter of each word
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function displayValue(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
-  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+  if (Array.isArray(value)) return value.map(v => formatLabel(String(v))).join(', ');
   if (typeof value === 'object') {
-    // altura_peso style object
     const obj = value as Record<string, unknown>;
     if ('altura' in obj && 'peso' in obj) return `${obj.altura} cm / ${obj.peso} kg`;
     return JSON.stringify(obj);
   }
-  return String(value);
+  return formatLabel(String(value));
 }
 
 // ── Sub-component: one response row ──────────────────────────────────────────
