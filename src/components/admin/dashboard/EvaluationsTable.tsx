@@ -6,6 +6,7 @@ import { ChevronRight } from 'lucide-react';
 
 export interface Evaluation {
   id: string;
+  user_id: string;
   patient_name: string;
   imc: number | null;
   status: string;

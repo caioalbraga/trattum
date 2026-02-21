@@ -112,6 +112,7 @@ export default function AdminDashboard() {
             const decryptedName = await decryptName(encryptedName);
             return {
               id: a.id,
+              user_id: a.user_id,
               patient_name: decryptedName,
               imc: a.imc,
               status: a.status,
@@ -142,6 +143,10 @@ export default function AdminDashboard() {
 
   const handleUpdateStatus = async (id: string, newStatus: string, _note?: string) => {
     try {
+      // Find the evaluation to get user_id
+      const evaluation = evaluations.find(e => e.id === id);
+      if (!evaluation) throw new Error('Evaluation not found');
+
       const { error } = await supabase
         .from('avaliacoes')
         .update({ status: newStatus })
@@ -149,9 +154,98 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
+      // If approved, run the full approval workflow
+      if (newStatus === 'aprovado') {
+        // 1. Update treatment status to active
+        await supabase
+          .from('tratamentos')
+          .update({ 
+            status: 'ativo', 
+            data_inicio: new Date().toISOString().split('T')[0],
+            plano: 'Protocolo de Gerenciamento Metabólico'
+          })
+          .eq('user_id', evaluation.user_id);
+
+        // 2. Create prescription
+        const { data: { user: adminUser } } = await supabase.auth.getUser();
+        await supabase
+          .from('prescricoes')
+          .insert({
+            user_id: evaluation.user_id,
+            avaliacao_id: id,
+            tratamento: 'Protocolo de Gerenciamento Metabólico',
+            dosagem: 'Semaglutida 0.25mg subcutânea, semanal',
+            observacoes: 'Prescrição inicial aprovada. Manter hidratação constante.',
+            aprovado_por: adminUser?.id,
+          });
+
+        // 3. Decrypt patient profile for document
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('nome, cpf')
+          .eq('user_id', evaluation.user_id)
+          .single();
+
+        let patientName = evaluation.patient_name;
+        let patientCpf = '';
+        if (profileData) {
+          try {
+            const { data: decNome } = await supabase.functions.invoke('decrypt-data', {
+              body: { data: profileData.nome, field: 'nome' }
+            });
+            if (decNome?.decrypted) patientName = decNome.decrypted;
+            
+            const { data: decCpf } = await supabase.functions.invoke('decrypt-data', {
+              body: { data: profileData.cpf, field: 'cpf' }
+            });
+            if (decCpf?.decrypted) patientCpf = decCpf.decrypted;
+          } catch { /* use fallback names */ }
+        }
+
+        // 4. Generate document in documentos table
+        const now = new Date();
+        await supabase.from('documentos').insert({
+          user_id: evaluation.user_id,
+          avaliacao_id: id,
+          tipo: 'receita_instrucoes',
+          titulo: 'Receita — Instruções de Tratamento',
+          conteudo: {
+            paciente_nome: patientName,
+            paciente_cpf: patientCpf,
+            medico_nome: 'Dr(a). Responsável Técnico',
+            medico_crm: 'CRM/CE 00000',
+            instrucoes: 'Protocolo de Gerenciamento Metabólico\n\n• Tomar 1 dose da medicação prescrita (Semaglutida 0,25mg) via subcutânea, uma vez por semana, preferencialmente no mesmo dia e horário.\n\n• Aplicar na região abdominal, coxa ou braço, alternando os locais de aplicação.\n\n• Manter hidratação constante (mínimo 2L de água/dia).\n\n• Seguir dieta balanceada conforme orientação nutricional.\n\n• Relatar qualquer efeito adverso imediatamente à equipe médica.\n\n• Retorno para reavaliação em 30 dias.',
+            codigo_autenticidade: `TRATTUM-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${id.slice(0, 8).toUpperCase()}`,
+            data_emissao: now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' }),
+          },
+          criado_por: adminUser?.id,
+        });
+
+        // 5. Send approval email (fire and forget) - use service function to get email
+        supabase.functions.invoke('send-approval-email', {
+          body: { 
+            patientEmail: evaluation.user_id, // Edge function resolves email from user_id
+            patientName,
+          }
+        }).catch(err => console.error('Email send error:', err));
+
+        // 6. Log audit
+        if (adminUser?.id) {
+          await supabase.from('audit_log').insert({
+            user_id: adminUser.id,
+            action: 'APPROVE_TREATMENT',
+            table_name: 'avaliacoes',
+            record_id: id,
+            details: { target_user_id: evaluation.user_id, status: 'aprovado' },
+          });
+        }
+      }
+
       toast({
-        title: 'Status atualizado',
-        description: `Avaliação marcada como ${newStatus}.`
+        title: newStatus === 'aprovado' ? 'Tratamento aprovado!' : 'Status atualizado',
+        description: newStatus === 'aprovado' 
+          ? 'Receita gerada, tratamento ativado e e-mail enviado ao paciente.'
+          : `Avaliação marcada como ${newStatus}.`
       });
 
       // Update local state

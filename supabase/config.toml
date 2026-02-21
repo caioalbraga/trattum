@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.send-consent-email]
 verify_jwt = false
+
+[functions.send-approval-email]
+verify_jwt = false
