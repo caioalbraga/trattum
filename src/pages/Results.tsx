@@ -244,7 +244,7 @@ export default function Results() {
                 Medicação não indicada para seu perfil
               </p>
               <p className="text-sm text-amber-700">
-                Com base no seu IMC de {calculatedValues.bmi.toFixed(1)}, recomendamos nosso programa de reeducação alimentar.
+                Com base no seu perfil, recomendamos nosso programa de reeducação alimentar.
               </p>
             </div>
           </div>
@@ -292,9 +292,6 @@ export default function Results() {
             {/* Dynamic Header */}
             <div className="text-center mb-10">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Badge variant="outline" className="text-xs tracking-widest uppercase">
-                  IMC: {calculatedValues.bmi.toFixed(1)}
-                </Badge>
                 <Badge 
                   variant="outline" 
                   className={`text-xs tracking-widest uppercase ${

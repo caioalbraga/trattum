@@ -246,10 +246,10 @@ export function TCLEModal({ open, onClose, consentLog, userProfile, isLoading }:
                 <p className="text-xs text-muted-foreground">
                   DPO:{" "}
                   <a
-                    href="mailto:dpo@trattum.com.br"
+                  href="mailto:dpo@trattum.com"
                     className="text-primary hover:underline"
                   >
-                    dpo@trattum.com.br
+                    dpo@trattum.com
                   </a>
                 </p>
                 <p className="text-xs text-muted-foreground/60 text-center pt-2">

@@ -93,7 +93,7 @@ export const CONSENT_TEXTS = {
         id: "direitos",
         number: 7,
         title: "Direitos do Titular",
-        content: `Conforme a LGPD, você tem os seguintes direitos:\n\n• **Confirmação** da existência de tratamento de dados;\n• **Acesso** aos dados coletados;\n• **Correção** de dados incompletos, inexatos ou desatualizados;\n• **Anonimização, bloqueio ou eliminação** de dados desnecessários;\n• **Portabilidade** dos dados a outro fornecedor;\n• **Eliminação** dos dados tratados com base no consentimento;\n• **Informação** sobre compartilhamento com terceiros;\n• **Revogação** do consentimento.\n\nPara exercer qualquer destes direitos, entre em contato com nosso Encarregado de Proteção de Dados (DPO) pelo e-mail: **dpo@trattum.com.br**.`,
+        content: `Conforme a LGPD, você tem os seguintes direitos:\n\n• **Confirmação** da existência de tratamento de dados;\n• **Acesso** aos dados coletados;\n• **Correção** de dados incompletos, inexatos ou desatualizados;\n• **Anonimização, bloqueio ou eliminação** de dados desnecessários;\n• **Portabilidade** dos dados a outro fornecedor;\n• **Eliminação** dos dados tratados com base no consentimento;\n• **Informação** sobre compartilhamento com terceiros;\n• **Revogação** do consentimento.\n\nPara exercer qualquer destes direitos, entre em contato com nosso Encarregado de Proteção de Dados (DPO) pelo e-mail: **dpo@trattum.com**.`,
       },
       {
         id: "revogacao",
@@ -129,7 +129,7 @@ export const CONSENT_TEXTS = {
         id: "dpo",
         number: 13,
         title: "Encarregado de Proteção de Dados (DPO)",
-        content: `**Nome:** Encarregado de Proteção de Dados da Trattum\n**E-mail:** dpo@trattum.com.br\n**Telefone:** (85) 9 9999-9999\n\nO Encarregado é responsável por:\n\n• Aceitar reclamações e comunicações dos titulares;\n• Prestar esclarecimentos às autoridades;\n• Orientar funcionários e contratados sobre práticas de proteção de dados.`,
+        content: `**Nome:** Encarregado de Proteção de Dados da Trattum\n**E-mail:** dpo@trattum.com\n**Telefone:** (85) 9 9999-9999\n\nO Encarregado é responsável por:\n\n• Aceitar reclamações e comunicações dos titulares;\n• Prestar esclarecimentos às autoridades;\n• Orientar funcionários e contratados sobre práticas de proteção de dados.`,
       },
       {
         id: "foro",
