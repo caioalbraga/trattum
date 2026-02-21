@@ -105,9 +105,7 @@ export default function Checkout() {
         .limit(1)
         .maybeSingle();
       
-      if (produto?.preco) {
-        setPackagePrice(produto.preco);
-      }
+      setPackagePrice(produto?.preco ?? 0);
 
       if (!user) {
         setIsLoadingData(false);
