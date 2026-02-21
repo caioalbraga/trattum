@@ -409,7 +409,7 @@ export function ClinicalDossier({
     setAdjustNote('');
   }
 
-  const isPending = evaluation.status === 'pendente';
+  const canTakeAction = ['pendente', 'ajuste', 'em_revisao'].includes(evaluation.status);
 
   return (
     <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
@@ -524,7 +524,7 @@ export function ClinicalDossier({
         </ScrollArea>
 
         {/* ── Fixed Action Bar ── */}
-        {isPending && onUpdateStatus && (
+        {canTakeAction && onUpdateStatus && (
           <div className="flex-shrink-0 border-t border-border/60 bg-card px-6 py-4 space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
               Centro de Decisão Clínica
