@@ -1,4 +1,4 @@
-import { HelpCircle, ChevronRight, Facebook, Instagram, Mail } from "lucide-react";
+import { ChevronRight, Facebook, Instagram, Mail } from "lucide-react";
 
 const treatmentLinks = [
   { label: "Gerenciamento de Peso", href: "#" },
@@ -18,26 +18,7 @@ export function Footer() {
     <footer className="bg-primary text-primary-foreground">
       {/* Main Footer */}
       <div className="container py-16">
-        <div className="grid md:grid-cols-3 gap-12 mb-12">
-          {/* Help Section */}
-          <div>
-            <h3 className="font-semibold text-lg mb-6 uppercase tracking-wide">
-              Precisa de orientação?
-            </h3>
-            <a 
-              href="#" 
-              className="inline-flex items-center gap-3 text-primary-foreground/90 hover:text-primary-foreground transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full border border-primary-foreground/30 flex items-center justify-center">
-                <HelpCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-medium">Acesse nossa Central de Ajuda</p>
-                <p className="text-sm text-primary-foreground/60">Respostas para suas principais dúvidas</p>
-              </div>
-            </a>
-          </div>
-
+        <div className="grid md:grid-cols-2 gap-12 mb-12">
           {/* Treatment Links */}
           <div>
             <h3 className="font-semibold text-sm mb-6 uppercase tracking-wide text-primary-foreground/70">
@@ -122,7 +103,7 @@ export function Footer() {
           <Mail className="w-5 h-5" />
           <div className="text-sm">
             <p className="font-medium">Seja uma farmácia parceira:</p>
-            <p className="text-primary-foreground/70">parcerias@trattum.com.br</p>
+            <p className="text-primary-foreground/70">parcerias@trattum.com</p>
           </div>
         </div>
 
@@ -137,31 +118,6 @@ export function Footer() {
             © 2026 Trattum™. Todos os direitos reservados.
           </p>
 
-          <div className="flex items-center gap-4">
-            {/* Payment Icons */}
-            <div className="flex gap-2">
-              <div className="w-10 h-6 bg-primary-foreground/20 rounded flex items-center justify-center text-[10px] font-medium">
-                VISA
-              </div>
-              <div className="w-10 h-6 bg-primary-foreground/20 rounded flex items-center justify-center text-[10px] font-medium">
-                MC
-              </div>
-              <div className="w-10 h-6 bg-primary-foreground/20 rounded flex items-center justify-center text-[10px] font-medium">
-                PIX
-              </div>
-            </div>
-
-            {/* Reclame Aqui Badge */}
-            <div className="bg-card text-foreground rounded-lg px-3 py-2 flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground text-xs">✓</span>
-              </div>
-              <div className="text-xs">
-                <p className="font-bold">ÓTIMO</p>
-                <p className="text-muted-foreground text-[10px]">ReclameAQUI</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </footer>
