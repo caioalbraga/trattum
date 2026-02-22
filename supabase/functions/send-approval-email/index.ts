@@ -89,11 +89,12 @@ serve(async (req: Request) => {
     const displayName = patientName || "Paciente";
     const dashboardUrl = "https://trattum.com/dashboard/tratamento";
 
-    const { error: emailError } = await resend.emails.send({
-      from: "Trattum <onboarding@resend.dev>",
-      to: [resolvedEmail],
-      subject: "Boas-vindas à Trattum: Seu plano de tratamento foi aprovado!",
-      html: `
+    try {
+      const { error: emailError } = await resend.emails.send({
+        from: "Trattum <onboarding@resend.dev>",
+        to: [resolvedEmail],
+        subject: "Boas-vindas à Trattum: Seu plano de tratamento foi aprovado!",
+        html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -137,13 +138,21 @@ serve(async (req: Request) => {
   </div>
 </body>
 </html>`,
-    });
+      });
 
-    if (emailError) {
-      console.error("Resend error:", emailError);
+      if (emailError) {
+        console.warn("Resend error (non-critical):", emailError);
+        // Return success anyway — email failure should not block approval
+        return new Response(
+          JSON.stringify({ success: true, warning: `Email não enviado: ${emailError.message}` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } catch (emailErr: unknown) {
+      console.warn("Email send exception (non-critical):", emailErr);
       return new Response(
-        JSON.stringify({ success: false, error: emailError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, warning: "Email não pôde ser enviado" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
