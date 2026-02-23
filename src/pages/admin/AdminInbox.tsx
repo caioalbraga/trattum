@@ -67,12 +67,98 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   em_revisao: { label: 'Em Revisão', variant: 'outline' },
 };
 
-const questionCategories: Record<string, string[]> = {
-  'Dados Biométricos': ['altura', 'peso', 'imc', 'idade', 'sexo'],
-  'Histórico de Saúde': ['condicoes', 'medicamentos', 'alergias', 'cirurgias'],
-  'Hábitos de Vida': ['exercicios', 'alimentacao', 'sono', 'estresse'],
-  'Objetivos': ['objetivo', 'expectativa', 'motivacao'],
+// ── Question label map (matches ClinicalDossier) ─────────────────────────────
+const questionLabels: Record<string, string> = {
+  motivos_emagrecer:        'Motivos para emagrecer',
+  apoio_programa:           'Áreas de apoio desejadas',
+  dificuldade_emagrecimento:'Principal dificuldade',
+  genero_nascimento:        'Gênero ao nascimento',
+  idade:                    'Faixa etária',
+  altura_peso:              'Altura / Peso',
+  tem_meta_peso:            'Tem meta de peso?',
+  qual_meta_peso:           'Meta de peso (kg)',
+  peso_maximo:              'Peso máximo na vida (kg)',
+  gordura_localizada:       'Região de gordura localizada',
+  tempo_tentativa:          'Tempo tentando emagrecer',
+  metodos_anteriores:       'Métodos já utilizados',
+  frequencia_exercicios:    'Frequência de exercícios',
+  vontade_comer_incontrolavel: 'Fome incontrolável fora das refeições',
+  comer_estressado:         'Come quando estressado?',
+  habito_beliscar:          'Hábito de beliscar',
+  consumo_alcool:           'Consumo de álcool',
+  etapa_21_triagem_transtorno: 'Diagnóstico de transtorno alimentar?',
+  etapa_22_qual_transtorno: 'Qual transtorno alimentar',
+  etapa_23_bulimia_3meses:  'Comportamento bulímico (últimos 3 meses)',
+  etapa_24_anorexia_3meses: 'Restrição severa alimentar (últimos 3 meses)',
+  saude_mental_diagnostico: 'Condição de saúde mental diagnosticada?',
+  quais_condicoes_mentais:  'Condições mentais diagnosticadas',
+  tomando_medicamento_mental:'Medicamento para saúde mental?',
+  detalhe_medicamento_mental:'Qual medicamento mental',
+  condicoes_medicas_lista:  'Condições médicas (coração, rins, fígado…)?',
+  etapa_30:                 'Doenças do coração',
+  etapa_31:                 'Doenças hormonais ou renais',
+  etapa_32:                 'Problemas de estômago/intestino',
+  etapa_33:                 'Condições adicionais (Convulsões, Glaucoma, Câncer)',
+  etapa_34:                 'Condições: Pressão Alta, Colesterol, Refluxo, Apneia',
+  etapa_35:                 'Cirurgia bariátrica',
+  etapa_36:                 'Medicamentos / suplementos (últimos 30 dias)?',
+  etapa_37:                 'Quais medicamentos e por quê',
+  etapa_38:                 'Possui alergias?',
+  etapa_39:                 'Alergia a qual medicamento',
+  etapa_40:                 'Informações adicionais de saúde?',
+  etapa_41:                 'Detalhes adicionais',
+  etapa_43:                 'Aceita medicamentos injetáveis?',
 };
+
+const questionCategories: Record<string, { title: string; keys: string[] }> = {
+  biometria: {
+    title: 'Dados Biométricos',
+    keys: ['genero_nascimento', 'idade', 'altura_peso', 'tem_meta_peso', 'qual_meta_peso', 'peso_maximo', 'gordura_localizada'],
+  },
+  historico: {
+    title: 'Histórico de Saúde',
+    keys: [
+      'condicoes_medicas_lista', 'etapa_30', 'etapa_31', 'etapa_32', 'etapa_33', 'etapa_34', 'etapa_35',
+      'etapa_36', 'etapa_37', 'etapa_38', 'etapa_39', 'etapa_40', 'etapa_41',
+      'etapa_21_triagem_transtorno', 'etapa_22_qual_transtorno',
+      'etapa_23_bulimia_3meses', 'etapa_24_anorexia_3meses',
+      'saude_mental_diagnostico', 'quais_condicoes_mentais',
+      'tomando_medicamento_mental', 'detalhe_medicamento_mental',
+      'consumo_alcool', 'etapa_43',
+    ],
+  },
+  estilo_vida: {
+    title: 'Hábitos de Vida',
+    keys: [
+      'frequencia_exercicios', 'vontade_comer_incontrolavel', 'comer_estressado',
+      'habito_beliscar', 'tempo_tentativa', 'metodos_anteriores',
+    ],
+  },
+  metas: {
+    title: 'Metas e Objetivos',
+    keys: ['motivos_emagrecer', 'apoio_programa', 'dificuldade_emagrecimento'],
+  },
+};
+
+// ── Helper: format values professionally ─────────────────────────────────────
+function formatLabel(raw: string): string {
+  const lower = raw.toLowerCase().trim();
+  if (lower === 'false' || lower === 'nao' || lower === 'não') return 'Não';
+  if (lower === 'true' || lower === 'sim') return 'Sim';
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function displayValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+  if (Array.isArray(value)) return value.map(v => formatLabel(String(v))).join(', ');
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if ('altura' in obj && 'peso' in obj) return `${obj.altura} cm / ${obj.peso} kg`;
+    return Object.entries(obj).map(([k, v]) => `${formatLabel(k)}: ${v}`).join(', ');
+  }
+  return formatLabel(String(value));
+}
 
 export default function AdminInbox() {
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
@@ -255,30 +341,34 @@ export default function AdminInbox() {
   };
 
   const renderAnswersByCategory = (respostas: Record<string, any>) => {
+    const allMappedKeys = new Set(Object.values(questionCategories).flatMap(c => c.keys));
+    
     return (
-      <Accordion type="multiple" className="w-full">
-        {Object.entries(questionCategories).map(([category, keys]) => {
-          const categoryAnswers = Object.entries(respostas).filter(([key]) => 
-            keys.some(k => key.toLowerCase().includes(k))
-          );
+      <Accordion type="multiple" className="w-full" defaultValue={['biometria']}>
+        {Object.entries(questionCategories).map(([categoryId, category]) => {
+          const categoryAnswers = category.keys
+            .filter(k => respostas[k] !== undefined && respostas[k] !== null && respostas[k] !== '')
+            .map(k => ({ key: k, value: respostas[k] }));
           
           if (categoryAnswers.length === 0) return null;
           
           return (
-            <AccordionItem key={category} value={category}>
+            <AccordionItem key={categoryId} value={categoryId}>
               <AccordionTrigger className="text-sm font-medium">
-                {category} ({categoryAnswers.length})
+                {category.title} ({categoryAnswers.length})
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-2">
-                  {categoryAnswers.map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
-                      <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                      <span className="font-medium">
-                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                      </span>
-                    </div>
-                  ))}
+                  {categoryAnswers.map(({ key, value }) => {
+                    const formatted = displayValue(value);
+                    if (formatted === '—') return null;
+                    return (
+                      <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
+                        <span className="text-muted-foreground">{questionLabels[key] || formatLabel(key)}</span>
+                        <span className="font-medium text-right max-w-[50%]">{formatted}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -286,25 +376,31 @@ export default function AdminInbox() {
         })}
         
         {/* Outras respostas */}
-        <AccordionItem value="outras">
-          <AccordionTrigger className="text-sm font-medium">
-            Outras Respostas
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2">
-              {Object.entries(respostas)
-                .filter(([key]) => !Object.values(questionCategories).flat().some(k => key.toLowerCase().includes(k)))
-                .map(([key, value]) => (
-                  <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
-                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                    <span className="font-medium">
-                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        {(() => {
+          const otherAnswers = Object.entries(respostas).filter(([key]) => !allMappedKeys.has(key));
+          if (otherAnswers.length === 0) return null;
+          return (
+            <AccordionItem value="outras">
+              <AccordionTrigger className="text-sm font-medium">
+                Outras Respostas ({otherAnswers.length})
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2">
+                  {otherAnswers.map(([key, value]) => {
+                    const formatted = displayValue(value);
+                    if (formatted === '—') return null;
+                    return (
+                      <div key={key} className="flex justify-between text-sm py-1 border-b border-border/50">
+                        <span className="text-muted-foreground">{questionLabels[key] || formatLabel(key)}</span>
+                        <span className="font-medium text-right max-w-[50%]">{formatted}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })()}
       </Accordion>
     );
   };
