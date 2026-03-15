@@ -27,10 +27,19 @@ export function useSubmitAssessment() {
       if (conditions.includes('problemas_cardiacos')) score += 20;
     }
 
-    // BMI-based risk
+    // BMI-based risk - support both old and new field formats
     const alturaData = answers['altura_peso'] as { altura?: number; peso?: number } | undefined;
+    const pesoAtual = answers['peso_atual'] as number | undefined;
+    const alturaVal = answers['altura'] as number | undefined;
+    
+    let bmi: number | null = null;
     if (alturaData?.altura && alturaData?.peso) {
-      const bmi = calculateBMI(alturaData.peso, alturaData.altura);
+      bmi = calculateBMI(alturaData.peso, alturaData.altura);
+    } else if (pesoAtual && alturaVal) {
+      bmi = calculateBMI(pesoAtual, alturaVal);
+    }
+    
+    if (bmi) {
       if (bmi >= 40) score += 30;
       else if (bmi >= 35) score += 20;
       else if (bmi >= 30) score += 10;
@@ -38,7 +47,8 @@ export function useSubmitAssessment() {
 
     // Medications increase risk
     const takesRiskMeds = answers['medicamentos_risco'] as string | undefined;
-    if (takesRiskMeds === 'sim') score += 15;
+    const usaMedicamento = answers['usa_medicamento_continuo'] as string | undefined;
+    if (takesRiskMeds === 'sim' || usaMedicamento === 'sim') score += 15;
 
     // Age factor
     const age = answers['idade'] as number | undefined;
