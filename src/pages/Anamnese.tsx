@@ -1,5 +1,5 @@
 import { Header } from "@/components/layout/Header";
-import { QuizContainer } from "@/components/quiz/QuizContainer";
+import { AnamneseForm } from "@/components/anamnese/AnamneseForm";
 
 export default function Anamnese() {
   return (
@@ -16,7 +16,7 @@ export default function Anamnese() {
           </p>
         </div>
 
-        <QuizContainer />
+        <AnamneseForm />
       </main>
     </div>
   );

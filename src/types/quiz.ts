@@ -91,5 +91,5 @@ export type Question =
   | LogicQuestion;
 
 export interface QuizAnswers {
-  [questionId: string]: string | string[] | number | { [fieldId: string]: number };
+  [questionId: string]: string | string[] | number | boolean | null | { [fieldId: string]: number | string };
 }

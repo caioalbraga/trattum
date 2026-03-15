@@ -58,28 +58,42 @@ function formatLabel(raw: string): string {
 function getPatientSummary(respostas: Record<string, unknown>) {
   const parts: { icon: typeof User; text: string }[] = [];
 
-  // Gender + Age
-  const genero = respostas.genero_nascimento as string | undefined;
-  const idade = respostas.idade as string | undefined;
-  if (genero || idade) {
-    const gLabel = genero ? formatLabel(genero) : '';
-    const iLabel = idade ? formatLabel(idade) : '';
-    parts.push({ icon: User, text: [gLabel, iLabel].filter(Boolean).join(', ') });
-  }
+  // NEW format detection
+  const isNew = 'nome_completo' in respostas || 'sexo' in respostas;
 
-  // Weight / Height
-  const ap = respostas.altura_peso as { altura?: number; peso?: number } | undefined;
-  if (ap?.altura && ap?.peso) {
-    parts.push({ icon: Scale, text: `${ap.peso} kg / ${ap.altura} cm` });
-  }
-
-  // Goal
-  const motivos = respostas.motivos_emagrecer;
-  if (motivos) {
-    const mText = Array.isArray(motivos)
-      ? motivos.slice(0, 2).map(v => formatLabel(String(v))).join(', ')
-      : formatLabel(String(motivos));
-    parts.push({ icon: Target, text: mText });
+  if (isNew) {
+    const sexo = respostas.sexo as string | undefined;
+    const dataNasc = respostas.data_nascimento as string | undefined;
+    if (sexo || dataNasc) {
+      const sLabel = sexo ? formatLabel(sexo) : '';
+      const dLabel = dataNasc || '';
+      parts.push({ icon: User, text: [sLabel, dLabel].filter(Boolean).join(', ') });
+    }
+    const peso = respostas.peso_atual as number | undefined;
+    const altura = respostas.altura as number | undefined;
+    if (peso && altura) {
+      parts.push({ icon: Scale, text: `${peso} kg / ${altura} cm` });
+    }
+  } else {
+    // OLD format
+    const genero = respostas.genero_nascimento as string | undefined;
+    const idade = respostas.idade as string | undefined;
+    if (genero || idade) {
+      const gLabel = genero ? formatLabel(genero) : '';
+      const iLabel = idade ? formatLabel(idade) : '';
+      parts.push({ icon: User, text: [gLabel, iLabel].filter(Boolean).join(', ') });
+    }
+    const ap = respostas.altura_peso as { altura?: number; peso?: number } | undefined;
+    if (ap?.altura && ap?.peso) {
+      parts.push({ icon: Scale, text: `${ap.peso} kg / ${ap.altura} cm` });
+    }
+    const motivos = respostas.motivos_emagrecer;
+    if (motivos) {
+      const mText = Array.isArray(motivos)
+        ? motivos.slice(0, 2).map(v => formatLabel(String(v))).join(', ')
+        : formatLabel(String(motivos));
+      parts.push({ icon: Target, text: mText });
+    }
   }
 
   return parts;

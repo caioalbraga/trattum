@@ -1,87 +1,113 @@
 
 
-## Plan: Refazer Formulário de Anamnese (4 Blocos) + Atualizar Prontuário Clínico
+## Plano: Central de Notificações e Fluxo de Ajustes Clínicos
 
-### Overview
+### Visao Geral
 
-Substituir completamente o formulário de anamnese atual (quiz step-by-step com ~40 perguntas JSON) por um formulário de 4 blocos em página única, com campos condicionais animados. Atualizar o prontuário clínico (ClinicalDossier) para refletir os novos campos.
+Vamos criar uma central de notificações no painel do paciente e um sistema de comunicação bidirecional entre médico e paciente para ajustes clínicos. O menu lateral será reorganizado na nova ordem solicitada.
 
-### Current State
+---
 
-- Anamnese usa `QuizContainer` + `useQuiz` + `questions.json` (41 questões step-by-step)
-- Dados salvos no campo JSONB `respostas` da tabela `avaliacoes`
-- ClinicalDossier mapeia keys do quiz antigo para exibição no painel admin
-- Não existe storage bucket para fotos
+### 1. Reorganizar Menu Lateral do Paciente
 
-### Changes Required
+**Ordem atual:** Início, Atendimento, Tratamento, Minha Conta
 
-#### 1. Create Storage Bucket for Photos
-- Create `anamnese-fotos` bucket via migration
-- Add RLS policies: users upload own photos, admins can view all
+**Nova ordem:** Início, Tratamento, Notificações (com badge de contagem), Atendimento, Minha Conta
 
-#### 2. New Anamnese Page (`src/pages/Anamnese.tsx`)
-- Replace quiz-based approach with a single-page, multi-block form
-- 4 blocks rendered sequentially with scroll, all on one page
-- Use `react-hook-form` for form state management
-- Submit saves to `avaliacoes.respostas` JSONB with new key structure
+**Arquivo:** `src/components/dashboard/DashboardSidebar.tsx`
 
-**Block 1 — Identificação:**
-- `nome_completo` (text)
-- `data_nascimento` (date picker)
-- `sexo` (select: Masculino/Feminino)
-- `peso_atual` (number, suffix "kg")
-- `altura` (number, suffix "cm")
+- Adicionar ícone `Bell` para Notificações
+- Rota: `/dashboard/notificacoes`
 
-**Block 2 — Histórico de Saúde:**
-- `usa_medicamento_continuo` (Sim/Não) → if Sim: `detalhe_medicamento_continuo` (text)
-- `historico_familiar_doencas` (Sim/Não) → if Sim: `detalhe_historico_familiar` (text)
-- `cirurgia_previa` (Sim/Não) → if Sim: `detalhe_cirurgia` (text)
-- **Conditional (sexo=Feminino only):** `ja_esteve_gravida` (Sim/Não) → if Sim: `quantas_gestacoes` (number) + `houve_aborto` (Sim/Não)
+---
 
-**Block 3 — Estilo de Vida:**
-- `acompanhamento_nutricional` (Sim/Não)
-- `pratica_atividade_fisica` (Sim/Não)
+### 2. Criar Tabelas no Banco de Dados
 
-**Block 4 — Medidas e Fotos:**
-- Circumferences (number fields): `circ_braco`, `circ_torax`, `circ_cintura`, `circ_quadril`, `circ_perna`
-- SVG body silhouette illustration showing measurement points
-- 3 photo upload fields: `foto_frente`, `foto_lateral`, `foto_costas`
+**Tabela `notificacoes`** -- notificações gerais do paciente (aprovação, rejeição, ajuste)
 
-**Conditional animations:** `framer-motion` AnimatePresence for smooth show/hide of conditional fields.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| user_id | uuid | Paciente destinatário |
+| avaliacao_id | uuid (nullable) | Avaliação relacionada |
+| tipo | text | 'aprovado', 'rejeitado', 'ajuste' |
+| titulo | text | Título da notificação |
+| mensagem | text | Corpo da notificação |
+| lida | boolean | Se foi lida |
+| created_at | timestamptz | Data de criação |
 
-#### 3. New Component: `src/components/anamnese/AnamneseForm.tsx`
-- Main form component with all 4 blocks
-- Handles conditional logic client-side (no page redirects)
-- On submit: uploads photos to storage bucket, saves all data to `avaliacoes.respostas`
+**Tabela `ajustes_clinicos`** -- thread de perguntas e respostas entre médico e paciente
 
-#### 4. Update `useSubmitAssessment.ts`
-- Adapt `calculateRiskScore` for new field keys
-- Calculate BMI from `peso_atual` and `altura` (instead of `altura_peso` object)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| avaliacao_id | uuid | Avaliação relacionada |
+| user_id | uuid | Paciente |
+| autor | text | 'medico' ou 'paciente' |
+| mensagem | text | Texto da pergunta ou resposta |
+| criado_por | uuid (nullable) | ID do admin que criou (quando autor=medico) |
+| created_at | timestamptz | Data de criação |
 
-#### 5. Update ClinicalDossier (`src/components/admin/dashboard/ClinicalDossier.tsx`)
-- Replace section definitions and `questionLabels` to match new 4-block structure:
-  - **Identificação**: nome_completo, data_nascimento, sexo, peso_atual, altura
-  - **Histórico de Saúde**: medicamentos, histórico familiar, cirurgias, gestações
-  - **Estilo de Vida**: acompanhamento nutricional, atividade física
-  - **Medidas**: circumferences
-  - **Fotos**: render photo URLs as images
-- Keep backward compatibility: old `questionLabels` remain so existing assessments still render correctly
-- Conditional fields that weren't answered simply don't appear (existing `ResponseRow` already returns null for empty values)
+**RLS:** Pacientes podem ler/atualizar suas notificações e inserir respostas nos ajustes. Admins podem gerenciar tudo.
 
-#### 6. Files Affected
-- **Rewrite:** `src/pages/Anamnese.tsx`
-- **New:** `src/components/anamnese/AnamneseForm.tsx`
-- **New:** `src/components/anamnese/BodySilhouette.tsx` (SVG illustration)
-- **New:** `src/components/anamnese/PhotoUpload.tsx`
-- **Edit:** `src/hooks/useSubmitAssessment.ts` (adapt risk calculation)
-- **Edit:** `src/components/admin/dashboard/ClinicalDossier.tsx` (add new sections, keep old ones)
-- **Edit:** `src/components/admin/dashboard/EvaluationsTable.tsx` (adapt summary extraction)
-- **No changes** to: `questions.json`, `useQuiz.ts`, `QuizContainer.tsx` (kept for reference but no longer used by `/anamnese` route)
-- **DB migration:** Create storage bucket + policies
+---
 
-#### 7. What Will NOT Change
-- No table recreation or column alterations
-- All data saved as JSONB in existing `respostas` column
-- No changes to Results page, auth flow, checkout, or any other pages
-- Old assessment data from previous patients remains readable
+### 3. Criar Página de Notificações do Paciente
+
+**Arquivo novo:** `src/pages/DashboardNotificacoes.tsx`
+
+- Lista de notificações com ícone por tipo (aprovado = check verde, rejeitado = X vermelho, ajuste = alerta azul)
+- Ao clicar em uma notificação de ajuste, abre um painel com:
+  - A pergunta do médico
+  - Campo de texto para resposta
+  - Botão "Enviar Resposta"
+- Notificações de aprovação/rejeição mostram apenas a mensagem informativa
+- Badge com contagem de não lidas no menu lateral
+
+---
+
+### 4. Atualizar Fluxo do Admin (Solicitar Ajuste)
+
+**Arquivo:** `src/pages/admin/AdminDashboard.tsx` (handleUpdateStatus)
+
+Quando o admin clica "Solicitar Ajuste":
+- Cria registro em `ajustes_clinicos` com autor='medico' e a nota escrita
+- Cria registro em `notificacoes` para o paciente com tipo='ajuste'
+- Atualiza status da avaliação para 'ajuste'
+
+Quando o admin aprova ou rejeita:
+- Cria notificação correspondente para o paciente
+
+---
+
+### 5. Mostrar Thread de Ajustes no Dossiê Clínico do Admin
+
+**Arquivo:** `src/components/admin/dashboard/ClinicalDossier.tsx`
+
+- Adicionar nova seção "Ajustes Clínicos" abaixo do dossiê
+- Exibe toda a thread de mensagens (pergunta do médico + resposta do paciente) em ordem cronológica
+- Formato de chat simples: mensagens do médico alinhadas à esquerda, do paciente à direita
+- Se a avaliação estiver em status 'ajuste', permitir enviar nova pergunta
+- O admin pode continuar pedindo ajustes (thread cresce)
+
+---
+
+### 6. Rota e Integração
+
+**Arquivo:** `src/App.tsx`
+
+- Adicionar rota `/dashboard/notificacoes` apontando para `DashboardNotificacoes`
+
+---
+
+### Resumo Tecnico dos Arquivos
+
+| Ação | Arquivo |
+|------|---------|
+| Editar | `src/components/dashboard/DashboardSidebar.tsx` (reordenar menu + adicionar Notificações) |
+| Criar | Migration SQL (tabelas `notificacoes` e `ajustes_clinicos` com RLS) |
+| Criar | `src/pages/DashboardNotificacoes.tsx` |
+| Editar | `src/App.tsx` (nova rota) |
+| Editar | `src/pages/admin/AdminDashboard.tsx` (criar notificações + ajustes ao mudar status) |
+| Editar | `src/components/admin/dashboard/ClinicalDossier.tsx` (seção de thread de ajustes) |
 

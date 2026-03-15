@@ -18,7 +18,6 @@ import {
   Calendar,
   Activity,
   Heart,
-  Utensils,
   Target,
   AlertTriangle,
   ChevronDown,
@@ -26,6 +25,8 @@ import {
   ClipboardList,
   MessageSquare,
   Send,
+  Ruler,
+  Camera,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Evaluation } from './EvaluationsTable';
@@ -45,8 +46,9 @@ const statusConfig: Record<string, { label: string; className: string; icon: typ
   rejeitado: { label: 'Rejeitado',          className: 'bg-red-100    text-red-800    border-red-200',    icon: XCircle },
 };
 
-// ── Question label map ───────────────────────────────────────────────────────
+// ── Question label map (OLD quiz keys + NEW anamnese keys) ───────────────────
 const questionLabels: Record<string, string> = {
+  // OLD quiz keys (backward compat)
   motivos_emagrecer:        'Motivos para emagrecer',
   apoio_programa:           'Áreas de apoio desejadas',
   dificuldade_emagrecimento:'Principal dificuldade',
@@ -86,6 +88,31 @@ const questionLabels: Record<string, string> = {
   etapa_40:                 'Informações adicionais de saúde?',
   etapa_41:                 'Detalhes adicionais',
   etapa_43:                 'Aceita medicamentos injetáveis?',
+  // NEW anamnese keys
+  nome_completo:                'Nome Completo',
+  data_nascimento:              'Data de Nascimento',
+  sexo:                         'Sexo',
+  peso_atual:                   'Peso Atual (kg)',
+  altura:                       'Altura (cm)',
+  usa_medicamento_continuo:     'Medicamento de Uso Contínuo?',
+  detalhe_medicamento_continuo: 'Quais Medicamentos',
+  historico_familiar_doencas:   'Histórico Familiar de Doenças?',
+  detalhe_historico_familiar:   'Detalhes do Histórico Familiar',
+  cirurgia_previa:              'Cirurgia Prévia?',
+  detalhe_cirurgia:             'Detalhes da Cirurgia',
+  ja_esteve_gravida:            'Já Esteve Grávida?',
+  quantas_gestacoes:            'Número de Gestações',
+  houve_aborto:                 'Houve Aborto?',
+  acompanhamento_nutricional:   'Acompanhamento Nutricional?',
+  pratica_atividade_fisica:     'Pratica Atividade Física?',
+  circ_braco:                   'Circunferência - Braço (cm)',
+  circ_torax:                   'Circunferência - Tórax (cm)',
+  circ_cintura:                 'Circunferência - Cintura (cm)',
+  circ_quadril:                 'Circunferência - Quadril (cm)',
+  circ_perna:                   'Circunferência - Perna/Coxa (cm)',
+  foto_frente:                  'Foto - Frente',
+  foto_lateral:                 'Foto - Lateral',
+  foto_costas:                  'Foto - Costas',
 };
 
 // ── Clinical risk flags ──────────────────────────────────────────────────────
@@ -115,7 +142,10 @@ function isRisk(key: string, value: unknown): boolean {
   return riskValues.has(str) || riskValues.has(str.toLowerCase());
 }
 
-// ── Section definitions ──────────────────────────────────────────────────────
+// Photo keys to render as images
+const photoKeys = new Set(['foto_frente', 'foto_lateral', 'foto_costas']);
+
+// ── Section definitions (OLD sections for backward compat) ───────────────────
 interface Section {
   id: string;
   title: string;
@@ -123,7 +153,47 @@ interface Section {
   keys: string[];
 }
 
-const sections: Section[] = [
+// NEW anamnese sections
+const newSections: Section[] = [
+  {
+    id: 'identificacao',
+    title: 'Identificação',
+    icon: User,
+    keys: ['nome_completo', 'data_nascimento', 'sexo', 'peso_atual', 'altura'],
+  },
+  {
+    id: 'historico_saude',
+    title: 'Histórico de Saúde',
+    icon: Heart,
+    keys: [
+      'usa_medicamento_continuo', 'detalhe_medicamento_continuo',
+      'historico_familiar_doencas', 'detalhe_historico_familiar',
+      'cirurgia_previa', 'detalhe_cirurgia',
+      'ja_esteve_gravida', 'quantas_gestacoes', 'houve_aborto',
+    ],
+  },
+  {
+    id: 'estilo_vida_new',
+    title: 'Estilo de Vida',
+    icon: Activity,
+    keys: ['acompanhamento_nutricional', 'pratica_atividade_fisica'],
+  },
+  {
+    id: 'medidas',
+    title: 'Medidas Corporais',
+    icon: Ruler,
+    keys: ['circ_braco', 'circ_torax', 'circ_cintura', 'circ_quadril', 'circ_perna'],
+  },
+  {
+    id: 'fotos',
+    title: 'Fotos',
+    icon: Camera,
+    keys: ['foto_frente', 'foto_lateral', 'foto_costas'],
+  },
+];
+
+// OLD quiz sections
+const oldSections: Section[] = [
   {
     id: 'biometria',
     title: 'Biometria e IMC',
@@ -161,13 +231,16 @@ const sections: Section[] = [
   },
 ];
 
+// Detect which format: new anamnese has 'nome_completo', old quiz has 'genero_nascimento'
+function isNewFormat(responses: Record<string, unknown>): boolean {
+  return 'nome_completo' in responses || 'sexo' in responses;
+}
+
 // ── Helper: pretty-print a value ─────────────────────────────────────────────
 function formatLabel(raw: string): string {
-  // Boolean translations
   const lower = raw.toLowerCase().trim();
   if (lower === 'false' || lower === 'nao' || lower === 'não') return 'Não';
   if (lower === 'true' || lower === 'sim') return 'Sim';
-  // Replace underscores, capitalize first letter of each word
   return raw
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
@@ -186,9 +259,18 @@ function displayValue(value: unknown): string {
 }
 
 // ── Sub-component: one response row ──────────────────────────────────────────
-function ResponseRow({ label, value, riskFlag }: { label: string; value: unknown; riskFlag: boolean }) {
+function ResponseRow({ label, value, riskFlag, isPhoto }: { label: string; value: unknown; riskFlag: boolean; isPhoto?: boolean }) {
   const display = displayValue(value);
   if (display === '—') return null;
+
+  if (isPhoto && typeof value === 'string' && value.startsWith('http')) {
+    return (
+      <div className="py-3 px-4 rounded-lg border bg-background border-border/30">
+        <dt className="text-xs text-muted-foreground mb-2">{label}</dt>
+        <img src={value} alt={label} className="w-full max-w-[200px] rounded-lg object-cover aspect-[3/4]" />
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
@@ -224,7 +306,7 @@ function SectionBlock({
 
   const rows = section.keys
     .filter(k => responses[k] !== undefined && responses[k] !== null && responses[k] !== '')
-    .map(k => ({ key: k, value: responses[k], risk: isRisk(k, responses[k]) }));
+    .map(k => ({ key: k, value: responses[k], risk: isRisk(k, responses[k]), isPhoto: photoKeys.has(k) }));
 
   const hasRisk = rows.some(r => r.risk);
 
@@ -251,13 +333,17 @@ function SectionBlock({
       </button>
 
       {open && (
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className={cn(
+          "p-4 gap-2",
+          section.id === 'fotos' ? 'grid grid-cols-1 sm:grid-cols-3' : 'grid grid-cols-1 sm:grid-cols-2'
+        )}>
           {rows.map(r => (
             <ResponseRow
               key={r.key}
               label={questionLabels[r.key] || r.key.replace(/_/g, ' ')}
               value={r.value}
               riskFlag={r.risk}
+              isPhoto={r.isPhoto}
             />
           ))}
         </div>
@@ -396,6 +482,10 @@ export function ClinicalDossier({
   const StatusIcon = status.icon;
   const responses = evaluation.respostas as Record<string, unknown>;
 
+  // Auto-detect format and pick sections
+  const useNew = isNewFormat(responses);
+  const sections = useNew ? newSections : oldSections;
+
   // Keys already mapped in sections
   const mappedKeys = new Set(sections.flatMap(s => s.keys));
   const otherEntries = Object.entries(responses).filter(([k]) => !mappedKeys.has(k));
@@ -424,7 +514,7 @@ export function ClinicalDossier({
               </div>
               <div>
                 <h2 className="font-serif text-xl font-semibold text-foreground leading-tight">
-                  {evaluation.patient_name || 'Nome não disponível'}
+                  {evaluation.patient_name || (responses.nome_completo as string) || 'Nome não disponível'}
                 </h2>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   <span className="flex items-center gap-1">
@@ -511,6 +601,7 @@ export function ClinicalDossier({
                         label={questionLabels[key] || key.replace(/_/g, ' ')}
                         value={value}
                         riskFlag={isRisk(key, value)}
+                        isPhoto={photoKeys.has(key)}
                       />
                     ))}
                   </div>
