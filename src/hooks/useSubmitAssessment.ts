@@ -74,12 +74,17 @@ export function useSubmitAssessment() {
         return { success: false, error: 'auth_required' };
       }
 
-      // Calculate IMC and risk score
+      // Calculate IMC and risk score - support both old and new formats
       const alturaData = answers['altura_peso'] as { altura?: number; peso?: number } | undefined;
-      const imc = alturaData?.altura && alturaData?.peso 
-        ? calculateBMI(alturaData.peso, alturaData.altura)
-        : null;
-      const scoreRisco = calculateRiskScore(answers);
+      const pesoAtual = answers['peso_atual'] as number | undefined;
+      const alturaVal = answers['altura'] as number | undefined;
+      
+      let imc: number | null = null;
+      if (alturaData?.altura && alturaData?.peso) {
+        imc = calculateBMI(alturaData.peso, alturaData.altura);
+      } else if (pesoAtual && alturaVal) {
+        imc = calculateBMI(pesoAtual, alturaVal);
+      }
 
       // Insert assessment into database
       const { data, error } = await supabase
