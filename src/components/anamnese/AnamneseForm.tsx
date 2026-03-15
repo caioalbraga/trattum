@@ -200,7 +200,7 @@ export function AnamneseForm() {
     // Photo URLs
     Object.assign(answers, fotoUrls);
 
-    const result = await submitAssessment(answers);
+    const result = await submitAssessment(answers as import('@/types/quiz').QuizAnswers);
     if (result.success) {
       navigate('/results');
     }
