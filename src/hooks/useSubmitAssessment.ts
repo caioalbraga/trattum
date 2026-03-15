@@ -86,6 +86,8 @@ export function useSubmitAssessment() {
         imc = calculateBMI(pesoAtual, alturaVal);
       }
 
+      const scoreRisco = calculateRiskScore(answers);
+
       // Insert assessment into database
       const { data, error } = await supabase
         .from('avaliacoes')
