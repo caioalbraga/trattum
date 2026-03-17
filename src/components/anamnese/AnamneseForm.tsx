@@ -200,10 +200,29 @@ export function AnamneseForm() {
     // Photo URLs
     Object.assign(answers, fotoUrls);
 
-    const result = await submitAssessment(answers as import('@/types/quiz').QuizAnswers);
-    if (result.success) {
-      navigate('/results');
+    // --- Client-side validation: age ≥ 18, BMI ≥ 25 ---
+    const peso = parseFloat(data.peso_atual);
+    const alturaM = parseFloat(data.altura) / 100;
+    const bmi = alturaM > 0 ? peso / (alturaM * alturaM) : 0;
+
+    let age = 0;
+    if (data.data_nascimento) {
+      const today = new Date();
+      const birth = new Date(data.data_nascimento);
+      age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     }
+
+    if (age < 18 || bmi < 25) {
+      sessionStorage.setItem('notEligibleReason', age < 18 ? 'age' : 'bmi');
+      navigate('/not-eligible');
+      return;
+    }
+
+    // Store answers in session for post-signup submission
+    sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+    navigate('/cadastro');
   };
 
   return (

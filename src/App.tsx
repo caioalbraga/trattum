@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Anamnese from "./pages/Anamnese";
 import Auth from "./pages/Auth";
 import Results from "./pages/Results";
+import Cadastro from "./pages/Cadastro";
+import Confirmacao from "./pages/Confirmacao";
 import Checkout from "./pages/Checkout";
 import NotEligible from "./pages/NotEligible";
 import ResetPassword from "./pages/ResetPassword";
