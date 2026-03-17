@@ -140,25 +140,6 @@ export function AnamneseForm() {
     if (!data.peso_atual) { toast.error('Informe o peso atual.'); return; }
     if (!data.altura) { toast.error('Informe a altura.'); return; }
 
-    // Upload photos if any
-    let fotoUrls: Record<string, string> = {};
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const uploads = await Promise.all(
-        (['frente', 'lateral', 'costas'] as const).map(async (tipo) => {
-          if (photos[tipo]) {
-            const url = await uploadPhoto(photos[tipo]!, user.id, tipo);
-            return [tipo, url] as const;
-          }
-          return null;
-        })
-      );
-      uploads.forEach((u) => {
-        if (u && u[1]) fotoUrls[`foto_${u[0]}`] = u[1];
-      });
-    }
-
     // Build answers object matching new structure
     const answers: Record<string, unknown> = {
       nome_completo: data.nome_completo.trim(),
