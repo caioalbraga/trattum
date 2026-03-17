@@ -140,25 +140,6 @@ export function AnamneseForm() {
     if (!data.peso_atual) { toast.error('Informe o peso atual.'); return; }
     if (!data.altura) { toast.error('Informe a altura.'); return; }
 
-    // Upload photos if any
-    let fotoUrls: Record<string, string> = {};
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const uploads = await Promise.all(
-        (['frente', 'lateral', 'costas'] as const).map(async (tipo) => {
-          if (photos[tipo]) {
-            const url = await uploadPhoto(photos[tipo]!, user.id, tipo);
-            return [tipo, url] as const;
-          }
-          return null;
-        })
-      );
-      uploads.forEach((u) => {
-        if (u && u[1]) fotoUrls[`foto_${u[0]}`] = u[1];
-      });
-    }
-
     // Build answers object matching new structure
     const answers: Record<string, unknown> = {
       nome_completo: data.nome_completo.trim(),
@@ -197,13 +178,32 @@ export function AnamneseForm() {
       if (data[f]) answers[f] = parseFloat(data[f]);
     });
 
-    // Photo URLs
-    Object.assign(answers, fotoUrls);
+    // Photos stored locally for now - will be uploaded after account creation
+    // Photo files are in the `photos` state but not uploaded yet since user has no account
 
-    const result = await submitAssessment(answers as import('@/types/quiz').QuizAnswers);
-    if (result.success) {
-      navigate('/results');
+    // --- Client-side validation: age ≥ 18, BMI ≥ 25 ---
+    const peso = parseFloat(data.peso_atual);
+    const alturaM = parseFloat(data.altura) / 100;
+    const bmi = alturaM > 0 ? peso / (alturaM * alturaM) : 0;
+
+    let age = 0;
+    if (data.data_nascimento) {
+      const today = new Date();
+      const birth = new Date(data.data_nascimento);
+      age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     }
+
+    if (age < 18 || bmi < 25) {
+      sessionStorage.setItem('notEligibleReason', age < 18 ? 'age' : 'bmi');
+      navigate('/not-eligible');
+      return;
+    }
+
+    // Store answers in session for post-signup submission
+    sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+    navigate('/cadastro');
   };
 
   return (
