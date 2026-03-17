@@ -178,8 +178,8 @@ export function AnamneseForm() {
       if (data[f]) answers[f] = parseFloat(data[f]);
     });
 
-    // Photo URLs
-    Object.assign(answers, fotoUrls);
+    // Photos stored locally for now - will be uploaded after account creation
+    // Photo files are in the `photos` state but not uploaded yet since user has no account
 
     // --- Client-side validation: age ≥ 18, BMI ≥ 25 ---
     const peso = parseFloat(data.peso_atual);
