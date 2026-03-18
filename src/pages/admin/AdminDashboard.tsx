@@ -193,12 +193,11 @@ export default function AdminDashboard() {
 
       // If approved, run the full approval workflow
       if (newStatus === 'aprovado') {
-        // 1. Update treatment status to active
+        // 1. Update treatment status to aprovado (payment now unlocked for patient)
         await supabase
           .from('tratamentos')
           .update({ 
-            status: 'ativo', 
-            data_inicio: new Date().toISOString().split('T')[0],
+            status: 'aprovado', 
             plano: 'Protocolo de Gerenciamento Metabólico'
           })
           .eq('user_id', evaluation.user_id);
