@@ -64,11 +64,11 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Fetch active treatments count
+      // Fetch active treatments count (any status beyond nenhum)
       const { count: tratamentosAtivos } = await supabase
         .from('tratamentos')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'ativo');
+        .in('status', ['em_analise', 'aprovado', 'processamento', 'enviado', 'entregue', 'em_andamento']);
 
       // Calculate metrics
       const now = new Date();
@@ -193,12 +193,11 @@ export default function AdminDashboard() {
 
       // If approved, run the full approval workflow
       if (newStatus === 'aprovado') {
-        // 1. Update treatment status to active
+        // 1. Update treatment status to aprovado (payment now unlocked for patient)
         await supabase
           .from('tratamentos')
           .update({ 
-            status: 'ativo', 
-            data_inicio: new Date().toISOString().split('T')[0],
+            status: 'aprovado', 
             plano: 'Protocolo de Gerenciamento Metabólico'
           })
           .eq('user_id', evaluation.user_id);

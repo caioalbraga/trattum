@@ -109,9 +109,14 @@ export function useSubmitAssessment() {
         return { success: false, error: error.message };
       }
 
-      // Store assessment ID for Results page
+      // Update tratamento status to em_analise
+      await supabase
+        .from('tratamentos')
+        .update({ status: 'em_analise' })
+        .eq('user_id', user.id);
+
+      // Store assessment ID
       sessionStorage.setItem('assessmentId', data.id);
-      // Clear any pending answers
       sessionStorage.removeItem('pendingQuizAnswers');
 
       return { success: true, assessmentId: data.id };
