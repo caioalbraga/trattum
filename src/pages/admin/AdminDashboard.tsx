@@ -64,11 +64,11 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Fetch active treatments count
+      // Fetch active treatments count (any status beyond nenhum)
       const { count: tratamentosAtivos } = await supabase
         .from('tratamentos')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'ativo');
+        .in('status', ['em_analise', 'aprovado', 'processamento', 'enviado', 'entregue', 'em_andamento']);
 
       // Calculate metrics
       const now = new Date();
