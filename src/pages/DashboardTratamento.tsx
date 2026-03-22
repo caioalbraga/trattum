@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard,
   Clock, Shield, Pill, Search, Truck, PackageCheck, CheckCircle2, Circle,
+  XCircle,
 } from 'lucide-react';
 import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
