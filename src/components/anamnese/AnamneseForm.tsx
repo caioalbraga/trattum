@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BodySilhouette } from './BodySilhouette';
 import { PhotoUpload } from './PhotoUpload';
 import { useSubmitAssessment } from '@/hooks/useSubmitAssessment';
+import { setPendingPhotos } from '@/lib/photo-store';
 
 const animVariants = {
   initial: { opacity: 0, height: 0, marginTop: 0 },
@@ -203,6 +204,8 @@ export function AnamneseForm() {
 
     // Store answers in session for post-signup submission
     sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+    // Store photos in memory for upload after account creation
+    setPendingPhotos(photos);
     navigate('/cadastro');
   };
 

@@ -110,10 +110,15 @@ export default function AdminDashboard() {
           avaliacoes.map(async (a) => {
             const encryptedName = profileMap.get(a.user_id) || null;
             const decryptedName = await decryptName(encryptedName);
+            // If decrypted name looks like an email, fall back to nome_completo from respostas
+            const respostas = a.respostas as Record<string, unknown>;
+            const nomeCompleto = respostas?.nome_completo as string | undefined;
+            const isEmail = decryptedName.includes('@');
+            const patientName = (isEmail && nomeCompleto) ? nomeCompleto : decryptedName;
             return {
               id: a.id,
               user_id: a.user_id,
-              patient_name: decryptedName,
+              patient_name: patientName,
               imc: a.imc,
               status: a.status,
               created_at: a.created_at,

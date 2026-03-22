@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
+import { getPendingPhotos, clearPendingPhotos } from "@/lib/photo-store";
 
 const emailSchema = z.string().email("E-mail inválido");
 const passwordSchema = z.string().min(6, "Senha deve ter pelo menos 6 caracteres");
@@ -29,6 +30,18 @@ export default function Cadastro() {
     }
   }, [navigate]);
 
+  const uploadPhoto = async (file: File, userId: string, tipo: string): Promise<string | null> => {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${userId}/${tipo}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('anamnese-fotos').upload(path, file);
+    if (error) {
+      console.error(`Upload error (${tipo}):`, error);
+      return null;
+    }
+    const { data } = supabase.storage.from('anamnese-fotos').getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -45,11 +58,19 @@ export default function Cadastro() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Extract nome_completo from pending answers to use as full_name
+      const pendingStr = sessionStorage.getItem('pendingQuizAnswers');
+      const pendingAnswers = pendingStr ? JSON.parse(pendingStr) : {};
+      const fullName = pendingAnswers.nome_completo || '';
+
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: fullName,
+          },
         },
       });
 
@@ -62,10 +83,38 @@ export default function Cadastro() {
         return;
       }
 
+      const userId = signUpData.user?.id;
+
+      // Upload pending photos if user was created
+      if (userId) {
+        const photos = getPendingPhotos();
+        const photoUrls: Record<string, string> = {};
+
+        const uploadPromises: Promise<void>[] = [];
+        for (const [tipo, file] of Object.entries(photos)) {
+          if (file) {
+            uploadPromises.push(
+              uploadPhoto(file, userId, tipo).then(url => {
+                if (url) photoUrls[`foto_${tipo}`] = url;
+              })
+            );
+          }
+        }
+        await Promise.all(uploadPromises);
+
+        // Add photo URLs to the pending answers
+        if (Object.keys(photoUrls).length > 0 && pendingStr) {
+          const updatedAnswers = { ...pendingAnswers, ...photoUrls };
+          sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(updatedAnswers));
+        }
+
+        clearPendingPhotos();
+      }
+
       // Submit pending anamnese data now that user is authenticated
-      const pendingStr = sessionStorage.getItem('pendingQuizAnswers');
-      if (pendingStr) {
-        const answers = JSON.parse(pendingStr);
+      const updatedPendingStr = sessionStorage.getItem('pendingQuizAnswers');
+      if (updatedPendingStr) {
+        const answers = JSON.parse(updatedPendingStr);
         await submitAssessment(answers);
       }
 
