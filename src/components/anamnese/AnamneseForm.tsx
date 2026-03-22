@@ -222,35 +222,31 @@ export function AnamneseForm() {
 
           {/* Data de nascimento */}
           <div className="space-y-2">
-            <Label>Data de nascimento</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dataNascimento && "text-muted-foreground"
-                  )}
-                  type="button"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dataNascimento ? format(dataNascimento, "dd/MM/yyyy") : "Selecione a data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dataNascimento || undefined}
-                  onSelect={(d) => setValue('data_nascimento', d || null)}
-                  disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                  captionLayout="dropdown-buttons"
-                  fromYear={1930}
-                  toYear={new Date().getFullYear()}
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="data_nascimento_display">Data de nascimento</Label>
+            <Input
+              id="data_nascimento_display"
+              placeholder="DD/MM/AAAA"
+              maxLength={10}
+              value={watch('data_nascimento_display') || ''}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, '');
+                let masked = '';
+                if (raw.length > 0) masked += raw.slice(0, 2);
+                if (raw.length > 2) masked += '/' + raw.slice(2, 4);
+                if (raw.length > 4) masked += '/' + raw.slice(4, 8);
+                setValue('data_nascimento_display', masked);
+                if (raw.length === 8) {
+                  const parsed = parse(masked, 'dd/MM/yyyy', new Date());
+                  if (isValid(parsed) && parsed <= new Date() && parsed >= new Date('1900-01-01')) {
+                    setValue('data_nascimento', parsed);
+                  } else {
+                    setValue('data_nascimento', null);
+                  }
+                } else {
+                  setValue('data_nascimento', null);
+                }
+              }}
+            />
           </div>
 
           {/* Sexo */}
