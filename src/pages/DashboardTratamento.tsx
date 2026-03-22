@@ -16,6 +16,7 @@ import { TCLEModal } from '@/components/consent/TCLEModal';
 import { PrescriptionModal } from '@/components/documents/PrescriptionModal';
 import { decryptProfile } from '@/lib/crypto-client';
 import { cn } from '@/lib/utils';
+import { normalizeTreatmentStatus } from '@/lib/treatment-status';
 
 interface Tratamento {
   status: string;
@@ -134,6 +135,7 @@ function StagePipeline({ currentStatus }: { currentStatus: string }) {
 export default function DashboardTratamento() {
   const { user } = useAuth();
   const [tratamento, setTratamento] = useState<Tratamento | null>(null);
+  const [evaluationStatus, setEvaluationStatus] = useState<string | null>(null);
   const [pedidoPendente, setPedidoPendente] = useState<Pedido | null>(null);
   const [consentLogs, setConsentLogs] = useState<ConsentLog[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -150,8 +152,8 @@ export default function DashboardTratamento() {
   const fetchData = async () => {
     if (!user) return;
     try {
-      const [tratamentoRes, pedidoRes, consentRes, profileRes, docRes] = await Promise.all([
-        supabase.from('tratamentos').select('*').eq('user_id', user.id).single(),
+      const [tratamentoRes, pedidoRes, consentRes, profileRes, docRes, avaliacaoRes] = await Promise.all([
+        supabase.from('tratamentos').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('pedidos').select('*').eq('user_id', user.id).eq('status', 'pendente')
           .order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('consent_logs')
@@ -163,12 +165,28 @@ export default function DashboardTratamento() {
           .select('id, tipo, titulo, conteudo, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
+        supabase.from('avaliacoes')
+          .select('status')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
-      setTratamento(tratamentoRes.data);
+      const normalizedStatus = normalizeTreatmentStatus(tratamentoRes.data?.status, avaliacaoRes.data?.status);
+
+      setTratamento(tratamentoRes.data ? { ...tratamentoRes.data, status: normalizedStatus } : tratamentoRes.data);
+      setEvaluationStatus(avaliacaoRes.data?.status || null);
       setPedidoPendente(pedidoRes.data);
       setConsentLogs(consentRes.data || []);
       setDocumentos((docRes.data as Documento[]) || []);
+
+      if (normalizedStatus !== 'nenhum' && tratamentoRes.data?.status !== normalizedStatus) {
+        await supabase
+          .from('tratamentos')
+          .update({ status: normalizedStatus })
+          .eq('user_id', user.id);
+      }
 
       if (profileRes.data) {
         const decrypted = await decryptProfile(profileRes.data);
@@ -182,7 +200,9 @@ export default function DashboardTratamento() {
     }
   };
 
-  const status = tratamento?.status || 'nenhum';
+  const status = normalizeTreatmentStatus(tratamento?.status, evaluationStatus) === 'ativo'
+    ? 'em_andamento'
+    : normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
   const stageIdx = getStageIndex(status);
   const isInPipeline = stageIdx >= 0;
   const isActive = status === 'em_andamento';

@@ -9,6 +9,7 @@ import { Activity, Calendar, CheckCircle2 } from 'lucide-react';
 import { decryptProfile } from '@/lib/crypto-client';
 import { DashboardPageSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
+import { normalizeTreatmentStatus } from '@/lib/treatment-status';
 
 interface Profile {
   nome: string | null;
@@ -18,6 +19,10 @@ interface Tratamento {
   status: string;
   plano: string | null;
   data_proxima_renovacao: string | null;
+}
+
+interface AvaliacaoResumo {
+  status: string;
 }
 
 interface MetaDiaria {
@@ -30,6 +35,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tratamento, setTratamento] = useState<Tratamento | null>(null);
+  const [avaliacaoRecente, setAvaliacaoRecente] = useState<AvaliacaoResumo | null>(null);
   const [metas, setMetas] = useState<MetaDiaria[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,24 +60,47 @@ export default function Dashboard() {
       const decrypted = await decryptProfile(profileData);
       setProfile(decrypted);
 
-      // Fetch tratamento
-      const { data: tratamentoData } = await supabase
-        .from('tratamentos')
-        .select('status, plano, data_proxima_renovacao')
-        .eq('user_id', user.id)
-        .single();
-
-      setTratamento(tratamentoData);
-
-      // Fetch metas do dia
       const today = new Date().toISOString().split('T')[0];
-      const { data: metasData } = await supabase
-        .from('metas_diarias')
-        .select('id, titulo, concluida')
-        .eq('user_id', user.id)
-        .eq('data', today);
+      const [
+        tratamentoRes,
+        avaliacaoRes,
+        metasRes,
+      ] = await Promise.all([
+        supabase
+          .from('tratamentos')
+          .select('status, plano, data_proxima_renovacao')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('avaliacoes')
+          .select('status')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('metas_diarias')
+          .select('id, titulo, concluida')
+          .eq('user_id', user.id)
+          .eq('data', today),
+      ]);
 
-      setMetas(metasData || []);
+      const normalizedStatus = normalizeTreatmentStatus(
+        tratamentoRes.data?.status,
+        avaliacaoRes.data?.status,
+      );
+
+      setTratamento(tratamentoRes.data ? { ...tratamentoRes.data, status: normalizedStatus } : tratamentoRes.data);
+      setAvaliacaoRecente(avaliacaoRes.data);
+
+      if (normalizedStatus !== 'nenhum' && tratamentoRes.data?.status !== normalizedStatus) {
+        await supabase
+          .from('tratamentos')
+          .update({ status: normalizedStatus })
+          .eq('user_id', user.id);
+      }
+
+      setMetas(metasRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -92,7 +121,17 @@ export default function Dashboard() {
     }
   };
 
-  const isTratamentoAtivo = tratamento?.status === 'ativo';
+  const isTratamentoAtivo = tratamento?.status === 'em_andamento' || tratamento?.status === 'ativo';
+  const statusLabelMap: Record<string, string> = {
+    em_analise: 'Em análise',
+    aprovado: 'Aprovado',
+    processamento: 'Em processamento',
+    enviado: 'Enviado',
+    entregue: 'Entregue',
+    em_andamento: 'Ativo',
+    ativo: 'Ativo',
+  };
+  const statusLabel = tratamento?.status ? statusLabelMap[tratamento.status] || 'Sem tratamento' : 'Sem tratamento';
 
   // Only compute greeting when we have real data
   const userName = profile?.nome?.split(' ')[0];
@@ -131,12 +170,12 @@ export default function Dashboard() {
                     ? 'bg-teal/10 text-teal' 
                     : 'bg-muted text-muted-foreground'
                 }`}>
-                  {isTratamentoAtivo ? 'Ativo' : 'Sem tratamento'}
+                  {statusLabel}
                 </span>
               </div>
-              {tratamento?.plano && (
+              {(tratamento?.plano || avaliacaoRecente?.status === 'pendente') && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {tratamento.plano}
+                  {tratamento?.plano || 'Sua avaliação está aguardando análise médica.'}
                 </p>
               )}
             </CardContent>
