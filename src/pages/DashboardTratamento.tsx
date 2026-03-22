@@ -80,52 +80,88 @@ function StagePipeline({ currentStatus }: { currentStatus: string }) {
   const currentIdx = getStageIndex(currentStatus);
 
   return (
-    <div className="relative">
-      {/* Vertical connector line */}
-      <div className="absolute left-[18px] top-4 bottom-4 w-0.5 bg-border" />
-
-      <div className="space-y-0">
-        {STAGES.map((stage, idx) => {
-          const isCurrent = idx === currentIdx;
-          const isDone = idx < currentIdx;
-          const isFuture = idx > currentIdx;
-          const StageIcon = stage.icon;
-
-          return (
-            <div key={stage.key} className="relative flex items-start gap-4 py-3">
-              {/* Step circle */}
-              <div
-                className={cn(
-                  'relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-                  isDone && 'bg-primary border-primary text-primary-foreground',
-                  isCurrent && 'bg-primary/10 border-primary text-primary ring-4 ring-primary/10',
-                  isFuture && 'bg-muted border-border text-muted-foreground',
-                )}
-              >
-                {isDone ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <StageIcon className="h-4 w-4" />
-                )}
-              </div>
-
-              {/* Label & description */}
-              <div className="pt-1">
-                <p className={cn(
-                  'text-sm font-medium',
-                  isCurrent && 'text-foreground',
-                  isDone && 'text-foreground',
-                  isFuture && 'text-muted-foreground',
-                )}>
-                  {stage.label}
-                </p>
-                {isCurrent && (
-                  <p className="text-sm text-muted-foreground mt-0.5">{stage.description}</p>
-                )}
-              </div>
+    <div className="space-y-1">
+      {/* Current stage highlight */}
+      {currentIdx >= 0 && (
+        <div className="mb-6 p-5 rounded-xl bg-secondary/60 border border-border/40">
+          <div className="flex items-center gap-3 mb-2">
+            {(() => {
+              const CurrentIcon = STAGES[currentIdx].icon;
+              return (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <CurrentIcon className="h-5 w-5" />
+                </div>
+              );
+            })()}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Etapa atual
+              </p>
+              <p className="font-serif text-lg font-semibold text-foreground">
+                {STAGES[currentIdx].label}
+              </p>
             </div>
-          );
-        })}
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">
+            {STAGES[currentIdx].description}
+          </p>
+        </div>
+      )}
+
+      {/* Horizontal progress bar */}
+      <div className="px-1">
+        {/* Steps row */}
+        <div className="flex items-center justify-between gap-0">
+          {STAGES.map((stage, idx) => {
+            const isCurrent = idx === currentIdx;
+            const isDone = idx < currentIdx;
+            const isFuture = idx > currentIdx;
+            const StageIcon = stage.icon;
+            const isLast = idx === STAGES.length - 1;
+
+            return (
+              <div key={stage.key} className="flex items-center flex-1 last:flex-none">
+                {/* Node */}
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all duration-300',
+                      isDone && 'bg-primary text-primary-foreground shadow-sm',
+                      isCurrent && 'bg-primary text-primary-foreground shadow-md ring-[3px] ring-primary/20',
+                      isFuture && 'bg-muted text-muted-foreground/50 border border-border',
+                    )}
+                  >
+                    {isDone ? (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <StageIcon className="h-3.5 w-3.5" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    'text-[10px] font-medium text-center leading-tight w-16',
+                    isDone && 'text-foreground',
+                    isCurrent && 'text-foreground font-semibold',
+                    isFuture && 'text-muted-foreground/60',
+                  )}>
+                    {stage.label}
+                  </span>
+                </div>
+
+                {/* Connector line */}
+                {!isLast && (
+                  <div className="flex-1 h-[2px] mx-1 mt-[-20px]">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-colors duration-300',
+                        idx < currentIdx ? 'bg-primary' : 'bg-border',
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
