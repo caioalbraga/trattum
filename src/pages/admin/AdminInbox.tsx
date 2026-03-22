@@ -488,7 +488,14 @@ export default function AdminInbox() {
                             <User className="h-4 w-4" />
                           </div>
                           <span className="font-medium">
-                            {avaliacao.profile?.nome || 'Paciente'}
+                            {(() => {
+                              const nome = avaliacao.profile?.nome;
+                              const nomeCompleto = avaliacao.respostas?.nome_completo as string | undefined;
+                              if (nome && !nome.includes('@')) return nome;
+                              if (nomeCompleto) return nomeCompleto;
+                              return nome || 'Paciente';
+                            })()}
+                          </span>
                           </span>
                         </div>
                       </TableCell>
