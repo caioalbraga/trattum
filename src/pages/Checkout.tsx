@@ -379,7 +379,7 @@ export default function Checkout() {
       await supabase
         .from('tratamentos')
         .update({
-          status: 'ativo',
+          status: 'processamento',
           plano: 'Pacote Trattum',
           data_inicio: new Date().toISOString().split('T')[0],
           data_proxima_renovacao: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

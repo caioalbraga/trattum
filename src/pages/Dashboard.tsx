@@ -121,7 +121,7 @@ export default function Dashboard() {
     }
   };
 
-  const isTratamentoAtivo = tratamento?.status === 'em_andamento';
+  const isTratamentoAtivo = tratamento?.status === 'em_andamento' || tratamento?.status === 'ativo';
   const statusLabelMap: Record<string, string> = {
     em_analise: 'Em análise',
     aprovado: 'Aprovado',
@@ -129,6 +129,7 @@ export default function Dashboard() {
     enviado: 'Enviado',
     entregue: 'Entregue',
     em_andamento: 'Ativo',
+    ativo: 'Ativo',
   };
   const statusLabel = tratamento?.status ? statusLabelMap[tratamento.status] || 'Sem tratamento' : 'Sem tratamento';
 

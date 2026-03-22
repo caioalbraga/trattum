@@ -200,7 +200,9 @@ export default function DashboardTratamento() {
     }
   };
 
-  const status = normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
+  const status = normalizeTreatmentStatus(tratamento?.status, evaluationStatus) === 'ativo'
+    ? 'em_andamento'
+    : normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
   const stageIdx = getStageIndex(status);
   const isInPipeline = stageIdx >= 0;
   const isActive = status === 'em_andamento';

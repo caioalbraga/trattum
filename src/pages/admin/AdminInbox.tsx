@@ -240,7 +240,7 @@ export default function AdminInbox() {
       // Update tratamentos status
       await supabase
         .from('tratamentos')
-        .update({ status: 'ativo' })
+        .update({ status: 'aprovado' })
         .eq('user_id', avaliacao.user_id);
 
       toast({

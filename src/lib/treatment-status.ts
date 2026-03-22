@@ -17,7 +17,7 @@ export function normalizeTreatmentStatus(
   evaluationStatus?: string | null,
 ): string {
   if (treatmentStatus && treatmentStatus !== 'nenhum') {
-    return treatmentStatus === 'ativo' ? 'em_andamento' : treatmentStatus;
+    return treatmentStatus;
   }
 
   return mapEvaluationToTreatmentStatus(evaluationStatus) ?? treatmentStatus ?? 'nenhum';
