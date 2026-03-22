@@ -109,11 +109,13 @@ export function useSubmitAssessment() {
         return { success: false, error: error.message };
       }
 
-      // Update tratamento status to em_analise
+      // Upsert tratamento status to em_analise (creates if not exists)
       await supabase
         .from('tratamentos')
-        .update({ status: 'em_analise' })
-        .eq('user_id', user.id);
+        .upsert(
+          { user_id: user.id, status: 'em_analise' },
+          { onConflict: 'user_id' }
+        );
 
       // Store assessment ID
       sessionStorage.setItem('assessmentId', data.id);
