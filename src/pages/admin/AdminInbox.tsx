@@ -496,7 +496,6 @@ export default function AdminInbox() {
                               return nome || 'Paciente';
                             })()}
                           </span>
-                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
