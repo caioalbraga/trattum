@@ -90,6 +90,7 @@ export function AnamneseForm() {
     defaultValues: {
       nome_completo: '',
       data_nascimento: null,
+      data_nascimento_display: '',
       sexo: '',
       peso_atual: '',
       altura: '',
