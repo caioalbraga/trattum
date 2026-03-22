@@ -204,6 +204,8 @@ export function AnamneseForm() {
 
     // Store answers in session for post-signup submission
     sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+    // Store photos in memory for upload after account creation
+    setPendingPhotos(photos);
     navigate('/cadastro');
   };
 
