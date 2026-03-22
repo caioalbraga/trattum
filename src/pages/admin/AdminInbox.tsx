@@ -547,7 +547,13 @@ export default function AdminInbox() {
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-serif">
-                Avaliação de {selectedAvaliacao?.profile?.nome || 'Paciente'}
+                Avaliação de {(() => {
+                  const nome = selectedAvaliacao?.profile?.nome;
+                  const nomeCompleto = selectedAvaliacao?.respostas?.nome_completo as string | undefined;
+                  if (nome && !nome.includes('@')) return nome;
+                  if (nomeCompleto) return nomeCompleto;
+                  return nome || 'Paciente';
+                })()}
               </DialogTitle>
               <DialogDescription>
                 Visualização 360° das respostas do questionário
