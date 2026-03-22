@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   FileText, Calendar, Activity, ArrowRight, Sparkles, CreditCard,
   Clock, Shield, Pill, Search, Truck, PackageCheck, CheckCircle2, Circle,
+  XCircle,
 } from 'lucide-react';
 import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
@@ -236,9 +237,9 @@ export default function DashboardTratamento() {
     }
   };
 
-  const status = normalizeTreatmentStatus(tratamento?.status, evaluationStatus) === 'ativo'
-    ? 'em_andamento'
-    : normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
+  const rawStatus = normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
+  const status = rawStatus === 'ativo' ? 'em_andamento' : rawStatus;
+  const isRejected = evaluationStatus === 'rejeitado' || status === 'rejeitado';
   const stageIdx = getStageIndex(status);
   const isInPipeline = stageIdx >= 0;
   const isActive = status === 'em_andamento';
@@ -256,8 +257,30 @@ export default function DashboardTratamento() {
             <p className="text-muted-foreground mt-2">Acompanhe a evolução do seu plano de saúde.</p>
           </div>
 
+          {/* ── Rejected state ── */}
+          {isRejected && (
+            <Card className="card-elevated border border-destructive/30">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+                  <XCircle className="w-8 h-8 text-destructive" />
+                </div>
+                <h2 className="font-serif text-2xl font-semibold mb-2">Avaliação Não Aprovada</h2>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  Após análise da equipe médica, seu perfil não atende aos critérios clínicos para este tratamento no momento. 
+                  Verifique suas notificações para mais detalhes ou entre em contato com nossa equipe.
+                </p>
+                <Button asChild variant="outline" size="lg">
+                  <Link to="/dashboard/notificacoes">
+                    Ver Notificações
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* ── No assessment yet ── */}
-          {!isInPipeline && (
+          {!isInPipeline && !isRejected && (
             <Card className="card-elevated border-2 border-dashed border-primary/20">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-6">
