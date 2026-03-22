@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { format, parse, isValid } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,8 +14,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { BodySilhouette } from './BodySilhouette';
@@ -31,6 +29,7 @@ const animVariants = {
 interface FormData {
   nome_completo: string;
   data_nascimento: Date | null;
+  data_nascimento_display: string;
   sexo: string;
   peso_atual: string;
   altura: string;
@@ -91,6 +90,7 @@ export function AnamneseForm() {
     defaultValues: {
       nome_completo: '',
       data_nascimento: null,
+      data_nascimento_display: '',
       sexo: '',
       peso_atual: '',
       altura: '',
@@ -223,35 +223,31 @@ export function AnamneseForm() {
 
           {/* Data de nascimento */}
           <div className="space-y-2">
-            <Label>Data de nascimento</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dataNascimento && "text-muted-foreground"
-                  )}
-                  type="button"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dataNascimento ? format(dataNascimento, "dd/MM/yyyy") : "Selecione a data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dataNascimento || undefined}
-                  onSelect={(d) => setValue('data_nascimento', d || null)}
-                  disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                  captionLayout="dropdown-buttons"
-                  fromYear={1930}
-                  toYear={new Date().getFullYear()}
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="data_nascimento_display">Data de nascimento</Label>
+            <Input
+              id="data_nascimento_display"
+              placeholder="DD/MM/AAAA"
+              maxLength={10}
+              value={watch('data_nascimento_display') || ''}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, '');
+                let masked = '';
+                if (raw.length > 0) masked += raw.slice(0, 2);
+                if (raw.length > 2) masked += '/' + raw.slice(2, 4);
+                if (raw.length > 4) masked += '/' + raw.slice(4, 8);
+                setValue('data_nascimento_display', masked);
+                if (raw.length === 8) {
+                  const parsed = parse(masked, 'dd/MM/yyyy', new Date());
+                  if (isValid(parsed) && parsed <= new Date() && parsed >= new Date('1900-01-01')) {
+                    setValue('data_nascimento', parsed);
+                  } else {
+                    setValue('data_nascimento', null);
+                  }
+                } else {
+                  setValue('data_nascimento', null);
+                }
+              }}
+            />
           </div>
 
           {/* Sexo */}
