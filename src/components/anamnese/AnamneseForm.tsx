@@ -29,6 +29,7 @@ const animVariants = {
 interface FormData {
   nome_completo: string;
   data_nascimento: Date | null;
+  data_nascimento_display: string;
   sexo: string;
   peso_atual: string;
   altura: string;
