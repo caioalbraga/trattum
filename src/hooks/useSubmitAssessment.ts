@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuizAnswers } from '@/types/quiz';
 import { calculateBMI } from '@/lib/assessment-logic';
 import { toast } from 'sonner';
+import { normalizeTreatmentStatus } from '@/lib/treatment-status';
 
 interface SubmitResult {
   success: boolean;
@@ -14,6 +15,41 @@ interface SubmitResult {
 export function useSubmitAssessment() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const ensureTreatmentInAnalysis = async (userId: string) => {
+    const { data: existingTreatment, error: existingTreatmentError } = await supabase
+      .from('tratamentos')
+      .select('id, status')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existingTreatmentError) {
+      throw existingTreatmentError;
+    }
+
+    const nextStatus = normalizeTreatmentStatus(existingTreatment?.status, 'pendente');
+
+    if (existingTreatment?.id) {
+      const { error: updateTreatmentError } = await supabase
+        .from('tratamentos')
+        .update({ status: nextStatus })
+        .eq('id', existingTreatment.id);
+
+      if (updateTreatmentError) {
+        throw updateTreatmentError;
+      }
+
+      return;
+    }
+
+    const { error: insertTreatmentError } = await supabase
+      .from('tratamentos')
+      .insert({ user_id: userId, status: nextStatus });
+
+    if (insertTreatmentError) {
+      throw insertTreatmentError;
+    }
+  };
 
   const calculateRiskScore = (answers: QuizAnswers): number => {
     let score = 0;
@@ -109,13 +145,7 @@ export function useSubmitAssessment() {
         return { success: false, error: error.message };
       }
 
-      // Upsert tratamento status to em_analise (creates if not exists)
-      await supabase
-        .from('tratamentos')
-        .upsert(
-          { user_id: user.id, status: 'em_analise' },
-          { onConflict: 'user_id' }
-        );
+      await ensureTreatmentInAnalysis(user.id);
 
       // Store assessment ID
       sessionStorage.setItem('assessmentId', data.id);
