@@ -58,6 +58,25 @@ export default function Dashboard() {
 
       // Decrypt the name
       const decrypted = await decryptProfile(profileData);
+      
+      // If name looks like an email, try to get nome_completo from latest avaliacao
+      if (decrypted?.nome && decrypted.nome.includes('@')) {
+        const { data: avalData } = await supabase
+          .from('avaliacoes')
+          .select('respostas')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        const nomeCompleto = (avalData?.respostas as Record<string, unknown>)?.nome_completo as string | undefined;
+        if (nomeCompleto) {
+          decrypted.nome = nomeCompleto;
+          // Also update the profile in the database for future use
+          await supabase.from('profiles').update({ nome: nomeCompleto }).eq('user_id', user.id);
+        }
+      }
+      
       setProfile(decrypted);
 
       const today = new Date().toISOString().split('T')[0];
