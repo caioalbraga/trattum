@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BodySilhouette } from './BodySilhouette';
 import { PhotoUpload } from './PhotoUpload';
 import { useSubmitAssessment } from '@/hooks/useSubmitAssessment';
+import { setPendingPhotos } from '@/lib/photo-store';
 
 const animVariants = {
   initial: { opacity: 0, height: 0, marginTop: 0 },
