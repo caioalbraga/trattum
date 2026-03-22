@@ -237,9 +237,9 @@ export default function DashboardTratamento() {
     }
   };
 
-  const status = normalizeTreatmentStatus(tratamento?.status, evaluationStatus) === 'ativo'
-    ? 'em_andamento'
-    : normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
+  const rawStatus = normalizeTreatmentStatus(tratamento?.status, evaluationStatus);
+  const status = rawStatus === 'ativo' ? 'em_andamento' : rawStatus;
+  const isRejected = evaluationStatus === 'rejeitado' || status === 'rejeitado';
   const stageIdx = getStageIndex(status);
   const isInPipeline = stageIdx >= 0;
   const isActive = status === 'em_andamento';
