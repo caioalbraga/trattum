@@ -98,16 +98,6 @@ export function AdminSidebar() {
         <Button 
           variant="ghost" 
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 mb-1"
-          onClick={openWhatsApp}
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          <span className="text-sm">Suporte WhatsApp</span>
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="sm"
           className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={handleLogout}
         >
