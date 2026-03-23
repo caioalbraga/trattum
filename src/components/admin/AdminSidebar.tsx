@@ -5,7 +5,6 @@ import {
   ShoppingBag, 
   Settings,
   LogOut,
-  MessageCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,10 +43,6 @@ export function AdminSidebar() {
       description: "Você saiu do painel administrativo.",
     });
     navigate('/');
-  };
-
-  const openWhatsApp = () => {
-    window.open('https://wa.me/5511999999999?text=Preciso%20de%20suporte%20técnico', '_blank');
   };
 
   return (
@@ -99,16 +94,6 @@ export function AdminSidebar() {
       <SidebarFooter className="p-3 mt-auto">
         <Separator className="bg-border/60 mb-3" />
         
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 mb-1"
-          onClick={openWhatsApp}
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          <span className="text-sm">Suporte WhatsApp</span>
-        </Button>
-
         <Button 
           variant="ghost" 
           size="sm"
