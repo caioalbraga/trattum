@@ -78,6 +78,14 @@ export default function Auth() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignore PASSWORD_RECOVERY events — those are handled by ResetPassword page
+      if (event === 'PASSWORD_RECOVERY') return;
+      
+      // Also ignore SIGNED_IN if it came from a recovery flow (URL contains recovery token)
+      const hash = window.location.hash || '';
+      const isRecoveryFlow = hash.includes('type=recovery') || hash.includes('type=magiclink');
+      if (isRecoveryFlow) return;
+      
       if (event === 'SIGNED_IN' && session && !showMFADialog) {
         // Use setTimeout to avoid deadlock in onAuthStateChange
         setTimeout(() => handleMFACheck(session), 0);
