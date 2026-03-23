@@ -46,10 +46,6 @@ export function AdminSidebar() {
     navigate('/');
   };
 
-  const openWhatsApp = () => {
-    window.open('https://wa.me/5511999999999?text=Preciso%20de%20suporte%20técnico', '_blank');
-  };
-
   return (
     <Sidebar className="border-r border-border/60 bg-card w-[220px]">
       <SidebarHeader className="p-5">
