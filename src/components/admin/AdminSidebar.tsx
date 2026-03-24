@@ -5,6 +5,7 @@ import {
   ShoppingBag, 
   Settings,
   LogOut,
+  UserCog,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,16 +26,27 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
-const menuItems = [
-  { title: 'Dashboard', url: '/trattum-admin', icon: LayoutDashboard },
-  { title: 'Triagem', url: '/trattum-admin/inbox', icon: ClipboardList },
-  { title: 'Pedidos', url: '/trattum-admin/pedidos', icon: ShoppingBag },
-  { title: 'Configurações', url: '/trattum-admin/configuracoes', icon: Settings },
+type AppRole = 'admin' | 'medico' | 'assistente';
+
+interface AdminSidebarProps {
+  userRole?: AppRole | null;
+}
+
+const allMenuItems = [
+  { title: 'Dashboard', url: '/trattum-admin', icon: LayoutDashboard, roles: ['admin', 'medico'] },
+  { title: 'Triagem', url: '/trattum-admin/inbox', icon: ClipboardList, roles: ['admin', 'medico', 'assistente'] },
+  { title: 'Pedidos', url: '/trattum-admin/pedidos', icon: ShoppingBag, roles: ['admin', 'medico'] },
+  { title: 'Configurações', url: '/trattum-admin/configuracoes', icon: Settings, roles: ['admin', 'medico'] },
+  { title: 'Usuários', url: '/trattum-admin/usuarios', icon: UserCog, roles: ['admin'] },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ userRole }: AdminSidebarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const menuItems = allMenuItems.filter(item => 
+    !userRole || item.roles.includes(userRole)
+  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
