@@ -11,9 +11,9 @@ interface AdminLayoutProps {
 
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
-  admin: ['/trattum-admin', '/trattum-admin/inbox', '/trattum-admin/pedidos', '/trattum-admin/configuracoes', '/trattum-admin/usuarios'],
-  medico: ['/trattum-admin', '/trattum-admin/inbox', '/trattum-admin/pedidos', '/trattum-admin/configuracoes'],
-  assistente: ['/trattum-admin/inbox'],
+  admin: ['/trattum-admin', '/trattum-admin/atendimento', '/trattum-admin/acompanhamento', '/trattum-admin/pedidos', '/trattum-admin/configuracoes', '/trattum-admin/usuarios'],
+  medico: ['/trattum-admin', '/trattum-admin/atendimento', '/trattum-admin/acompanhamento', '/trattum-admin/pedidos', '/trattum-admin/configuracoes'],
+  assistente: ['/trattum-admin/atendimento'],
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {

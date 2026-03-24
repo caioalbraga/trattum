@@ -6,6 +6,7 @@ import {
   Settings,
   LogOut,
   UserCog,
+  HeartPulse,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +35,8 @@ interface AdminSidebarProps {
 
 const allMenuItems = [
   { title: 'Dashboard', url: '/trattum-admin', icon: LayoutDashboard, roles: ['admin', 'medico'] },
-  { title: 'Triagem', url: '/trattum-admin/inbox', icon: ClipboardList, roles: ['admin', 'medico', 'assistente'] },
+  { title: 'Atendimento', url: '/trattum-admin/atendimento', icon: ClipboardList, roles: ['admin', 'medico', 'assistente'] },
+  { title: 'Acompanhamento', url: '/trattum-admin/acompanhamento', icon: HeartPulse, roles: ['admin', 'medico'] },
   { title: 'Pedidos', url: '/trattum-admin/pedidos', icon: ShoppingBag, roles: ['admin', 'medico'] },
   { title: 'Configurações', url: '/trattum-admin/configuracoes', icon: Settings, roles: ['admin', 'medico'] },
   { title: 'Usuários', url: '/trattum-admin/usuarios', icon: UserCog, roles: ['admin'] },

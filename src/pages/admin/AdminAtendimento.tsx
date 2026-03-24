@@ -18,13 +18,13 @@ export interface AtendimentoAvaliacao {
   patient_name: string;
 }
 
-const filters = [
+const filters: { key: string; label: string | null; icon?: typeof Lock }[] = [
   { key: 'pendente', label: 'Pendentes' },
   { key: 'ajuste', label: 'Ajustes' },
   { key: 'aguardando_pagamento', label: 'Esperando Pagamento' },
   { key: 'aprovado', label: 'Aprovados' },
   { key: 'bloqueado', label: null, icon: Lock },
-] as const;
+];
 
 type FilterKey = typeof filters[number]['key'];
 

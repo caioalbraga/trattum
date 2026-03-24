@@ -55,8 +55,8 @@ const App = () => (
             <Route path="/dashboard/notificacoes" element={<DashboardNotificacoes />} />
             {/* Admin Routes */}
             <Route path="/trattum-admin" element={<AdminDashboard />} />
-            <Route path="/trattum-admin/inbox" element={<AdminInbox />} />
-            <Route path="/trattum-admin/crm" element={<AdminCRM />} />
+            <Route path="/trattum-admin/atendimento" element={<AdminAtendimento />} />
+            <Route path="/trattum-admin/acompanhamento" element={<AdminAcompanhamento />} />
             <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
             <Route path="/trattum-admin/usuarios" element={<AdminUsuarios />} />
             {/* Developer Tools */}
