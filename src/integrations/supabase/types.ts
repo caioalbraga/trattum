@@ -749,6 +749,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_clinical_staff: { Args: never; Returns: boolean }
       sanitize_text_input: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
