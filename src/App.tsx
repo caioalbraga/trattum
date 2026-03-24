@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInbox from "./pages/admin/AdminInbox";
 import AdminCRM from "./pages/admin/AdminCRM";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import TestLogic from "./pages/TestLogic";
 
 const queryClient = new QueryClient();
