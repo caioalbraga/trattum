@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.send-approval-email]
 verify_jwt = false
+
+[functions.admin-delete-user]
+verify_jwt = false
+
+[functions.admin-search-user]
+verify_jwt = false
+
+[functions.admin-update-role]
+verify_jwt = false

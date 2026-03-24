@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/trattum-admin/inbox" element={<AdminInbox />} />
             <Route path="/trattum-admin/crm" element={<AdminCRM />} />
             <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
+            <Route path="/trattum-admin/usuarios" element={<AdminUsuarios />} />
             {/* Developer Tools */}
             <Route path="/test-logic" element={<TestLogic />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
