@@ -18,28 +18,34 @@ export type Database = {
         Row: {
           autor: string
           avaliacao_id: string
+          campos_ajuste: Json | null
           created_at: string
           criado_por: string | null
           id: string
           mensagem: string
+          tipo_ajuste: string | null
           user_id: string
         }
         Insert: {
           autor: string
           avaliacao_id: string
+          campos_ajuste?: Json | null
           created_at?: string
           criado_por?: string | null
           id?: string
           mensagem: string
+          tipo_ajuste?: string | null
           user_id: string
         }
         Update: {
           autor?: string
           avaliacao_id?: string
+          campos_ajuste?: Json | null
           created_at?: string
           criado_por?: string | null
           id?: string
           mensagem?: string
+          tipo_ajuste?: string | null
           user_id?: string
         }
         Relationships: [
@@ -320,6 +326,36 @@ export type Database = {
           logradouro?: string | null
           numero?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mensagens_acompanhamento: {
+        Row: {
+          autor: string
+          created_at: string
+          id: string
+          imagem_url: string | null
+          lida: boolean
+          mensagem: string | null
+          user_id: string
+        }
+        Insert: {
+          autor: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          lida?: boolean
+          mensagem?: string | null
+          user_id: string
+        }
+        Update: {
+          autor?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          lida?: boolean
+          mensagem?: string | null
           user_id?: string
         }
         Relationships: []

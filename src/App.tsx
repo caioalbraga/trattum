@@ -21,8 +21,8 @@ import DashboardTratamento from "./pages/DashboardTratamento";
 import DashboardConta from "./pages/DashboardConta";
 import DashboardNotificacoes from "./pages/DashboardNotificacoes";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminInbox from "./pages/admin/AdminInbox";
-import AdminCRM from "./pages/admin/AdminCRM";
+import AdminAtendimento from "./pages/admin/AdminAtendimento";
+import AdminAcompanhamento from "./pages/admin/AdminAcompanhamento";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import TestLogic from "./pages/TestLogic";
@@ -55,8 +55,8 @@ const App = () => (
             <Route path="/dashboard/notificacoes" element={<DashboardNotificacoes />} />
             {/* Admin Routes */}
             <Route path="/trattum-admin" element={<AdminDashboard />} />
-            <Route path="/trattum-admin/inbox" element={<AdminInbox />} />
-            <Route path="/trattum-admin/crm" element={<AdminCRM />} />
+            <Route path="/trattum-admin/atendimento" element={<AdminAtendimento />} />
+            <Route path="/trattum-admin/acompanhamento" element={<AdminAcompanhamento />} />
             <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
             <Route path="/trattum-admin/usuarios" element={<AdminUsuarios />} />
             {/* Developer Tools */}
