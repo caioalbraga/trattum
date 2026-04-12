@@ -122,9 +122,11 @@ export function AnamneseForm() {
   const jaEsteve = watch('ja_esteve_gravida');
   const dataNascimento = watch('data_nascimento');
 
-  // Dev test mode: auto-fill all fields when typing @dev_test in nome
-  useCallback(() => {
-    if (nomeCompleto === '@dev_test') {
+  // Dev test mode: auto-fill when nome = @dev_test
+  const devFilled = useRef(false);
+  useEffect(() => {
+    if (nomeCompleto === '@dev_test' && !devFilled.current) {
+      devFilled.current = true;
       setValue('nome_completo', 'João Silva Teste');
       setValue('data_nascimento_display', '15/03/1990');
       setValue('data_nascimento', new Date(1990, 2, 15));
@@ -149,7 +151,8 @@ export function AnamneseForm() {
       setValue('circ_perna', '60');
       toast.success('🧪 Modo teste: campos preenchidos!');
     }
-  }, [nomeCompleto])();
+    if (nomeCompleto !== '@dev_test') devFilled.current = false;
+  }, [nomeCompleto, setValue]);
 
   const uploadPhoto = async (file: File, userId: string, tipo: string): Promise<string | null> => {
     const ext = file.name.split('.').pop() || 'jpg';
