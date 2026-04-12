@@ -49,14 +49,24 @@ async function encrypt(text: string, key: CryptoKey): Promise<string> {
 }
 
 async function getKey(): Promise<CryptoKey> {
-  const keyBase64 = Deno.env.get("ENCRYPTION_KEY");
-  if (!keyBase64) {
+  const keyRaw = Deno.env.get("ENCRYPTION_KEY");
+  if (!keyRaw) {
     throw new Error("ENCRYPTION_KEY not configured");
   }
-  
-  // Decode base64 key
-  const keyBytes = Uint8Array.from(atob(keyBase64), c => c.charCodeAt(0));
-  
+
+  let keyBytes: Uint8Array;
+
+  try {
+    keyBytes = Uint8Array.from(atob(keyRaw), c => c.charCodeAt(0));
+  } catch {
+    keyBytes = new TextEncoder().encode(keyRaw);
+  }
+
+  if (keyBytes.length !== 32) {
+    const hash = await crypto.subtle.digest("SHA-256", keyBytes);
+    keyBytes = new Uint8Array(hash);
+  }
+
   return crypto.subtle.importKey(
     "raw",
     keyBytes,
