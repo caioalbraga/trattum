@@ -3,7 +3,9 @@ import { Header } from "@/components/layout/Header";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { CONSENT_TEXTS } from "@/lib/consent.texts";
 
-const termContent: Record<string, { title: string; sections?: typeof CONSENT_TEXTS.terms.sections }> = {
+type TermSection = { id: string; number: number; title: string; content: string };
+
+const termContent: Record<string, { title: string; sections?: TermSection[] }> = {
   "termos-de-uso": {
     title: "Termos de Uso",
     sections: CONSENT_TEXTS.terms.sections.filter(s =>
