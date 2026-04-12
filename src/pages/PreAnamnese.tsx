@@ -15,6 +15,24 @@ export default function PreAnamnese() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checking, setChecking] = useState(true);
 
+  // On mount, restore from localStorage if present
+  useEffect(() => {
+    try {
+      const tcle = localStorage.getItem('consent_tcle');
+      const veracidade = localStorage.getItem('consent_declaracao_veracidade');
+      if (tcle) {
+        const parsed = JSON.parse(tcle);
+        if (parsed.aceito) setCheckTcle(true);
+      }
+      if (veracidade) {
+        const parsed = JSON.parse(veracidade);
+        if (parsed.aceito) setCheckVeracidade(true);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -38,19 +56,46 @@ export default function PreAnamnese() {
     check();
   }, [user, authLoading, navigate]);
 
+  const handleTcleChange = (checked: boolean) => {
+    setCheckTcle(checked);
+    if (checked) {
+      localStorage.setItem('consent_tcle', JSON.stringify({
+        aceito: true,
+        aceito_em: new Date().toISOString()
+      }));
+    } else {
+      localStorage.removeItem('consent_tcle');
+    }
+  };
+
+  const handleVeracidadeChange = (checked: boolean) => {
+    setCheckVeracidade(checked);
+    if (checked) {
+      localStorage.setItem('consent_declaracao_veracidade', JSON.stringify({
+        aceito: true,
+        aceito_em: new Date().toISOString()
+      }));
+    } else {
+      localStorage.removeItem('consent_declaracao_veracidade');
+    }
+  };
+
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
       if (user) {
-        const now = new Date().toISOString();
+        const tcleSaved = localStorage.getItem('consent_tcle');
+        const veracidadeSaved = localStorage.getItem('consent_declaracao_veracidade');
+        const tcleTimestamp = tcleSaved ? JSON.parse(tcleSaved).aceito_em : new Date().toISOString();
+        const veracidadeTimestamp = veracidadeSaved ? JSON.parse(veracidadeSaved).aceito_em : new Date().toISOString();
+
         await supabase.from('user_consents').upsert([
-          { user_id: user.id, termo: 'tcle', aceito: true, aceito_em: now },
-          { user_id: user.id, termo: 'declaracao_de_veracidade', aceito: true, aceito_em: now },
+          { user_id: user.id, termo: 'tcle', aceito: true, aceito_em: tcleTimestamp },
+          { user_id: user.id, termo: 'declaracao_de_veracidade', aceito: true, aceito_em: veracidadeTimestamp },
         ], { onConflict: 'user_id,termo' });
       }
       navigate('/anamnese');
     } catch {
-      // proceed anyway
       navigate('/anamnese');
     } finally {
       setIsSubmitting(false);
@@ -88,7 +133,7 @@ export default function PreAnamnese() {
                   type="checkbox"
                   id="tcle"
                   checked={checkTcle}
-                  onChange={(e) => setCheckTcle(e.target.checked)}
+                  onChange={(e) => handleTcleChange(e.target.checked)}
                   className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
                 <label htmlFor="tcle" className="text-sm text-foreground leading-relaxed cursor-pointer">
@@ -103,7 +148,7 @@ export default function PreAnamnese() {
                   type="checkbox"
                   id="veracidade"
                   checked={checkVeracidade}
-                  onChange={(e) => setCheckVeracidade(e.target.checked)}
+                  onChange={(e) => handleVeracidadeChange(e.target.checked)}
                   className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
                 <label htmlFor="veracidade" className="text-sm text-foreground leading-relaxed cursor-pointer">
