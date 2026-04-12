@@ -122,12 +122,9 @@ export function AnamneseForm() {
   const jaEsteve = watch('ja_esteve_gravida');
   const dataNascimento = watch('data_nascimento');
 
-  // Dev test mode: auto-fill all fields when typing @dev_test
-  useCallback(() => {}, []); // placeholder to keep hooks order
-  const prevNomeRef = useState('')[0];
-  if (nomeCompleto === '@dev_test' && prevNomeRef !== '@dev_test') {
-    // Use setTimeout to avoid setting state during render
-    setTimeout(() => {
+  // Dev test mode: auto-fill all fields when typing @dev_test in nome
+  useCallback(() => {
+    if (nomeCompleto === '@dev_test') {
       setValue('nome_completo', 'João Silva Teste');
       setValue('data_nascimento_display', '15/03/1990');
       setValue('data_nascimento', new Date(1990, 2, 15));
@@ -151,8 +148,8 @@ export function AnamneseForm() {
       setValue('circ_quadril', '104');
       setValue('circ_perna', '60');
       toast.success('🧪 Modo teste: campos preenchidos!');
-    }, 0);
-  }
+    }
+  }, [nomeCompleto])();
 
   const uploadPhoto = async (file: File, userId: string, tipo: string): Promise<string | null> => {
     const ext = file.name.split('.').pop() || 'jpg';
