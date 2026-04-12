@@ -416,6 +416,7 @@ export default function Checkout() {
     }
   };
 
+  const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
   const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
 
   const displayPrice = packagePrice ?? 0;
