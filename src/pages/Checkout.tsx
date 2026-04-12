@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import { encryptProfile, encryptEndereco } from "@/lib/crypto-client";
 import { useConsent } from "@/hooks/useConsent";
-import { ConsentInlineStep } from "@/components/consent/ConsentInlineStep";
 
 type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
