@@ -80,11 +80,23 @@ function ResponseRow({ label, value }: { label: string; value: unknown }) {
 // ── Lightbox ─────────────────────────────────────────────────────
 function PhotoLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center" onClick={onClose}>
-      <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-white/80">
+    <div
+      className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
+      onClick={(e) => { e.stopPropagation(); onClose(); }}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute top-4 right-4 text-white hover:text-white/80 z-[201]"
+      >
         <X className="h-8 w-8" />
       </button>
-      <img src={src} alt={alt} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg" />
+      <img
+        src={src}
+        alt={alt}
+        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
     </div>
   );
 }
