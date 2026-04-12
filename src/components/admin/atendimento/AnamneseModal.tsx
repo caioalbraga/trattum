@@ -152,6 +152,13 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   const [showAdjustment, setShowAdjustment] = useState(false);
   const { toast } = useToast();
 
+  // Reset state when switching patients or closing
+  useEffect(() => {
+    setLightboxSrc(null);
+    setShowAdjustment(false);
+    setLoading(null);
+  }, [avaliacao?.id, open]);
+
   if (!avaliacao) return null;
 
   const r = avaliacao.respostas;
