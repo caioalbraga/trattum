@@ -91,7 +91,7 @@ serve(async (req: Request) => {
 
     try {
       const { error: emailError } = await resend.emails.send({
-        from: "Trattum <onboarding@resend.dev>",
+        from: "Trattum <noreply@trattum.com>",
         to: [resolvedEmail],
         subject: "Boas-vindas à Trattum: Seu plano de tratamento foi aprovado!",
         html: `
