@@ -741,6 +741,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          aceito: boolean
+          aceito_em: string
+          created_at: string
+          id: string
+          termo: string
+          user_id: string
+        }
+        Insert: {
+          aceito?: boolean
+          aceito_em?: string
+          created_at?: string
+          id?: string
+          termo: string
+          user_id: string
+        }
+        Update: {
+          aceito?: boolean
+          aceito_em?: string
+          created_at?: string
+          id?: string
+          termo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
