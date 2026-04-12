@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -14,6 +14,29 @@ import { getPendingPhotos, clearPendingPhotos } from "@/lib/photo-store";
 const emailSchema = z.string().email("E-mail inválido");
 const passwordSchema = z.string().min(6, "Senha deve ter pelo menos 6 caracteres");
 
+function getConsent(key: string): { aceito: boolean; aceito_em: string } | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.aceito) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setConsent(key: string, value: boolean) {
+  if (value) {
+    localStorage.setItem(key, JSON.stringify({
+      aceito: true,
+      aceito_em: new Date().toISOString()
+    }));
+  } else {
+    localStorage.removeItem(key);
+  }
+}
+
 export default function Cadastro() {
   const navigate = useNavigate();
   const { submitAssessment, isSubmitting } = useSubmitAssessment();
@@ -21,16 +44,60 @@ export default function Cadastro() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Cadastro checkboxes (Termos de Uso + Política de Privacidade)
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
 
-  // Ensure pending answers exist, otherwise redirect back
+  // Pre-anamnese consents (TCLE + Veracidade) - shown only if missing
+  const [missingPreConsents, setMissingPreConsents] = useState(false);
+  const [checkTcle, setCheckTcle] = useState(false);
+  const [checkVeracidade, setCheckVeracidade] = useState(false);
+
+  // Check localStorage on mount
   useEffect(() => {
     const pending = sessionStorage.getItem('pendingQuizAnswers');
     if (!pending) {
       navigate('/anamnese');
+      return;
+    }
+
+    const tcle = getConsent('consent_tcle');
+    const veracidade = getConsent('consent_declaracao_veracidade');
+    const termos = getConsent('consent_termos_uso');
+    const privacidade = getConsent('consent_politica_privacidade');
+
+    if (tcle) setCheckTcle(true);
+    if (veracidade) setCheckVeracidade(true);
+    if (termos) setAcceptTerms(true);
+    if (privacidade) setAcceptPrivacy(true);
+
+    if (!tcle || !veracidade) {
+      setMissingPreConsents(true);
     }
   }, [navigate]);
+
+  const handleTermsChange = (checked: boolean) => {
+    setAcceptTerms(checked);
+    setConsent('consent_termos_uso', checked);
+  };
+
+  const handlePrivacyChange = (checked: boolean) => {
+    setAcceptPrivacy(checked);
+    setConsent('consent_politica_privacidade', checked);
+  };
+
+  const handleTcleChange = (checked: boolean) => {
+    setCheckTcle(checked);
+    setConsent('consent_tcle', checked);
+  };
+
+  const handleVeracidadeChange = (checked: boolean) => {
+    setCheckVeracidade(checked);
+    setConsent('consent_declaracao_veracidade', checked);
+  };
+
+  const allConsentsAccepted = acceptTerms && acceptPrivacy && checkTcle && checkVeracidade;
 
   const uploadPhoto = async (file: File, userId: string, tipo: string): Promise<string | null> => {
     const ext = file.name.split('.').pop() || 'jpg';
@@ -60,7 +127,6 @@ export default function Cadastro() {
     setIsLoading(true);
 
     try {
-      // Extract nome_completo from pending answers to use as full_name
       const pendingStr = sessionStorage.getItem('pendingQuizAnswers');
       const pendingAnswers = pendingStr ? JSON.parse(pendingStr) : {};
       const fullName = pendingAnswers.nome_completo || '';
@@ -87,15 +153,34 @@ export default function Cadastro() {
 
       const userId = signUpData.user?.id;
 
-      // Upload pending photos if user was created
       if (userId) {
-        // Register consent accepts
-        const now = new Date().toISOString();
-        await supabase.from('user_consents').upsert([
-          { user_id: userId, termo: 'termos_de_uso', aceito: true, aceito_em: now },
-          { user_id: userId, termo: 'politica_de_privacidade', aceito: true, aceito_em: now },
-        ], { onConflict: 'user_id,termo' });
+        // Persist all 4 consents to Supabase with original timestamps
+        try {
+          const tcleData = getConsent('consent_tcle');
+          const veracidadeData = getConsent('consent_declaracao_veracidade');
+          const termosData = getConsent('consent_termos_uso');
+          const privacidadeData = getConsent('consent_politica_privacidade');
 
+          const now = new Date().toISOString();
+
+          await supabase.from('user_consents').insert([
+            { user_id: userId, termo: 'tcle', aceito: true, aceito_em: tcleData?.aceito_em || now },
+            { user_id: userId, termo: 'declaracao_veracidade', aceito: true, aceito_em: veracidadeData?.aceito_em || now },
+            { user_id: userId, termo: 'termos_uso', aceito: true, aceito_em: termosData?.aceito_em || now },
+            { user_id: userId, termo: 'politica_privacidade', aceito: true, aceito_em: privacidadeData?.aceito_em || now },
+          ]);
+
+          // Clean up localStorage
+          localStorage.removeItem('consent_tcle');
+          localStorage.removeItem('consent_declaracao_veracidade');
+          localStorage.removeItem('consent_termos_uso');
+          localStorage.removeItem('consent_politica_privacidade');
+        } catch (consentError) {
+          console.error('Erro ao registrar consentimentos:', consentError);
+          // Don't block signup
+        }
+
+        // Upload pending photos
         const photos = getPendingPhotos();
         const photoUrls: Record<string, string> = {};
 
@@ -111,7 +196,6 @@ export default function Cadastro() {
         }
         await Promise.all(uploadPromises);
 
-        // Add photo URLs to the pending answers
         if (Object.keys(photoUrls).length > 0 && pendingStr) {
           const updatedAnswers = { ...pendingAnswers, ...photoUrls };
           sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(updatedAnswers));
@@ -120,14 +204,13 @@ export default function Cadastro() {
         clearPendingPhotos();
       }
 
-      // Submit pending anamnese data now that user is authenticated
+      // Submit pending anamnese data
       const updatedPendingStr = sessionStorage.getItem('pendingQuizAnswers');
       if (updatedPendingStr) {
         const answers = JSON.parse(updatedPendingStr);
         await submitAssessment(answers);
       }
 
-      // Navigate to confirmation
       navigate('/confirmacao');
     } catch (err) {
       toast.error('Erro ao criar conta');
@@ -161,6 +244,55 @@ export default function Cadastro() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {missingPreConsents && (!checkTcle || !checkVeracidade) && (
+              <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-3">
+                      Identificamos que alguns termos não foram confirmados. Por favor, confirme seu aceite abaixo antes de criar sua conta.
+                    </p>
+                    <div className="space-y-3">
+                      {!checkTcle && (
+                        <div className="flex items-start space-x-2">
+                          <input
+                            type="checkbox"
+                            id="tcle_recovery"
+                            checked={checkTcle}
+                            onChange={(e) => handleTcleChange(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="tcle_recovery" className="text-sm text-foreground leading-relaxed cursor-pointer">
+                            Li e concordo com o{" "}
+                            <a href="/termos/tcle" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              Termo de Consentimento Livre e Esclarecido (TCLE)
+                            </a>
+                          </label>
+                        </div>
+                      )}
+                      {!checkVeracidade && (
+                        <div className="flex items-start space-x-2">
+                          <input
+                            type="checkbox"
+                            id="veracidade_recovery"
+                            checked={checkVeracidade}
+                            onChange={(e) => handleVeracidadeChange(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="veracidade_recovery" className="text-sm text-foreground leading-relaxed cursor-pointer">
+                            Li e concordo com a{" "}
+                            <a href="/termos/declaracao-de-veracidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              Declaração de Veracidade da Anamnese
+                            </a>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
@@ -201,7 +333,7 @@ export default function Cadastro() {
                     type="checkbox"
                     id="acceptTerms"
                     checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    onChange={(e) => handleTermsChange(e.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
@@ -216,7 +348,7 @@ export default function Cadastro() {
                     type="checkbox"
                     id="acceptPrivacy"
                     checked={acceptPrivacy}
-                    onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                    onChange={(e) => handlePrivacyChange(e.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
                   <label htmlFor="acceptPrivacy" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
@@ -228,7 +360,7 @@ export default function Cadastro() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || isSubmitting || !acceptTerms || !acceptPrivacy}>
+              <Button type="submit" className="w-full" disabled={isLoading || isSubmitting || !allConsentsAccepted}>
                 {(isLoading || isSubmitting) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {isLoading || isSubmitting ? "Criando conta..." : "Criar Conta"}
               </Button>
