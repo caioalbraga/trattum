@@ -264,11 +264,8 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   ].map(p => ({ ...p, url: r[p.key] as string | undefined })).filter(p => p.url);
 
   return (
-    <>
-      {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Foto" onClose={() => setLightboxSrc(null)} />}
-
-      <Dialog open={open} onOpenChange={isOpen => { if (!isOpen) onClose(); }}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
+    <Dialog open={open} onOpenChange={isOpen => { if (!isOpen && !lightboxSrc) onClose(); }}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0 overflow-hidden [&>button.absolute]:hidden">
           {/* Header */}
           <header className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-border/60 bg-card">
             <div className="flex items-start justify-between gap-4">
@@ -494,8 +491,10 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
               </div>
             </footer>
           )}
+
+          {/* Lightbox rendered inside dialog so it doesn't close the modal */}
+          {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Foto" onClose={() => setLightboxSrc(null)} />}
         </DialogContent>
       </Dialog>
-    </>
   );
 }
