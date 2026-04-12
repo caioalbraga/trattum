@@ -114,12 +114,45 @@ export function AnamneseForm() {
     },
   });
 
+  const nomeCompleto = watch('nome_completo');
   const sexo = watch('sexo');
   const usaMedicamento = watch('usa_medicamento_continuo');
   const historicoFamiliar = watch('historico_familiar_doencas');
   const cirurgiaPrevia = watch('cirurgia_previa');
   const jaEsteve = watch('ja_esteve_gravida');
   const dataNascimento = watch('data_nascimento');
+
+  // Dev test mode: auto-fill all fields when typing @dev_test
+  useCallback(() => {}, []); // placeholder to keep hooks order
+  const prevNomeRef = useState('')[0];
+  if (nomeCompleto === '@dev_test' && prevNomeRef !== '@dev_test') {
+    // Use setTimeout to avoid setting state during render
+    setTimeout(() => {
+      setValue('nome_completo', 'João Silva Teste');
+      setValue('data_nascimento_display', '15/03/1990');
+      setValue('data_nascimento', new Date(1990, 2, 15));
+      setValue('sexo', 'masculino');
+      setValue('peso_atual', '95');
+      setValue('altura', '175');
+      setValue('usa_medicamento_continuo', 'sim');
+      setValue('detalhe_medicamento_continuo', 'Losartana 50mg, Metformina 850mg');
+      setValue('historico_familiar_doencas', 'sim');
+      setValue('detalhe_historico_familiar', 'Diabetes tipo 2, hipertensão arterial');
+      setValue('cirurgia_previa', 'nao');
+      setValue('detalhe_cirurgia', '');
+      setValue('ja_esteve_gravida', '');
+      setValue('quantas_gestacoes', '');
+      setValue('houve_aborto', '');
+      setValue('acompanhamento_nutricional', 'nao');
+      setValue('pratica_atividade_fisica', 'sim');
+      setValue('circ_braco', '35');
+      setValue('circ_torax', '105');
+      setValue('circ_cintura', '98');
+      setValue('circ_quadril', '104');
+      setValue('circ_perna', '60');
+      toast.success('🧪 Modo teste: campos preenchidos!');
+    }, 0);
+  }
 
   const uploadPhoto = async (file: File, userId: string, tipo: string): Promise<string | null> => {
     const ext = file.name.split('.').pop() || 'jpg';
