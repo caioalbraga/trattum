@@ -491,8 +491,10 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
               </div>
             </footer>
           )}
+
+          {/* Lightbox rendered inside dialog so it doesn't close the modal */}
+          {lightboxSrc && <PhotoLightbox src={lightboxSrc} alt="Foto" onClose={() => setLightboxSrc(null)} />}
         </DialogContent>
       </Dialog>
-    </>
   );
 }
