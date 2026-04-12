@@ -70,7 +70,7 @@ export function AboutSection() {
               <Button 
                 variant="hero" 
                 className="w-full group"
-                onClick={() => navigate('/anamnese')}
+                onClick={() => navigate('/pre-anamnese')}
               >
                 Descobrir meu Plano de Metas
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
