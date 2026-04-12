@@ -98,7 +98,7 @@ export function HeroSection() {
             <Button 
               variant="hero" 
               size="xl"
-              onClick={() => navigate('/anamnese')}
+              onClick={() => navigate('/pre-anamnese')}
               className="group"
             >
               Iniciar minha Avaliação

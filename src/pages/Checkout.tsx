@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useSubmitAssessment } from "@/hooks/useSubmitAssessment";
 import { encryptProfile, encryptEndereco } from "@/lib/crypto-client";
 import { useConsent } from "@/hooks/useConsent";
-import { ConsentInlineStep } from "@/components/consent/ConsentInlineStep";
 
 type CheckoutStep = 'conta' | 'entrega' | 'pagamento';
 
@@ -53,9 +52,10 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { submitAssessment } = useSubmitAssessment();
-  const { hasValidConsent, isLoading: consentLoading, isChecking: consentChecking, error: consentError, acceptConsent } = useConsent();
+  const { hasValidConsent, isLoading: consentLoading, isChecking: consentChecking, acceptConsent } = useConsent();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('conta');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [medicacaoConsent, setMedicacaoConsent] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [packagePrice, setPackagePrice] = useState<number | null>(null);
   const [profileData, setProfileData] = useState<{ nome?: string; whatsapp?: string; cpf?: string } | null>(null);
@@ -400,6 +400,22 @@ export default function Checkout() {
     }
   };
 
+  const handleMedicacaoConsent = async () => {
+    try {
+      // Record the medication consent in user_consents
+      if (user) {
+        const now = new Date().toISOString();
+        await supabase.from('user_consents').upsert([
+          { user_id: user.id, termo: 'termo_de_responsabilidade_medicacao', aceito: true, aceito_em: now },
+        ], { onConflict: 'user_id,termo' });
+      }
+      // Then accept the general consent (existing flow)
+      await acceptConsent();
+    } catch {
+      await acceptConsent();
+    }
+  };
+
   const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
   const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
 
@@ -576,13 +592,39 @@ export default function Checkout() {
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-2">Consentimento necessário</h2>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Antes de continuar, precisamos do seu consentimento para uso dos dados.
+                    Antes de continuar, precisamos do seu consentimento para uso da medicação.
                   </p>
-                  <ConsentInlineStep
-                    isLoading={consentLoading}
-                    error={consentError}
-                    onAccept={acceptConsent}
-                  />
+                  <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="consent-medicacao"
+                        checked={medicacaoConsent}
+                        onChange={(e) => setMedicacaoConsent(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="consent-medicacao" className="text-sm text-foreground leading-relaxed cursor-pointer">
+                        Li e concordo com o{" "}
+                        <a href="/termos/termo-de-responsabilidade-medicacao" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                          Termo de Responsabilidade pelo Uso da Medicação
+                        </a>
+                      </label>
+                    </div>
+                    <Button
+                      onClick={handleMedicacaoConsent}
+                      disabled={!medicacaoConsent || consentLoading}
+                      className="w-full"
+                    >
+                      {consentLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Registrando...
+                        </>
+                      ) : (
+                        'Continuar'
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
 

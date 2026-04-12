@@ -291,7 +291,7 @@ export default function DashboardTratamento() {
                   Faça nossa avaliação clínica para descobrir o melhor tratamento para você. É rápido, seguro e personalizado.
                 </p>
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <Link to="/anamnese">
+                  <Link to="/pre-anamnese">
                     Começar Avaliação
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
