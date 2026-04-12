@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
         const emailHtml = buildTCLEEmailHtml(body);
 
         // Use onboarding@resend.dev for testing until domain is verified
-        const fromAddress = "Trattum <onboarding@resend.dev>";
+        const fromAddress = "Trattum <noreply@trattum.com>";
 
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
