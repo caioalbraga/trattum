@@ -400,7 +400,22 @@ export default function Checkout() {
     }
   };
 
-  const steps = ['Tratamento', 'Conta', 'Entrega', 'Pagamento'];
+  const handleMedicacaoConsent = async () => {
+    try {
+      // Record the medication consent in user_consents
+      if (user) {
+        const now = new Date().toISOString();
+        await supabase.from('user_consents').upsert([
+          { user_id: user.id, termo: 'termo_de_responsabilidade_medicacao', aceito: true, aceito_em: now },
+        ], { onConflict: 'user_id,termo' });
+      }
+      // Then accept the general consent (existing flow)
+      await acceptConsent();
+    } catch {
+      await acceptConsent();
+    }
+  };
+
   const stepIndex = currentStep === 'conta' ? 1 : currentStep === 'entrega' ? 2 : 3;
 
   const displayPrice = packagePrice ?? 0;
