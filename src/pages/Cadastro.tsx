@@ -21,6 +21,8 @@ export default function Cadastro() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
 
   // Ensure pending answers exist, otherwise redirect back
   useEffect(() => {
@@ -87,6 +89,13 @@ export default function Cadastro() {
 
       // Upload pending photos if user was created
       if (userId) {
+        // Register consent accepts
+        const now = new Date().toISOString();
+        await supabase.from('user_consents').upsert([
+          { user_id: userId, termo: 'termos_de_uso', aceito: true, aceito_em: now },
+          { user_id: userId, termo: 'politica_de_privacidade', aceito: true, aceito_em: now },
+        ], { onConflict: 'user_id,termo' });
+
         const photos = getPendingPhotos();
         const photoUrls: Record<string, string> = {};
 
@@ -185,7 +194,41 @@ export default function Cadastro() {
                 </div>
                 <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading || isSubmitting}>
+
+              <div className="space-y-3">
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="acceptTerms"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="acceptTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    Li e concordo com os{" "}
+                    <a href="/termos/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      Termos de Uso
+                    </a>
+                  </label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="acceptPrivacy"
+                    checked={acceptPrivacy}
+                    onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="acceptPrivacy" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    Li e concordo com a{" "}
+                    <a href="/termos/politica-de-privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      Política de Privacidade
+                    </a>
+                  </label>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading || isSubmitting || !acceptTerms || !acceptPrivacy}>
                 {(isLoading || isSubmitting) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {isLoading || isSubmitting ? "Criando conta..." : "Criar Conta"}
               </Button>
