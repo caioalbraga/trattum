@@ -235,11 +235,75 @@ export function AnamneseForm() {
       return;
     }
 
-    // Store answers in session for post-signup submission
-    sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
-    // Store photos in memory for upload after account creation
-    setPendingPhotos(photos);
-    navigate('/cadastro');
+    // Check if user is already logged in
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      // User is logged in — submit directly
+      const userId = session.user.id;
+
+      // Upload photos directly
+      const photoUrls: Record<string, string> = {};
+      const uploadPromises: Promise<void>[] = [];
+      for (const [tipo, file] of Object.entries(photos)) {
+        if (file) {
+          uploadPromises.push(
+            uploadPhoto(file as File, userId, tipo).then(url => {
+              if (url) photoUrls[`foto_${tipo}`] = url;
+            })
+          );
+        }
+      }
+      await Promise.all(uploadPromises);
+
+      // Merge photo URLs into answers
+      const finalAnswers = { ...answers, ...photoUrls } as Record<string, string | number | boolean | string[] | null | { [fieldId: string]: number | string }>;
+
+      // Submit assessment
+      const result = await submitAssessment(finalAnswers);
+
+      if (result.success) {
+        // Update profile name with anamnese nome_completo
+        await supabase
+          .from('profiles')
+          .update({ nome: data.nome_completo.trim() })
+          .eq('user_id', userId);
+
+        // Persist any pending localStorage consents
+        const consentKeys = [
+          { key: 'consent_tcle', termo: 'tcle' },
+          { key: 'consent_declaracao_veracidade', termo: 'declaracao_veracidade' },
+        ];
+        const consentsToInsert: Array<{ user_id: string; termo: string; aceito: boolean; aceito_em: string }> = [];
+        const now = new Date().toISOString();
+
+        for (const { key, termo } of consentKeys) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed.aceito) {
+                consentsToInsert.push({ user_id: userId, termo, aceito: true, aceito_em: parsed.aceito_em || now });
+              }
+            } catch { /* ignore */ }
+          }
+        }
+
+        if (consentsToInsert.length > 0) {
+          await supabase.from('user_consents').insert(consentsToInsert);
+          consentKeys.forEach(({ key }) => localStorage.removeItem(key));
+        }
+
+        // Clear session storage
+        sessionStorage.removeItem('pendingQuizAnswers');
+        navigate('/confirmacao');
+      }
+    } else {
+      // User not logged in — store and redirect to /cadastro
+      sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+      setPendingPhotos(photos);
+      navigate('/cadastro');
+    }
   };
 
   return (
