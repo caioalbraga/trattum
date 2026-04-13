@@ -42,6 +42,10 @@ export default function Auth() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
+  // Consent checkboxes for signup
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+
   // Forgot password
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotDialogOpen, setForgotDialogOpen] = useState(false);
@@ -136,6 +140,26 @@ export default function Auth() {
     }
   };
 
+  const handleTermsChange = (checked: boolean) => {
+    setAcceptTerms(checked);
+    if (checked) {
+      localStorage.setItem('consent_termos_uso', JSON.stringify({ aceito: true, aceito_em: new Date().toISOString() }));
+    } else {
+      localStorage.removeItem('consent_termos_uso');
+    }
+  };
+
+  const handlePrivacyChange = (checked: boolean) => {
+    setAcceptPrivacy(checked);
+    if (checked) {
+      localStorage.setItem('consent_politica_privacidade', JSON.stringify({ aceito: true, aceito_em: new Date().toISOString() }));
+    } else {
+      localStorage.removeItem('consent_politica_privacidade');
+    }
+  };
+
+  const signupConsentsAccepted = acceptTerms && acceptPrivacy;
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -159,7 +183,7 @@ export default function Auth() {
     try {
       const redirectUrl = `${window.location.origin}/dashboard`;
 
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
@@ -177,6 +201,45 @@ export default function Auth() {
           toast.error(error.message);
         }
         return;
+      }
+
+      const userId = signUpData.user?.id;
+      if (userId) {
+        try {
+          const now = new Date().toISOString();
+          const consentsToInsert: Array<{ user_id: string; termo: string; aceito: boolean; aceito_em: string }> = [];
+
+          // Termos de Uso + Política de Privacidade
+          const termosRaw = localStorage.getItem('consent_termos_uso');
+          const privacidadeRaw = localStorage.getItem('consent_politica_privacidade');
+          const termosTs = termosRaw ? JSON.parse(termosRaw).aceito_em : now;
+          const privacidadeTs = privacidadeRaw ? JSON.parse(privacidadeRaw).aceito_em : now;
+
+          consentsToInsert.push(
+            { user_id: userId, termo: 'termos_uso', aceito: true, aceito_em: termosTs },
+            { user_id: userId, termo: 'politica_privacidade', aceito: true, aceito_em: privacidadeTs },
+          );
+
+          // Check for pre-anamnese consents in localStorage
+          const tcleRaw = localStorage.getItem('consent_tcle');
+          const veracidadeRaw = localStorage.getItem('consent_declaracao_veracidade');
+          if (tcleRaw) {
+            consentsToInsert.push({ user_id: userId, termo: 'tcle', aceito: true, aceito_em: JSON.parse(tcleRaw).aceito_em || now });
+          }
+          if (veracidadeRaw) {
+            consentsToInsert.push({ user_id: userId, termo: 'declaracao_veracidade', aceito: true, aceito_em: JSON.parse(veracidadeRaw).aceito_em || now });
+          }
+
+          await supabase.from('user_consents').insert(consentsToInsert);
+
+          // Clean up localStorage
+          localStorage.removeItem('consent_termos_uso');
+          localStorage.removeItem('consent_politica_privacidade');
+          localStorage.removeItem('consent_tcle');
+          localStorage.removeItem('consent_declaracao_veracidade');
+        } catch (consentError) {
+          console.error('Erro ao registrar consentimentos:', consentError);
+        }
       }
 
       toast.success('Conta criada com sucesso!');
@@ -402,7 +465,41 @@ export default function Auth() {
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-2">
+                      <input
+                        type="checkbox"
+                        id="auth-acceptTerms"
+                        checked={acceptTerms}
+                        onChange={(e) => handleTermsChange(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="auth-acceptTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                        Li e concordo com os{" "}
+                        <a href="/termos/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          Termos de Uso
+                        </a>
+                      </label>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <input
+                        type="checkbox"
+                        id="auth-acceptPrivacy"
+                        checked={acceptPrivacy}
+                        onChange={(e) => handlePrivacyChange(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="auth-acceptPrivacy" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                        Li e concordo com a{" "}
+                        <a href="/termos/politica-de-privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          Política de Privacidade
+                        </a>
+                      </label>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading || !signupConsentsAccepted}>
                     {isLoading ? "Criando conta..." : "Criar Conta"}
                   </Button>
                 </form>
