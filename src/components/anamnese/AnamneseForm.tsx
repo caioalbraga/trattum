@@ -257,7 +257,7 @@ export function AnamneseForm() {
       await Promise.all(uploadPromises);
 
       // Merge photo URLs into answers
-      const finalAnswers = { ...answers, ...photoUrls };
+      const finalAnswers = { ...answers, ...photoUrls } as Record<string, string | number | boolean | string[] | null | { [fieldId: string]: number | string }>;
 
       // Submit assessment
       const result = await submitAssessment(finalAnswers);

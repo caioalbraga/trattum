@@ -204,11 +204,19 @@ export default function Cadastro() {
         clearPendingPhotos();
       }
 
-      // Submit pending anamnese data
+      // Submit pending anamnese data and update profile name
       const updatedPendingStr = sessionStorage.getItem('pendingQuizAnswers');
       if (updatedPendingStr) {
         const answers = JSON.parse(updatedPendingStr);
         await submitAssessment(answers);
+
+        // Update profile name with anamnese nome_completo (Problema 3)
+        if (answers.nome_completo && userId) {
+          await supabase
+            .from('profiles')
+            .update({ nome: answers.nome_completo })
+            .eq('user_id', userId);
+        }
       }
 
       navigate('/confirmacao');
