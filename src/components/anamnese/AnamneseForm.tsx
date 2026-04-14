@@ -20,6 +20,7 @@ import { BodySilhouette } from './BodySilhouette';
 import { PhotoUpload } from './PhotoUpload';
 import { useSubmitAssessment } from '@/hooks/useSubmitAssessment';
 import { setPendingPhotos } from '@/lib/photo-store';
+import { savePendingAnamnese } from '@/lib/pending-anamnese';
 
 const animVariants = {
   initial: { opacity: 0, height: 0, marginTop: 0 },
@@ -301,6 +302,7 @@ export function AnamneseForm() {
     } else {
       // User not logged in — store and redirect to /cadastro
       sessionStorage.setItem('pendingQuizAnswers', JSON.stringify(answers));
+      savePendingAnamnese(answers);
       setPendingPhotos(photos);
       navigate('/cadastro');
     }

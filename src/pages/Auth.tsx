@@ -21,6 +21,7 @@ import { z } from "zod";
 import { MFAVerification } from "@/components/auth/MFAVerification";
 import { useMFA } from "@/hooks/useMFA";
 import { generateDeviceFingerprint } from "@/lib/device-fingerprint";
+import { submitPendingAnamnese } from "@/lib/pending-anamnese";
 
 const emailSchema = z.string().email("E-mail inválido");
 const passwordSchema = z.string().min(6, "Senha deve ter pelo menos 6 caracteres");
@@ -130,6 +131,17 @@ export default function Auth() {
           toast.error(error.message);
         }
         return;
+      }
+
+      // Submit any pending anamnese before redirect
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const submitted = await submitPendingAnamnese(session.user.id);
+        if (submitted) {
+          toast.success('Login realizado e anamnese enviada!');
+          navigate('/confirmacao');
+          return;
+        }
       }
 
       toast.success('Login realizado com sucesso!');
