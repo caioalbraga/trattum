@@ -2,19 +2,16 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, ArrowLeft, Heart, Phone, Stethoscope } from "lucide-react";
+import { AlertCircle, Heart, Phone, Stethoscope } from "lucide-react";
 
 export default function NotEligible() {
   const navigate = useNavigate();
-  const reason = sessionStorage.getItem('notEligibleReason') || 'bmi';
+  const reason = sessionStorage.getItem('notEligibleReason') || 'imc_minimo';
 
-  const title = reason === 'age'
-    ? 'Idade mínima não atingida'
-    : 'Perfil fora dos critérios mínimos';
+  const title = 'Tratamento não indicado no momento';
 
-  const description = reason === 'age'
-    ? 'O tratamento é indicado apenas para maiores de 18 anos. Consulte um profissional de saúde para orientações adequadas à sua faixa etária.'
-    : 'Com base nas informações fornecidas, seu Índice de Massa Corporal (IMC) está abaixo de 25, o que não indica necessidade de tratamento medicamentoso para perda de peso no momento.';
+  const description =
+    'Com base nas informações que você compartilhou conosco, o tratamento Trattum não é o mais adequado para o seu caso neste momento. Recomendamos que você procure acompanhamento médico tradicional para avaliar com cuidado o melhor caminho para você. Agradecemos muito o seu interesse em cuidar da sua saúde com a gente.';
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,14 +73,6 @@ export default function NotEligible() {
           </Card>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => navigate('/anamnese')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Revisar minhas respostas
-            </Button>
             <Button
               className="flex-1"
               onClick={() => navigate('/')}

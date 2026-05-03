@@ -15,12 +15,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 import { BodySilhouette } from './BodySilhouette';
 import { PhotoUpload } from './PhotoUpload';
 import { useSubmitAssessment } from '@/hooks/useSubmitAssessment';
 import { setPendingPhotos } from '@/lib/photo-store';
 import { savePendingAnamnese } from '@/lib/pending-anamnese';
+
+// ====== Critérios de elegibilidade (ajustáveis) ======
+const IDADE_MINIMA = 18;
+const IDADE_MAXIMA = 75;
+const IMC_MINIMO = 27;
 
 const animVariants = {
   initial: { opacity: 0, height: 0, marginTop: 0 },
@@ -82,6 +88,8 @@ function YesNoField({
 export function AnamneseForm() {
   const navigate = useNavigate();
   const { submitAssessment, isSubmitting } = useSubmitAssessment();
+  const [step, setStep] = useState(1);
+  const TOTAL_STEPS = 4;
   const [photos, setPhotos] = useState<{ frente: File | null; lateral: File | null; costas: File | null }>({
     frente: null,
     lateral: null,
@@ -167,13 +175,84 @@ export function AnamneseForm() {
     return data.publicUrl;
   };
 
+  // ---- Helpers de idade / IMC ----
+  const computeAge = (date: Date | null): number => {
+    if (!date) return 0;
+    const today = new Date();
+    const birth = new Date(date);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
+  const computeBMI = (peso: string, altura: string): number => {
+    const p = parseFloat(peso);
+    const aM = parseFloat(altura) / 100;
+    return aM > 0 ? p / (aM * aM) : 0;
+  };
+
+  // ---- Validação por bloco ----
+  const validateStep1 = (data: FormData): string | null => {
+    if (!data.nome_completo.trim()) return 'Preencha o nome completo.';
+    if (!data.data_nascimento) return 'Selecione a data de nascimento.';
+    if (!data.sexo) return 'Selecione o sexo.';
+    if (!data.peso_atual) return 'Informe o peso atual.';
+    if (!data.altura) return 'Informe a altura.';
+    return null;
+  };
+
+  const checkEligibility = (data: FormData): 'idade_minima' | 'idade_maxima' | 'imc_minimo' | null => {
+    const age = computeAge(data.data_nascimento);
+    const bmi = computeBMI(data.peso_atual, data.altura);
+    if (age < IDADE_MINIMA) return 'idade_minima';
+    if (age > IDADE_MAXIMA) return 'idade_maxima';
+    if (bmi < IMC_MINIMO) return 'imc_minimo';
+    return null;
+  };
+
+  const handleNextFromStep1 = async () => {
+    const data = watch();
+    const err = validateStep1(data);
+    if (err) { toast.error(err); return; }
+
+    const reason = checkEligibility(data);
+    if (reason) {
+      sessionStorage.setItem('notEligibleReason', reason);
+      // Best-effort: registrar tentativa (não bloqueia o redirecionamento)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await (supabase as any).from('inelegibilidade_tentativas').insert({
+          motivo: reason,
+          idade: computeAge(data.data_nascimento),
+          imc: computeBMI(data.peso_atual, data.altura),
+          user_id: session?.user.id ?? null,
+        });
+      } catch (e) {
+        console.warn('[anamnese] não foi possível registrar tentativa:', e);
+      }
+      navigate('/not-eligible');
+      return;
+    }
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNext = (next: number) => {
+    setStep(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const onSubmit = async (data: FormData) => {
-    // Validate required fields
-    if (!data.nome_completo.trim()) { toast.error('Preencha o nome completo.'); return; }
-    if (!data.data_nascimento) { toast.error('Selecione a data de nascimento.'); return; }
-    if (!data.sexo) { toast.error('Selecione o sexo.'); return; }
-    if (!data.peso_atual) { toast.error('Informe o peso atual.'); return; }
-    if (!data.altura) { toast.error('Informe a altura.'); return; }
+    // Revalida bloco 1 + elegibilidade por segurança
+    const err = validateStep1(data);
+    if (err) { toast.error(err); setStep(1); return; }
+    const reason = checkEligibility(data);
+    if (reason) {
+      sessionStorage.setItem('notEligibleReason', reason);
+      navigate('/not-eligible');
+      return;
+    }
 
     // Build answers object matching new structure
     const answers: Record<string, unknown> = {
@@ -188,53 +267,6 @@ export function AnamneseForm() {
       acompanhamento_nutricional: data.acompanhamento_nutricional || 'nao',
       pratica_atividade_fisica: data.pratica_atividade_fisica || 'nao',
     };
-
-    // Conditional fields
-    if (data.usa_medicamento_continuo === 'sim' && data.detalhe_medicamento_continuo.trim()) {
-      answers.detalhe_medicamento_continuo = data.detalhe_medicamento_continuo.trim();
-    }
-    if (data.historico_familiar_doencas === 'sim' && data.detalhe_historico_familiar.trim()) {
-      answers.detalhe_historico_familiar = data.detalhe_historico_familiar.trim();
-    }
-    if (data.cirurgia_previa === 'sim' && data.detalhe_cirurgia.trim()) {
-      answers.detalhe_cirurgia = data.detalhe_cirurgia.trim();
-    }
-    if (data.sexo === 'feminino') {
-      answers.ja_esteve_gravida = data.ja_esteve_gravida || 'nao';
-      if (data.ja_esteve_gravida === 'sim') {
-        if (data.quantas_gestacoes) answers.quantas_gestacoes = parseInt(data.quantas_gestacoes);
-        if (data.houve_aborto) answers.houve_aborto = data.houve_aborto;
-      }
-    }
-
-    // Circumferences
-    const circFields = ['circ_braco', 'circ_torax', 'circ_cintura', 'circ_quadril', 'circ_perna'] as const;
-    circFields.forEach((f) => {
-      if (data[f]) answers[f] = parseFloat(data[f]);
-    });
-
-    // Photos stored locally for now - will be uploaded after account creation
-    // Photo files are in the `photos` state but not uploaded yet since user has no account
-
-    // --- Client-side validation: age ≥ 18, BMI ≥ 25 ---
-    const peso = parseFloat(data.peso_atual);
-    const alturaM = parseFloat(data.altura) / 100;
-    const bmi = alturaM > 0 ? peso / (alturaM * alturaM) : 0;
-
-    let age = 0;
-    if (data.data_nascimento) {
-      const today = new Date();
-      const birth = new Date(data.data_nascimento);
-      age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    }
-
-    if (age < 18 || bmi < 25) {
-      sessionStorage.setItem('notEligibleReason', age < 18 ? 'age' : 'bmi');
-      navigate('/not-eligible');
-      return;
-    }
 
     // Check if user is already logged in
     const { data: { session } } = await supabase.auth.getSession();
@@ -309,9 +341,24 @@ export function AnamneseForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-6">
 
-      {/* ── BLOCO 1: Identificação ── */}
+      {/* Progresso */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium text-foreground">Etapa {step} de {TOTAL_STEPS}</span>
+          <span className="text-muted-foreground">
+            {step === 1 && 'Dados Básicos'}
+            {step === 2 && 'Histórico de Saúde'}
+            {step === 3 && 'Estilo de Vida'}
+            {step === 4 && 'Medidas e Fotos'}
+          </span>
+        </div>
+        <Progress value={(step / TOTAL_STEPS) * 100} />
+      </div>
+
+      {/* ── BLOCO 1: Dados Básicos ── */}
+      {step === 1 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">1. Identificação</CardTitle>
@@ -399,8 +446,18 @@ export function AnamneseForm() {
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {step === 1 && (
+        <div className="flex justify-end pb-8">
+          <Button type="button" size="lg" onClick={handleNextFromStep1} className="w-full max-w-md">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 2: Histórico de Saúde ── */}
+      {step === 2 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">2. Histórico de Saúde</CardTitle>
@@ -506,8 +563,21 @@ export function AnamneseForm() {
           </AnimatePresence>
         </CardContent>
       </Card>
+      )}
+
+      {step === 2 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(1)} className="flex-1">
+            Voltar
+          </Button>
+          <Button type="button" size="lg" onClick={() => handleNext(3)} className="flex-1">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 3: Estilo de Vida ── */}
+      {step === 3 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">3. Estilo de Vida</CardTitle>
@@ -525,8 +595,21 @@ export function AnamneseForm() {
           />
         </CardContent>
       </Card>
+      )}
+
+      {step === 3 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(2)} className="flex-1">
+            Voltar
+          </Button>
+          <Button type="button" size="lg" onClick={() => handleNext(4)} className="flex-1">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 4: Medidas e Fotos ── */}
+      {step === 4 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">4. Medidas e Fotos</CardTitle>
@@ -592,19 +675,20 @@ export function AnamneseForm() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Submit */}
-      <div className="flex justify-center pb-8">
-        <Button
-          type="submit"
-          size="lg"
-          disabled={isSubmitting}
-          className="w-full max-w-md gap-2"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Enviando avaliação...' : 'Enviar Anamnese'}
-        </Button>
-      </div>
+      {/* Submit (apenas no Bloco 4) */}
+      {step === 4 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(3)} className="flex-1" disabled={isSubmitting}>
+            Voltar
+          </Button>
+          <Button type="submit" size="lg" disabled={isSubmitting} className="flex-1 gap-2">
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Enviando...' : 'Enviar Anamnese'}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
