@@ -595,8 +595,21 @@ export function AnamneseForm() {
           />
         </CardContent>
       </Card>
+      )}
+
+      {step === 3 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(2)} className="flex-1">
+            Voltar
+          </Button>
+          <Button type="button" size="lg" onClick={() => handleNext(4)} className="flex-1">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 4: Medidas e Fotos ── */}
+      {step === 4 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">4. Medidas e Fotos</CardTitle>
