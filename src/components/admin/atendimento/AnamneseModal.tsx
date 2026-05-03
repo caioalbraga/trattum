@@ -151,6 +151,7 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   const [loading, setLoading] = useState<string | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [showAdjustment, setShowAdjustment] = useState(false);
+  const [photos, setPhotos] = useState<Array<{ key: string; label: string; url: string }>>([]);
   const { toast } = useToast();
 
   // Reset state when switching patients or closing
@@ -159,6 +160,31 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
     setShowAdjustment(false);
     setLoading(null);
   }, [avaliacao?.id, open]);
+
+  // Resolve signed URLs for private bucket photos
+  const fotoFrente = avaliacao?.respostas?.foto_frente as string | undefined;
+  const fotoLateral = avaliacao?.respostas?.foto_lateral as string | undefined;
+  const fotoCostas = avaliacao?.respostas?.foto_costas as string | undefined;
+  useEffect(() => {
+    let active = true;
+    if (!avaliacao) { setPhotos([]); return; }
+    const specs = [
+      { key: 'foto_frente', label: 'Frente', raw: fotoFrente },
+      { key: 'foto_lateral', label: 'Lateral', raw: fotoLateral },
+      { key: 'foto_costas', label: 'Costas', raw: fotoCostas },
+    ];
+    (async () => {
+      const resolved = await Promise.all(
+        specs.map(async (p) => {
+          if (!p.raw) return null;
+          const url = await getSignedPhotoUrl(p.raw);
+          return url ? { key: p.key, label: p.label, url } : null;
+        })
+      );
+      if (active) setPhotos(resolved.filter((x): x is { key: string; label: string; url: string } => !!x));
+    })();
+    return () => { active = false; };
+  }, [avaliacao?.id, fotoFrente, fotoLateral, fotoCostas]);
 
   if (!avaliacao) return null;
 
@@ -257,28 +283,6 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   // Gestational section - only show for female
   const isFemale = String(r.sexo || '').toLowerCase() === 'feminino';
 
-  // Photo signed URLs (bucket privado)
-  const photoSpecs = [
-    { key: 'foto_frente', label: 'Frente' },
-    { key: 'foto_lateral', label: 'Lateral' },
-    { key: 'foto_costas', label: 'Costas' },
-  ];
-  const [photos, setPhotos] = useState<Array<{ key: string; label: string; url: string }>>([]);
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const resolved = await Promise.all(
-        photoSpecs.map(async (p) => {
-          const raw = r[p.key] as string | undefined;
-          if (!raw) return null;
-          const url = await getSignedPhotoUrl(raw);
-          return url ? { ...p, url } : null;
-        })
-      );
-      if (active) setPhotos(resolved.filter((x): x is { key: string; label: string; url: string } => !!x));
-    })();
-    return () => { active = false; };
-  }, [r.foto_frente, r.foto_lateral, r.foto_costas]);
 
   return (
     <Dialog open={open} onOpenChange={isOpen => { if (!isOpen && !lightboxSrc) onClose(); }}>
