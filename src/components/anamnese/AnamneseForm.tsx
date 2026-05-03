@@ -175,13 +175,82 @@ export function AnamneseForm() {
     return data.publicUrl;
   };
 
+  // ---- Helpers de idade / IMC ----
+  const computeAge = (date: Date | null): number => {
+    if (!date) return 0;
+    const today = new Date();
+    const birth = new Date(date);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
+  const computeBMI = (peso: string, altura: string): number => {
+    const p = parseFloat(peso);
+    const aM = parseFloat(altura) / 100;
+    return aM > 0 ? p / (aM * aM) : 0;
+  };
+
+  // ---- Validação por bloco ----
+  const validateStep1 = (data: FormData): string | null => {
+    if (!data.nome_completo.trim()) return 'Preencha o nome completo.';
+    if (!data.data_nascimento) return 'Selecione a data de nascimento.';
+    if (!data.sexo) return 'Selecione o sexo.';
+    if (!data.peso_atual) return 'Informe o peso atual.';
+    if (!data.altura) return 'Informe a altura.';
+    return null;
+  };
+
+  const checkEligibility = (data: FormData): 'idade_minima' | 'idade_maxima' | 'imc_minimo' | null => {
+    const age = computeAge(data.data_nascimento);
+    const bmi = computeBMI(data.peso_atual, data.altura);
+    if (age < IDADE_MINIMA) return 'idade_minima';
+    if (age > IDADE_MAXIMA) return 'idade_maxima';
+    if (bmi < IMC_MINIMO) return 'imc_minimo';
+    return null;
+  };
+
+  const handleNextFromStep1 = async () => {
+    const data = watch();
+    const err = validateStep1(data);
+    if (err) { toast.error(err); return; }
+
+    const reason = checkEligibility(data);
+    if (reason) {
+      sessionStorage.setItem('notEligibleReason', reason);
+      // Best-effort: registrar tentativa (não bloqueia o redirecionamento)
+      try {
+        await supabase.from('inelegibilidade_tentativas').insert({
+          motivo: reason,
+          idade: computeAge(data.data_nascimento),
+          imc: computeBMI(data.peso_atual, data.altura),
+        });
+      } catch (e) {
+        console.warn('[anamnese] não foi possível registrar tentativa:', e);
+      }
+      navigate('/not-eligible');
+      return;
+    }
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNext = (next: number) => {
+    setStep(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const onSubmit = async (data: FormData) => {
-    // Validate required fields
-    if (!data.nome_completo.trim()) { toast.error('Preencha o nome completo.'); return; }
-    if (!data.data_nascimento) { toast.error('Selecione a data de nascimento.'); return; }
-    if (!data.sexo) { toast.error('Selecione o sexo.'); return; }
-    if (!data.peso_atual) { toast.error('Informe o peso atual.'); return; }
-    if (!data.altura) { toast.error('Informe a altura.'); return; }
+    // Revalida bloco 1 + elegibilidade por segurança
+    const err = validateStep1(data);
+    if (err) { toast.error(err); setStep(1); return; }
+    const reason = checkEligibility(data);
+    if (reason) {
+      sessionStorage.setItem('notEligibleReason', reason);
+      navigate('/not-eligible');
+      return;
+    }
 
     // Build answers object matching new structure
     const answers: Record<string, unknown> = {
@@ -196,53 +265,6 @@ export function AnamneseForm() {
       acompanhamento_nutricional: data.acompanhamento_nutricional || 'nao',
       pratica_atividade_fisica: data.pratica_atividade_fisica || 'nao',
     };
-
-    // Conditional fields
-    if (data.usa_medicamento_continuo === 'sim' && data.detalhe_medicamento_continuo.trim()) {
-      answers.detalhe_medicamento_continuo = data.detalhe_medicamento_continuo.trim();
-    }
-    if (data.historico_familiar_doencas === 'sim' && data.detalhe_historico_familiar.trim()) {
-      answers.detalhe_historico_familiar = data.detalhe_historico_familiar.trim();
-    }
-    if (data.cirurgia_previa === 'sim' && data.detalhe_cirurgia.trim()) {
-      answers.detalhe_cirurgia = data.detalhe_cirurgia.trim();
-    }
-    if (data.sexo === 'feminino') {
-      answers.ja_esteve_gravida = data.ja_esteve_gravida || 'nao';
-      if (data.ja_esteve_gravida === 'sim') {
-        if (data.quantas_gestacoes) answers.quantas_gestacoes = parseInt(data.quantas_gestacoes);
-        if (data.houve_aborto) answers.houve_aborto = data.houve_aborto;
-      }
-    }
-
-    // Circumferences
-    const circFields = ['circ_braco', 'circ_torax', 'circ_cintura', 'circ_quadril', 'circ_perna'] as const;
-    circFields.forEach((f) => {
-      if (data[f]) answers[f] = parseFloat(data[f]);
-    });
-
-    // Photos stored locally for now - will be uploaded after account creation
-    // Photo files are in the `photos` state but not uploaded yet since user has no account
-
-    // --- Client-side validation: age ≥ 18, BMI ≥ 25 ---
-    const peso = parseFloat(data.peso_atual);
-    const alturaM = parseFloat(data.altura) / 100;
-    const bmi = alturaM > 0 ? peso / (alturaM * alturaM) : 0;
-
-    let age = 0;
-    if (data.data_nascimento) {
-      const today = new Date();
-      const birth = new Date(data.data_nascimento);
-      age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    }
-
-    if (age < 18 || bmi < 25) {
-      sessionStorage.setItem('notEligibleReason', age < 18 ? 'age' : 'bmi');
-      navigate('/not-eligible');
-      return;
-    }
 
     // Check if user is already logged in
     const { data: { session } } = await supabase.auth.getSession();
