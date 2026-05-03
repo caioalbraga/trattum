@@ -262,10 +262,21 @@ export function AnamneseForm() {
       peso_atual: parseFloat(data.peso_atual),
       altura: parseFloat(data.altura),
       usa_medicamento_continuo: data.usa_medicamento_continuo || 'nao',
+      detalhe_medicamento_continuo: data.detalhe_medicamento_continuo?.trim() || null,
       historico_familiar_doencas: data.historico_familiar_doencas || 'nao',
+      detalhe_historico_familiar: data.detalhe_historico_familiar?.trim() || null,
       cirurgia_previa: data.cirurgia_previa || 'nao',
+      detalhe_cirurgia: data.detalhe_cirurgia?.trim() || null,
+      ja_esteve_gravida: data.ja_esteve_gravida || null,
+      quantas_gestacoes: data.quantas_gestacoes || null,
+      houve_aborto: data.houve_aborto || null,
       acompanhamento_nutricional: data.acompanhamento_nutricional || 'nao',
       pratica_atividade_fisica: data.pratica_atividade_fisica || 'nao',
+      circ_braco: data.circ_braco ? parseFloat(data.circ_braco) : null,
+      circ_torax: data.circ_torax ? parseFloat(data.circ_torax) : null,
+      circ_cintura: data.circ_cintura ? parseFloat(data.circ_cintura) : null,
+      circ_quadril: data.circ_quadril ? parseFloat(data.circ_quadril) : null,
+      circ_perna: data.circ_perna ? parseFloat(data.circ_perna) : null,
     };
 
     // Check if user is already logged in
