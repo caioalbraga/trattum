@@ -74,14 +74,6 @@ export default function NotEligible() {
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => navigate('/anamnese')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Revisar minhas respostas
-            </Button>
-            <Button
               className="flex-1"
               onClick={() => navigate('/')}
             >
