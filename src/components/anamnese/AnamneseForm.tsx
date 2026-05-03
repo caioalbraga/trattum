@@ -675,19 +675,20 @@ export function AnamneseForm() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Submit */}
-      <div className="flex justify-center pb-8">
-        <Button
-          type="submit"
-          size="lg"
-          disabled={isSubmitting}
-          className="w-full max-w-md gap-2"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Enviando avaliação...' : 'Enviar Anamnese'}
-        </Button>
-      </div>
+      {/* Submit (apenas no Bloco 4) */}
+      {step === 4 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(3)} className="flex-1" disabled={isSubmitting}>
+            Voltar
+          </Button>
+          <Button type="submit" size="lg" disabled={isSubmitting} className="flex-1 gap-2">
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Enviando...' : 'Enviar Anamnese'}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
