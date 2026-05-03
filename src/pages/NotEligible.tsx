@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, ArrowLeft, Heart, Phone, Stethoscope } from "lucide-react";
+import { AlertCircle, Heart, Phone, Stethoscope } from "lucide-react";
 
 export default function NotEligible() {
   const navigate = useNavigate();
