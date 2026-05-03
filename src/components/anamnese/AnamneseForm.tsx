@@ -88,6 +88,8 @@ function YesNoField({
 export function AnamneseForm() {
   const navigate = useNavigate();
   const { submitAssessment, isSubmitting } = useSubmitAssessment();
+  const [step, setStep] = useState(1);
+  const TOTAL_STEPS = 4;
   const [photos, setPhotos] = useState<{ frente: File | null; lateral: File | null; costas: File | null }>({
     frente: null,
     lateral: null,
