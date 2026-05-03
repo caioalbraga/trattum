@@ -446,8 +446,18 @@ export function AnamneseForm() {
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {step === 1 && (
+        <div className="flex justify-end pb-8">
+          <Button type="button" size="lg" onClick={handleNextFromStep1} className="w-full max-w-md">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 2: Histórico de Saúde ── */}
+      {step === 2 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">2. Histórico de Saúde</CardTitle>
