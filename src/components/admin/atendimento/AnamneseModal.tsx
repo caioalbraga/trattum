@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { getSignedPhotoUrl } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -256,12 +257,28 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   // Gestational section - only show for female
   const isFemale = String(r.sexo || '').toLowerCase() === 'feminino';
 
-  // Photo URLs
-  const photos = [
+  // Photo signed URLs (bucket privado)
+  const photoSpecs = [
     { key: 'foto_frente', label: 'Frente' },
     { key: 'foto_lateral', label: 'Lateral' },
     { key: 'foto_costas', label: 'Costas' },
-  ].map(p => ({ ...p, url: r[p.key] as string | undefined })).filter(p => p.url);
+  ];
+  const [photos, setPhotos] = useState<Array<{ key: string; label: string; url: string }>>([]);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const resolved = await Promise.all(
+        photoSpecs.map(async (p) => {
+          const raw = r[p.key] as string | undefined;
+          if (!raw) return null;
+          const url = await getSignedPhotoUrl(raw);
+          return url ? { ...p, url } : null;
+        })
+      );
+      if (active) setPhotos(resolved.filter((x): x is { key: string; label: string; url: string } => !!x));
+    })();
+    return () => { active = false; };
+  }, [r.foto_frente, r.foto_lateral, r.foto_costas]);
 
   return (
     <Dialog open={open} onOpenChange={isOpen => { if (!isOpen && !lightboxSrc) onClose(); }}>

@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { SignedImg } from '@/components/SignedImg';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -263,11 +264,11 @@ function ResponseRow({ label, value, riskFlag, isPhoto }: { label: string; value
   const display = displayValue(value);
   if (display === '—') return null;
 
-  if (isPhoto && typeof value === 'string' && value.startsWith('http')) {
+  if (isPhoto && typeof value === 'string' && value.length > 0) {
     return (
       <div className="py-3 px-4 rounded-lg border bg-background border-border/30">
         <dt className="text-xs text-muted-foreground mb-2">{label}</dt>
-        <img src={value} alt={label} className="w-full max-w-[200px] rounded-lg object-cover aspect-[3/4]" />
+        <SignedImg src={value} alt={label} className="w-full max-w-[200px] rounded-lg object-cover aspect-[3/4]" />
       </div>
     );
   }
