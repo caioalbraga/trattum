@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { SignedImg } from '@/components/SignedImg';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
