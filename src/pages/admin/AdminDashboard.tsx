@@ -45,7 +45,7 @@ export default function AdminDashboard() {
         { count: aguardandoPagamento },
         { data: renovacoes },
       ] = await Promise.all([
-        supabase.from('pedidos').select('valor, created_at, status'),
+        supabase.from('pedidos_legacy').select('valor, created_at, status'),
         supabase.from('tratamentos').select('*', { count: 'exact', head: true })
           .in('status', ['em_andamento', 'entregue']),
         supabase.from('avaliacoes').select('*', { count: 'exact', head: true })

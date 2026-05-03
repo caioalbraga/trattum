@@ -175,7 +175,7 @@ export default function Checkout() {
 
         // Check for pending orders to resume
         const { data: pendingOrder } = await supabase
-          .from('pedidos')
+          .from('pedidos_legacy')
           .select('id, status')
           .eq('user_id', user.id)
           .eq('status', 'pendente')
@@ -318,7 +318,7 @@ export default function Checkout() {
       // Create or update pending order
       if (!pendingOrderId) {
         const { data: newOrder, error: orderError } = await supabase
-          .from('pedidos')
+          .from('pedidos_legacy')
           .insert({
             user_id: user.id,
             valor: packagePrice,
@@ -360,13 +360,13 @@ export default function Checkout() {
       const orderId = pendingOrderId;
       if (orderId) {
         await supabase
-          .from('pedidos')
+          .from('pedidos_legacy')
           .update({ status: 'pago' })
           .eq('id', orderId);
       } else {
         // Create order if doesn't exist
         await supabase
-          .from('pedidos')
+          .from('pedidos_legacy')
           .insert({
             user_id: user.id,
             valor: packagePrice,

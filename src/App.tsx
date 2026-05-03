@@ -27,6 +27,7 @@ import AdminAtendimento from "./pages/admin/AdminAtendimento";
 import AdminAcompanhamento from "./pages/admin/AdminAcompanhamento";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminPedidosPage from "./pages/admin/AdminPedidos";
 import TestLogic from "./pages/TestLogic";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,8 @@ const App = () => (
             <Route path="/trattum-admin/acompanhamento" element={<AdminAcompanhamento />} />
             <Route path="/trattum-admin/configuracoes" element={<AdminConfiguracoes />} />
             <Route path="/trattum-admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/trattum-admin/pedidos" element={<AdminPedidosPage />} />
+            <Route path="/pedidos" element={<AdminPedidosPage />} />
             {/* Developer Tools */}
             <Route path="/test-logic" element={<TestLogic />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

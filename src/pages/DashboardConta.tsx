@@ -124,7 +124,7 @@ export default function DashboardConta() {
       const [profileRes, enderecoRes, pedidosRes, consentRes, docRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('user_id', user.id).single(),
         supabase.from('enderecos').select('*').eq('user_id', user.id).eq('is_default', true).single(),
-        supabase.from('pedidos').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('pedidos_legacy').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('consent_logs')
           .select('id, consent_timestamp, terms_version, document_hash, ip_address, email_sent, user_agent')
           .eq('user_id', user.id)
