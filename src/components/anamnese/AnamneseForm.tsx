@@ -59,6 +59,37 @@ interface FormData {
   circ_perna: string;
 }
 
+const ANAMNESE_FIELD_NAMES: Array<keyof FormData> = [
+  'nome_completo',
+  'data_nascimento',
+  'data_nascimento_display',
+  'sexo',
+  'peso_atual',
+  'altura',
+  'usa_medicamento_continuo',
+  'detalhe_medicamento_continuo',
+  'historico_familiar_doencas',
+  'detalhe_historico_familiar',
+  'cirurgia_previa',
+  'detalhe_cirurgia',
+  'ja_esteve_gravida',
+  'quantas_gestacoes',
+  'houve_aborto',
+  'acompanhamento_nutricional',
+  'pratica_atividade_fisica',
+  'circ_braco',
+  'circ_torax',
+  'circ_cintura',
+  'circ_quadril',
+  'circ_perna',
+];
+
+function parseNumberField(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(String(value).replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function YesNoField({
   label,
   value,
@@ -96,7 +127,8 @@ export function AnamneseForm() {
     costas: null,
   });
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
+    shouldUnregister: false,
     defaultValues: {
       nome_completo: '',
       data_nascimento: null,
@@ -122,6 +154,10 @@ export function AnamneseForm() {
       circ_perna: '',
     },
   });
+
+  useEffect(() => {
+    ANAMNESE_FIELD_NAMES.forEach((fieldName) => register(fieldName));
+  }, [register]);
 
   const nomeCompleto = watch('nome_completo');
   const sexo = watch('sexo');
@@ -254,29 +290,32 @@ export function AnamneseForm() {
       return;
     }
 
-    // Build answers object matching new structure
+    const currentValues = getValues();
+    const formData = { ...currentValues, ...data };
+
+    // Build answers object matching current anamnese structure
     const answers: Record<string, unknown> = {
-      nome_completo: data.nome_completo.trim(),
-      data_nascimento: data.data_nascimento ? format(data.data_nascimento, 'yyyy-MM-dd') : null,
-      sexo: data.sexo,
-      peso_atual: parseFloat(data.peso_atual),
-      altura: parseFloat(data.altura),
-      usa_medicamento_continuo: data.usa_medicamento_continuo || 'nao',
-      detalhe_medicamento_continuo: data.detalhe_medicamento_continuo?.trim() || null,
-      historico_familiar_doencas: data.historico_familiar_doencas || 'nao',
-      detalhe_historico_familiar: data.detalhe_historico_familiar?.trim() || null,
-      cirurgia_previa: data.cirurgia_previa || 'nao',
-      detalhe_cirurgia: data.detalhe_cirurgia?.trim() || null,
-      ja_esteve_gravida: data.ja_esteve_gravida || null,
-      quantas_gestacoes: data.quantas_gestacoes || null,
-      houve_aborto: data.houve_aborto || null,
-      acompanhamento_nutricional: data.acompanhamento_nutricional || 'nao',
-      pratica_atividade_fisica: data.pratica_atividade_fisica || 'nao',
-      circ_braco: data.circ_braco ? parseFloat(data.circ_braco) : null,
-      circ_torax: data.circ_torax ? parseFloat(data.circ_torax) : null,
-      circ_cintura: data.circ_cintura ? parseFloat(data.circ_cintura) : null,
-      circ_quadril: data.circ_quadril ? parseFloat(data.circ_quadril) : null,
-      circ_perna: data.circ_perna ? parseFloat(data.circ_perna) : null,
+      nome_completo: formData.nome_completo.trim(),
+      data_nascimento: formData.data_nascimento ? format(formData.data_nascimento, 'yyyy-MM-dd') : null,
+      sexo: formData.sexo,
+      peso_atual: parseNumberField(formData.peso_atual),
+      altura: parseNumberField(formData.altura),
+      usa_medicamento_continuo: formData.usa_medicamento_continuo || 'nao',
+      detalhe_medicamento_continuo: formData.detalhe_medicamento_continuo?.trim() || null,
+      historico_familiar_doencas: formData.historico_familiar_doencas || 'nao',
+      detalhe_historico_familiar: formData.detalhe_historico_familiar?.trim() || null,
+      cirurgia_previa: formData.cirurgia_previa || 'nao',
+      detalhe_cirurgia: formData.detalhe_cirurgia?.trim() || null,
+      ja_esteve_gravida: formData.ja_esteve_gravida || null,
+      quantas_gestacoes: formData.quantas_gestacoes || null,
+      houve_aborto: formData.houve_aborto || null,
+      acompanhamento_nutricional: formData.acompanhamento_nutricional || 'nao',
+      pratica_atividade_fisica: formData.pratica_atividade_fisica || 'nao',
+      circ_braco: parseNumberField(formData.circ_braco),
+      circ_torax: parseNumberField(formData.circ_torax),
+      circ_cintura: parseNumberField(formData.circ_cintura),
+      circ_quadril: parseNumberField(formData.circ_quadril),
+      circ_perna: parseNumberField(formData.circ_perna),
     };
 
     // Check if user is already logged in
