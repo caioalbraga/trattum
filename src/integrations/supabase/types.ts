@@ -580,6 +580,57 @@ export type Database = {
       pedidos: {
         Row: {
           created_at: string
+          dosagem: string | null
+          id: string
+          medicamento: string | null
+          observacoes: string | null
+          paciente_id: string
+          pedido_legacy_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dosagem?: string | null
+          id?: string
+          medicamento?: string | null
+          observacoes?: string | null
+          paciente_id: string
+          pedido_legacy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dosagem?: string | null
+          id?: string
+          medicamento?: string | null
+          observacoes?: string | null
+          paciente_id?: string
+          pedido_legacy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_pedido_legacy_id_fkey"
+            columns: ["pedido_legacy_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_legacy"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_legacy: {
+        Row: {
+          created_at: string
           descricao: string | null
           id: string
           status: string
@@ -603,6 +654,44 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      pedidos_status_log: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          id: string
+          observacao: string | null
+          pedido_id: string
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          id?: string
+          observacao?: string | null
+          pedido_id: string
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          id?: string
+          observacao?: string | null
+          pedido_id?: string
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_status_log_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prescricoes: {
         Row: {
