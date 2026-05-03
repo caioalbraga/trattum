@@ -563,8 +563,21 @@ export function AnamneseForm() {
           </AnimatePresence>
         </CardContent>
       </Card>
+      )}
+
+      {step === 2 && (
+        <div className="flex gap-3 pb-8">
+          <Button type="button" variant="outline" size="lg" onClick={() => handleNext(1)} className="flex-1">
+            Voltar
+          </Button>
+          <Button type="button" size="lg" onClick={() => handleNext(3)} className="flex-1">
+            Avançar
+          </Button>
+        </div>
+      )}
 
       {/* ── BLOCO 3: Estilo de Vida ── */}
+      {step === 3 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">3. Estilo de Vida</CardTitle>
