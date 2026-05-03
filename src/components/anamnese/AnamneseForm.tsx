@@ -221,10 +221,12 @@ export function AnamneseForm() {
       sessionStorage.setItem('notEligibleReason', reason);
       // Best-effort: registrar tentativa (não bloqueia o redirecionamento)
       try {
-        await supabase.from('inelegibilidade_tentativas').insert({
+        const { data: { session } } = await supabase.auth.getSession();
+        await (supabase as any).from('inelegibilidade_tentativas').insert({
           motivo: reason,
           idade: computeAge(data.data_nascimento),
           imc: computeBMI(data.peso_atual, data.altura),
+          user_id: session?.user.id ?? null,
         });
       } catch (e) {
         console.warn('[anamnese] não foi possível registrar tentativa:', e);
