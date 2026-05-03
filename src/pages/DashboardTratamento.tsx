@@ -15,6 +15,7 @@ import { TratamentoSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FadeInContent } from '@/components/dashboard/FadeInContent';
 import { TCLEModal } from '@/components/consent/TCLEModal';
 import { PrescriptionModal } from '@/components/documents/PrescriptionModal';
+import { PedidoAcompanhamento } from '@/components/dashboard/PedidoAcompanhamento';
 import { decryptProfile } from '@/lib/crypto-client';
 import { cn } from '@/lib/utils';
 import { normalizeTreatmentStatus } from '@/lib/treatment-status';
@@ -256,6 +257,8 @@ export default function DashboardTratamento() {
             <h1 className="font-serif text-3xl lg:text-4xl font-semibold text-foreground">Tratamento</h1>
             <p className="text-muted-foreground mt-2">Acompanhe a evolução do seu plano de saúde.</p>
           </div>
+
+          <PedidoAcompanhamento />
 
           {/* ── Rejected state ── */}
           {isRejected && (
