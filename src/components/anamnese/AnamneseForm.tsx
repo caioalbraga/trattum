@@ -15,12 +15,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 import { BodySilhouette } from './BodySilhouette';
 import { PhotoUpload } from './PhotoUpload';
 import { useSubmitAssessment } from '@/hooks/useSubmitAssessment';
 import { setPendingPhotos } from '@/lib/photo-store';
 import { savePendingAnamnese } from '@/lib/pending-anamnese';
+
+// ====== Critérios de elegibilidade (ajustáveis) ======
+const IDADE_MINIMA = 18;
+const IDADE_MAXIMA = 75;
+const IMC_MINIMO = 27;
 
 const animVariants = {
   initial: { opacity: 0, height: 0, marginTop: 0 },
