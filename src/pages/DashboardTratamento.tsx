@@ -191,7 +191,7 @@ export default function DashboardTratamento() {
     try {
       const [tratamentoRes, pedidoRes, consentRes, profileRes, docRes, avaliacaoRes] = await Promise.all([
         supabase.from('tratamentos').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('pedidos').select('*').eq('user_id', user.id).eq('status', 'pendente')
+        supabase.from('pedidos_legacy').select('*').eq('user_id', user.id).eq('status', 'pendente')
           .order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('consent_logs')
           .select('id, consent_timestamp, terms_version, document_hash, ip_address, email_sent, user_agent')

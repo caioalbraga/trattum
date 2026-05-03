@@ -61,7 +61,7 @@ export default function AdminPedidos() {
   const fetchPedidos = async () => {
     try {
       const { data, error } = await supabase
-        .from('pedidos')
+        .from('pedidos_legacy')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -81,7 +81,7 @@ export default function AdminPedidos() {
   const updateStatus = async (pedidoId: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from('pedidos')
+        .from('pedidos_legacy')
         .update({ status: newStatus })
         .eq('id', pedidoId);
 
