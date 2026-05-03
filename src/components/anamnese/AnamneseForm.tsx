@@ -341,9 +341,24 @@ export function AnamneseForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-6">
 
-      {/* ── BLOCO 1: Identificação ── */}
+      {/* Progresso */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium text-foreground">Etapa {step} de {TOTAL_STEPS}</span>
+          <span className="text-muted-foreground">
+            {step === 1 && 'Dados Básicos'}
+            {step === 2 && 'Histórico de Saúde'}
+            {step === 3 && 'Estilo de Vida'}
+            {step === 4 && 'Medidas e Fotos'}
+          </span>
+        </div>
+        <Progress value={(step / TOTAL_STEPS) * 100} />
+      </div>
+
+      {/* ── BLOCO 1: Dados Básicos ── */}
+      {step === 1 && (
       <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="text-lg">1. Identificação</CardTitle>
