@@ -330,6 +330,33 @@ export type Database = {
         }
         Relationships: []
       }
+      inelegibilidade_tentativas: {
+        Row: {
+          created_at: string
+          id: string
+          idade: number | null
+          imc: number | null
+          motivo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idade?: number | null
+          imc?: number | null
+          motivo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idade?: number | null
+          imc?: number | null
+          motivo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       mensagens_acompanhamento: {
         Row: {
           autor: string
