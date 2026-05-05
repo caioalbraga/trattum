@@ -285,6 +285,152 @@ export type Database = {
           },
         ]
       }
+      email_followup_jobs: {
+        Row: {
+          agendado_para: string
+          cancelado: boolean
+          cancelado_motivo: string | null
+          created_at: string
+          enviado: boolean
+          enviado_em: string | null
+          id: string
+          paciente_id: string
+          pedido_legacy_id: string | null
+          template_codigo: string
+        }
+        Insert: {
+          agendado_para: string
+          cancelado?: boolean
+          cancelado_motivo?: string | null
+          created_at?: string
+          enviado?: boolean
+          enviado_em?: string | null
+          id?: string
+          paciente_id: string
+          pedido_legacy_id?: string | null
+          template_codigo: string
+        }
+        Update: {
+          agendado_para?: string
+          cancelado?: boolean
+          cancelado_motivo?: string | null
+          created_at?: string
+          enviado?: boolean
+          enviado_em?: string | null
+          id?: string
+          paciente_id?: string
+          pedido_legacy_id?: string | null
+          template_codigo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_followup_jobs_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_followup_jobs_pedido_legacy_id_fkey"
+            columns: ["pedido_legacy_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_legacy"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_log: {
+        Row: {
+          assunto: string
+          destinatario: string
+          enviado_em: string
+          erro: string | null
+          id: string
+          modo_teste: boolean
+          resend_id: string | null
+          status: string
+          template_codigo: string
+        }
+        Insert: {
+          assunto: string
+          destinatario: string
+          enviado_em?: string
+          erro?: string | null
+          id?: string
+          modo_teste?: boolean
+          resend_id?: string | null
+          status: string
+          template_codigo: string
+        }
+        Update: {
+          assunto?: string
+          destinatario?: string
+          enviado_em?: string
+          erro?: string | null
+          id?: string
+          modo_teste?: boolean
+          resend_id?: string | null
+          status?: string
+          template_codigo?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          assunto: string
+          ativo: boolean
+          codigo: string
+          corpo_html: string
+          created_at: string
+          descricao: string | null
+          gatilho: string
+          id: string
+          modo_teste: boolean
+          nome: string
+          updated_at: string
+          updated_by: string | null
+          variaveis_disponiveis: string[]
+        }
+        Insert: {
+          assunto: string
+          ativo?: boolean
+          codigo: string
+          corpo_html: string
+          created_at?: string
+          descricao?: string | null
+          gatilho: string
+          id?: string
+          modo_teste?: boolean
+          nome: string
+          updated_at?: string
+          updated_by?: string | null
+          variaveis_disponiveis?: string[]
+        }
+        Update: {
+          assunto?: string
+          ativo?: boolean
+          codigo?: string
+          corpo_html?: string
+          created_at?: string
+          descricao?: string | null
+          gatilho?: string
+          id?: string
+          modo_teste?: boolean
+          nome?: string
+          updated_at?: string
+          updated_by?: string | null
+          variaveis_disponiveis?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enderecos: {
         Row: {
           bairro: string | null
@@ -927,8 +1073,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      invoke_send_email: {
+        Args: {
+          p_destinatario: string
+          p_template_codigo: string
+          p_variaveis?: Json
+        }
+        Returns: number
+      }
       is_admin: { Args: never; Returns: boolean }
       is_clinical_staff: { Args: never; Returns: boolean }
+      process_pending_followups: { Args: never; Returns: number }
       sanitize_text_input: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
