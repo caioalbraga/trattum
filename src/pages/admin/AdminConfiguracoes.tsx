@@ -21,17 +21,36 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Settings,
   Loader2,
   Package,
   Tag,
   Plus,
   Pencil,
-  Save
+  Save,
+  Construction,
 } from 'lucide-react';
+
+function EmptyTabPlaceholder({
+  title = 'Em breve',
+  subtitle = 'Esta seção será implementada em breve.',
+}: { title?: string; subtitle?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center py-24 px-6 gap-4">
+      <div className="p-4 rounded-full bg-muted">
+        <Construction className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="font-serif text-xl font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
 import { couponCodeSchema } from '@/lib/validation-schemas';
 
 interface Produto {
@@ -267,9 +286,20 @@ export default function AdminConfiguracoes() {
         <div>
           <h1 className="font-serif text-3xl font-bold">Configurações</h1>
           <p className="text-muted-foreground">
-            Controle de produtos e cupons em tempo real
+            Central de configurações operacionais da Trattum.
           </p>
         </div>
+
+        <Tabs defaultValue="produtos-cupons" className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto h-auto flex-nowrap">
+            <TabsTrigger value="produtos-cupons">Produtos & Cupons</TabsTrigger>
+            <TabsTrigger value="emails">E-mails</TabsTrigger>
+            <TabsTrigger value="envio">Envio & Entrega</TabsTrigger>
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            <TabsTrigger value="clinicos">Parâmetros Clínicos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="produtos-cupons" className="space-y-6 mt-6">
 
         {/* Products */}
         <Card>
@@ -415,6 +445,21 @@ export default function AdminConfiguracoes() {
             </Table>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="emails" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="envio" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="documentos" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="clinicos" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Product Edit Dialog */}
         <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
