@@ -299,30 +299,13 @@ export function EmailsTab({ isAdmin }: { isAdmin: boolean }) {
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum envio ainda</TableCell></TableRow>
                 )}
                 {logs.map(l => (
-                  <>
-                    <TableRow key={l.id} className="cursor-pointer" onClick={() => setExpandedLog(expandedLog === l.id ? null : l.id)}>
-                      <TableCell className="text-sm">
-                        {formatDistanceToNow(new Date(l.enviado_em), { addSuffix: true, locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-sm">{templateNameByCode(l.template_codigo)}</TableCell>
-                      <TableCell className="text-sm font-mono text-xs">{l.destinatario}</TableCell>
-                      <TableCell>
-                        {l.status === 'enviado' && <Badge className="bg-emerald-600"><CheckCircle2 className="h-3 w-3 mr-1" />Enviado</Badge>}
-                        {l.status === 'falhou' && <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Falhou</Badge>}
-                        {l.status === 'em_rota' && <Badge variant="secondary">Em rota</Badge>}
-                      </TableCell>
-                      <TableCell>{l.modo_teste && <Badge variant="outline">Teste</Badge>}</TableCell>
-                    </TableRow>
-                    {expandedLog === l.id && (
-                      <TableRow key={l.id + '-exp'}>
-                        <TableCell colSpan={5} className="bg-muted/40 text-xs font-mono">
-                          {l.erro && <div className="text-destructive whitespace-pre-wrap">Erro: {l.erro}</div>}
-                          {l.resend_id && <div>Resend ID: {l.resend_id}</div>}
-                          <div>Assunto: {l.assunto}</div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
+                  <FragmentRow
+                    key={l.id}
+                    log={l}
+                    expanded={expandedLog === l.id}
+                    onToggle={() => setExpandedLog(expandedLog === l.id ? null : l.id)}
+                    templateName={templateNameByCode(l.template_codigo)}
+                  />
                 ))}
               </TableBody>
             </Table>
