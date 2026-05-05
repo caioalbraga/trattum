@@ -52,6 +52,7 @@ function EmptyTabPlaceholder({
   );
 }
 import { couponCodeSchema } from '@/lib/validation-schemas';
+import { EmailsTab } from '@/components/admin/configuracoes/EmailsTab';
 
 interface Produto {
   id: string;
@@ -448,7 +449,7 @@ export default function AdminConfiguracoes() {
           </TabsContent>
 
           <TabsContent value="emails" className="mt-6">
-            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+            <EmailsTab isAdmin={true} />
           </TabsContent>
           <TabsContent value="envio" className="mt-6">
             <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
