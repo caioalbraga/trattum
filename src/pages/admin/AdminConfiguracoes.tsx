@@ -445,6 +445,21 @@ export default function AdminConfiguracoes() {
             </Table>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="emails" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="envio" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="documentos" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="clinicos" className="mt-6">
+            <Card><CardContent className="p-0"><EmptyTabPlaceholder /></CardContent></Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Product Edit Dialog */}
         <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
