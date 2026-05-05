@@ -249,6 +249,21 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
         body: { patientEmail: avaliacao.user_id, patientName: avaliacao.patient_name }
       }).catch(console.error);
 
+      // Schedule pagamento follow-ups (dia 3 e dia 7)
+      try {
+        const { data: prof } = await supabase
+          .from('profiles').select('id').eq('user_id', avaliacao.user_id).maybeSingle();
+        if (prof?.id) {
+          const now = Date.now();
+          await supabase.from('email_followup_jobs').insert([
+            { paciente_id: prof.id, template_codigo: 'followup_pagamento_dia3',
+              agendado_para: new Date(now + 3 * 86400000).toISOString() },
+            { paciente_id: prof.id, template_codigo: 'followup_pagamento_dia7',
+              agendado_para: new Date(now + 7 * 86400000).toISOString() },
+          ]);
+        }
+      } catch (e) { console.error('followup schedule', e); }
+
       toast({ title: 'Tratamento aprovado!', description: 'Receita gerada e paciente notificado.' });
       await onStatusUpdate();
     } catch (error) {
