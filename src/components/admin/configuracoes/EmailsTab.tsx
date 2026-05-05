@@ -79,6 +79,7 @@ function FragmentRow({ log: l, expanded, onToggle, templateName }: {
       )}
     </>
   );
+}
 
 export function EmailsTab({ isAdmin }: { isAdmin: boolean }) {
   const { user } = useAuth();
