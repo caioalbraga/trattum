@@ -286,9 +286,20 @@ export default function AdminConfiguracoes() {
         <div>
           <h1 className="font-serif text-3xl font-bold">Configurações</h1>
           <p className="text-muted-foreground">
-            Controle de produtos e cupons em tempo real
+            Central de configurações operacionais da Trattum.
           </p>
         </div>
+
+        <Tabs defaultValue="produtos-cupons" className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto h-auto flex-nowrap">
+            <TabsTrigger value="produtos-cupons">Produtos & Cupons</TabsTrigger>
+            <TabsTrigger value="emails">E-mails</TabsTrigger>
+            <TabsTrigger value="envio">Envio & Entrega</TabsTrigger>
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            <TabsTrigger value="clinicos">Parâmetros Clínicos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="produtos-cupons" className="space-y-6 mt-6">
 
         {/* Products */}
         <Card>
