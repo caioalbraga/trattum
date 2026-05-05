@@ -21,17 +21,36 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Settings,
   Loader2,
   Package,
   Tag,
   Plus,
   Pencil,
-  Save
+  Save,
+  Construction,
 } from 'lucide-react';
+
+function EmptyTabPlaceholder({
+  title = 'Em breve',
+  subtitle = 'Esta seção será implementada em breve.',
+}: { title?: string; subtitle?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center py-24 px-6 gap-4">
+      <div className="p-4 rounded-full bg-muted">
+        <Construction className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="font-serif text-xl font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
 import { couponCodeSchema } from '@/lib/validation-schemas';
 
 interface Produto {
