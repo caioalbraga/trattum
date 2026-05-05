@@ -50,6 +50,36 @@ interface EmailLog {
   enviado_em: string;
 }
 
+function FragmentRow({ log: l, expanded, onToggle, templateName }: {
+  log: EmailLog; expanded: boolean; onToggle: () => void; templateName: string;
+}) {
+  return (
+    <>
+      <TableRow className="cursor-pointer" onClick={onToggle}>
+        <TableCell className="text-sm">
+          {formatDistanceToNow(new Date(l.enviado_em), { addSuffix: true, locale: ptBR })}
+        </TableCell>
+        <TableCell className="text-sm">{templateName}</TableCell>
+        <TableCell className="text-xs font-mono">{l.destinatario}</TableCell>
+        <TableCell>
+          {l.status === 'enviado' && <Badge className="bg-emerald-600"><CheckCircle2 className="h-3 w-3 mr-1" />Enviado</Badge>}
+          {l.status === 'falhou' && <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Falhou</Badge>}
+          {l.status === 'em_rota' && <Badge variant="secondary">Em rota</Badge>}
+        </TableCell>
+        <TableCell>{l.modo_teste && <Badge variant="outline">Teste</Badge>}</TableCell>
+      </TableRow>
+      {expanded && (
+        <TableRow>
+          <TableCell colSpan={5} className="bg-muted/40 text-xs font-mono">
+            {l.erro && <div className="text-destructive whitespace-pre-wrap">Erro: {l.erro}</div>}
+            {l.resend_id && <div>Resend ID: {l.resend_id}</div>}
+            <div>Assunto: {l.assunto}</div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+
 export function EmailsTab({ isAdmin }: { isAdmin: boolean }) {
   const { user } = useAuth();
   const { toast } = useToast();
