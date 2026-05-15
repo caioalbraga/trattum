@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 
 const features = [
-  "Avaliação médica digital com análise de perfil metabólico",
-  "Medicações prescritas entregues na sua porta com frete incluído",
-  "Suporte clínico contínuo para ajustes e orientações",
+  "Avaliação clínica conduzida por médicos habilitados.",
+  "Medicações prescritas e entregues com discrição.",
+  "Acompanhamento clínico via chat durante o tratamento.",
 ];
 
 export function AboutSection() {
@@ -21,17 +21,16 @@ export function AboutSection() {
         </div>
         
         <h2 className="heading-section text-foreground text-center mb-4 max-w-3xl mx-auto">
-          Medicina de precisão, simplificada
+          Estrutura Clínica Integrada
         </h2>
         
         <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
-          Gerenciamos cada etapa do seu tratamento para que você foque apenas nos seus resultados.
-          Na Trattum, você tem acesso a médicos especializados, farmácias credenciadas pela Anvisa e suporte clínico dedicado.
+          Da avaliação diagnóstica ao recebimento das medicações em domicílio.
         </p>
 
         <div className="text-center mb-8">
           <h3 className="text-xl font-serif font-medium text-foreground">
-            Modalidades de Atendimento
+            Estrutura Clínica Integrada
           </h3>
         </div>
 
@@ -48,10 +47,10 @@ export function AboutSection() {
             
             <div className="p-6">
               <h4 className="font-semibold text-lg text-foreground mb-2">
-                Programa Integrado
+                Estrutura Clínica Integrada
               </h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Diagnóstico médico, prescrição personalizada e suporte clínico ilimitado
+                Da avaliação diagnóstica ao recebimento das medicações em domicílio.
               </p>
 
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
@@ -72,7 +71,7 @@ export function AboutSection() {
                 className="w-full group"
                 onClick={() => navigate('/pre-anamnese')}
               >
-                Descobrir meu Plano de Metas
+                Iniciar minha Avaliação
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
