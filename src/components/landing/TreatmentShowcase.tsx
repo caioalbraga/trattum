@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 
 const benefits = [
-  "Redução de 15-20% do peso corporal em até 6 meses",
-  "Regulação hormonal e controle da saciedade",
-  "Melhora significativa dos marcadores metabólicos",
-  "Monitoramento clínico contínuo e ajustes de protocolo",
-  "Logística discreta com entrega domiciliar",
-  "Canal de suporte disponível 7 dias por semana",
+  "Avaliação clínica detalhada por médico habilitado.",
+  "Plano clínico individualizado, definido pelo médico responsável.",
+  "Medicações prescritas e aprovadas pela Anvisa, entregues em domicílio.",
+  "Acompanhamento da equipe clínica via chat na plataforma durante o tratamento.",
+  "Logística domiciliar discreta, sem necessidade de ir à farmácia.",
+  "Operação em conformidade com as normativas do CFM e Anvisa.",
 ];
 
 export function TreatmentShowcase() {
@@ -24,7 +24,7 @@ export function TreatmentShowcase() {
         </div>
         
         <h2 className="heading-section text-foreground text-center mb-16 max-w-3xl mx-auto">
-          Transformação metabólica duradoura com respaldo científico
+          O que compõe o programa Trattum
         </h2>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
@@ -45,7 +45,7 @@ export function TreatmentShowcase() {
                   <Check className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Autorizado</p>
+                  <p className="font-medium text-foreground">Medicações aprovadas</p>
                   <p className="text-xs text-muted-foreground">pela Anvisa</p>
                 </div>
               </div>
@@ -55,12 +55,11 @@ export function TreatmentShowcase() {
           {/* Content */}
           <div>
             <h3 className="text-2xl font-serif font-medium text-foreground mb-4">
-              Programa de Gerenciamento Metabólico
+              O que compõe o programa Trattum
             </h3>
             
             <p className="text-muted-foreground mb-8 leading-relaxed">
-              Nosso protocolo integra medicações de alta eficácia com acompanhamento médico especializado. 
-              Focamos na regulação hormonal e no controle de saciedade para uma transformação sustentável e segura.
+              A Trattum atua como prestadora direta de serviços de saúde. Integramos a avaliação diagnóstica, a prescrição responsável e o contato contínuo com os médicos em um só ambiente seguro.
             </p>
 
             <ul className="space-y-4 mb-8">

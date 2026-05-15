@@ -62,9 +62,7 @@ export function HeroSection() {
               delay: 0.3,
             }}
           >
-            A ciência do<br />
-            <span className="italic">emagrecimento</span><br />
-            ao seu alcance.
+            Tratamento médico para <span className="italic">emagrecimento</span> com cuidado contínuo.
           </motion.h1>
           
           <motion.p 
@@ -78,9 +76,9 @@ export function HeroSection() {
               delay: 0.4,
             }}
           >
-            Acesso médico imediato, sem burocracia ou deslocamentos.
+            Telemedicina especializada com acompanhamento clínico e entrega domiciliar discreta das medicações.
             <br /><br />
-            Protocolos clínicos rigorosos e medicações de última geração, com acompanhamento especializado em cada etapa.
+            Uma avaliação clínica criteriosa determina a sua aptidão para o programa.
           </motion.p>
 
           <motion.div
