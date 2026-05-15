@@ -3,20 +3,20 @@ import { ClipboardList, Package, Users } from "lucide-react";
 const steps = [
   {
     icon: ClipboardList,
-    title: "Avaliação estruturada",
-    description: "Responda a um questionário clínico detalhado na plataforma. Esta anamnese inicial permite avaliar a sua elegibilidade ao tratamento.",
+    title: "Bio-Avaliação Digital",
+    description: "Inicie seu diagnóstico através do nosso protocolo inteligente de perguntas. Em poucos minutos, mapeamos seu perfil metabólico e histórico de saúde para uma prescrição precisa.",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80",
   },
   {
     icon: Package,
-    title: "Análise médica",
-    description: "Um médico habilitado revisa cuidadosamente o seu histórico. Em caso de aprovação clínica, é elaborado um plano com prescrição.",
+    title: "Análise Médica Especializada",
+    description: "Seu perfil é revisado por nossa equipe clínica credenciada. Prescrevemos apenas medicações aprovadas pela Anvisa, manipuladas sob rigorosos padrões farmacêuticos.",
     image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&q=80",
   },
   {
     icon: Users,
-    title: "Acompanhamento contínuo",
-    description: "O paciente mantém um canal direto via chat na plataforma. A equipe acompanha a evolução clínica durante todo o processo.",
+    title: "Acompanhamento de Evolução",
+    description: "Suporte clínico contínuo e ajustes de metas para garantir resultados sustentáveis. Nossa equipe está disponível para orientações sobre efeitos, dosagens e progressão do tratamento.",
     image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&q=80",
   },
 ];
@@ -26,7 +26,7 @@ export function ProcessSection() {
     <section className="py-24">
       <div className="container">
         <h2 className="heading-section text-foreground mb-16 max-w-2xl">
-          Como o tratamento é conduzido na plataforma
+          Gerenciamento metabólico inteligente e personalizado
         </h2>
 
         <div className="grid md:grid-cols-3 gap-8">
