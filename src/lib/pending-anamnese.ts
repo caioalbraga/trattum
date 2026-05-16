@@ -142,6 +142,7 @@ export async function submitPendingAnamnese(userId: string): Promise<boolean> {
 
     // Clean up
     localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem('anamnese_draft'); } catch { /* noop */ }
     sessionStorage.removeItem('pendingQuizAnswers');
     sessionStorage.removeItem('pendingAssessmentPreview');
 
