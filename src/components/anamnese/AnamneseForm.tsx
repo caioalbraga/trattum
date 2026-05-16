@@ -331,7 +331,11 @@ export function AnamneseForm() {
       return;
     }
 
-    const currentValues = getValues();
+    if (!photos.frente || !photos.lateral || !photos.costas) {
+      toast.error('Envie as 3 fotos (frente, lateral e costas) para continuar.');
+      return;
+    }
+
     const formData = { ...currentValues, ...data };
 
     // Build answers object matching current anamnese structure
