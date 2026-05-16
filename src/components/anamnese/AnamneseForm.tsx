@@ -357,14 +357,28 @@ export function AnamneseForm() {
   };
 
   const validateStep2 = (data: FormData): string | null => {
+    if (!data.usa_medicamento_continuo) {
+      return 'Informe se você usa medicamento de uso contínuo.';
+    }
     if (data.usa_medicamento_continuo === 'sim' && !data.detalhe_medicamento_continuo?.trim()) {
       return 'Descreva quais medicamentos de uso contínuo você utiliza.';
+    }
+    if (!data.historico_familiar_doencas) {
+      return 'Informe se sua família tem histórico de doenças.';
     }
     if (data.historico_familiar_doencas === 'sim' && !data.detalhe_historico_familiar?.trim()) {
       return 'Descreva o histórico familiar de doenças.';
     }
+    if (!data.cirurgia_previa) {
+      return 'Informe se você já realizou alguma cirurgia prévia.';
+    }
     if (data.cirurgia_previa === 'sim' && !data.detalhe_cirurgia?.trim()) {
       return 'Descreva quais cirurgias prévias você realizou.';
+    }
+    if (data.sexo === 'feminino') {
+      if (!data.ja_esteve_gravida) {
+        return 'Informe se você já esteve grávida.';
+      }
     }
     if (data.sexo === 'feminino' && data.ja_esteve_gravida === 'sim') {
       if (!data.quantas_gestacoes || Number(data.quantas_gestacoes) < 1) {
