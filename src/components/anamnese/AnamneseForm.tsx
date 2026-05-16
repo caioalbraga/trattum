@@ -274,6 +274,34 @@ export function AnamneseForm() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const validateStep2 = (data: FormData): string | null => {
+    if (data.usa_medicamento_continuo === 'sim' && !data.detalhe_medicamento_continuo?.trim()) {
+      return 'Descreva quais medicamentos de uso contínuo você utiliza.';
+    }
+    if (data.historico_familiar_doencas === 'sim' && !data.detalhe_historico_familiar?.trim()) {
+      return 'Descreva o histórico familiar de doenças.';
+    }
+    if (data.cirurgia_previa === 'sim' && !data.detalhe_cirurgia?.trim()) {
+      return 'Descreva quais cirurgias prévias você realizou.';
+    }
+    if (data.sexo === 'feminino' && data.ja_esteve_gravida === 'sim') {
+      if (!data.quantas_gestacoes || Number(data.quantas_gestacoes) < 1) {
+        return 'Informe quantas gestações você teve.';
+      }
+      if (!data.houve_aborto) {
+        return 'Informe se houve algum aborto.';
+      }
+    }
+    return null;
+  };
+
+  const handleNextFromStep2 = () => {
+    const err = validateStep2(watch());
+    if (err) { toast.error(err); return; }
+    setStep(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNext = (next: number) => {
     setStep(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -620,7 +648,7 @@ export function AnamneseForm() {
           <Button type="button" variant="outline" size="lg" onClick={() => handleNext(1)} className="flex-1">
             Voltar
           </Button>
-          <Button type="button" size="lg" onClick={() => handleNext(3)} className="flex-1">
+          <Button type="button" size="lg" onClick={handleNextFromStep2} className="flex-1">
             Avançar
           </Button>
         </div>
