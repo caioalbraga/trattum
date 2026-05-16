@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react';
-import { Camera, X, Upload } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ALLOWED_EXT = /\.(jpe?g|png)$/i;
 
 interface PhotoUploadProps {
   label: string;
