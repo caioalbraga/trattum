@@ -18,6 +18,12 @@ export function PhotoUpload({ label, value, onChange }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
+    const typeOk = ALLOWED_TYPES.includes(file.type.toLowerCase()) || ALLOWED_EXT.test(file.name);
+    if (!typeOk) {
+      toast.error('Apenas imagens JPG ou PNG são aceitas');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
     onChange(file);
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
