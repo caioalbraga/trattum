@@ -519,6 +519,27 @@ export function AnamneseForm() {
     }
   };
 
+  if (showDraftBanner) {
+    return (
+      <Card className="card-elevated max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-lg">Avaliação em andamento</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Você tem uma avaliação em andamento. Deseja continuar?
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" onClick={handleContinueDraft}>Continuar</Button>
+            <Button type="button" variant="outline" onClick={handleDiscardDraft}>
+              Começar do zero
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-6">
 
