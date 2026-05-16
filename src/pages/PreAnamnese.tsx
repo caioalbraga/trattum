@@ -91,7 +91,7 @@ export default function PreAnamnese() {
 
         await supabase.from('user_consents').upsert([
           { user_id: user.id, termo: 'tcle', aceito: true, aceito_em: tcleTimestamp },
-          { user_id: user.id, termo: 'declaracao_de_veracidade', aceito: true, aceito_em: veracidadeTimestamp },
+          { user_id: user.id, termo: 'declaracao_veracidade', aceito: true, aceito_em: veracidadeTimestamp },
         ], { onConflict: 'user_id,termo' });
       }
       navigate('/anamnese');
