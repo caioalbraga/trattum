@@ -163,12 +163,12 @@ export default function Cadastro() {
 
           const now = new Date().toISOString();
 
-          await supabase.from('user_consents').insert([
+          await supabase.from('user_consents').upsert([
             { user_id: userId, termo: 'tcle', aceito: true, aceito_em: tcleData?.aceito_em || now },
             { user_id: userId, termo: 'declaracao_veracidade', aceito: true, aceito_em: veracidadeData?.aceito_em || now },
             { user_id: userId, termo: 'termos_uso', aceito: true, aceito_em: termosData?.aceito_em || now },
             { user_id: userId, termo: 'politica_privacidade', aceito: true, aceito_em: privacidadeData?.aceito_em || now },
-          ]);
+          ], { onConflict: 'user_id,termo', ignoreDuplicates: true });
 
           // Clean up localStorage
           localStorage.removeItem('consent_tcle');

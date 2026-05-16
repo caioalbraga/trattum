@@ -242,7 +242,7 @@ export default function Auth() {
             consentsToInsert.push({ user_id: userId, termo: 'declaracao_veracidade', aceito: true, aceito_em: JSON.parse(veracidadeRaw).aceito_em || now });
           }
 
-          await supabase.from('user_consents').insert(consentsToInsert);
+          await supabase.from('user_consents').upsert(consentsToInsert, { onConflict: 'user_id,termo', ignoreDuplicates: true });
 
           // Clean up localStorage
           localStorage.removeItem('consent_termos_uso');
