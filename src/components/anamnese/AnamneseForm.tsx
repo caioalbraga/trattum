@@ -336,6 +336,7 @@ export function AnamneseForm() {
       return;
     }
 
+    const currentValues = getValues();
     const formData = { ...currentValues, ...data };
 
     // Build answers object matching current anamnese structure
