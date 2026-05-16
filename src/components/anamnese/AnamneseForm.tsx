@@ -373,7 +373,7 @@ export function AnamneseForm() {
         }
 
         if (consentsToInsert.length > 0) {
-          await supabase.from('user_consents').insert(consentsToInsert);
+          await supabase.from('user_consents').upsert(consentsToInsert, { onConflict: 'user_id,termo', ignoreDuplicates: true });
           consentKeys.forEach(({ key }) => localStorage.removeItem(key));
         }
 
