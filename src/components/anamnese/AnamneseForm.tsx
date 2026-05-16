@@ -302,6 +302,19 @@ export function AnamneseForm() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const validateStep3 = (data: FormData): string | null => {
+    if (!data.acompanhamento_nutricional) return 'Informe se você tem acompanhamento nutricional.';
+    if (!data.pratica_atividade_fisica) return 'Informe se você pratica atividade física.';
+    return null;
+  };
+
+  const handleNextFromStep3 = () => {
+    const err = validateStep3(watch());
+    if (err) { toast.error(err); return; }
+    setStep(4);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNext = (next: number) => {
     setStep(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -680,7 +693,7 @@ export function AnamneseForm() {
           <Button type="button" variant="outline" size="lg" onClick={() => handleNext(2)} className="flex-1">
             Voltar
           </Button>
-          <Button type="button" size="lg" onClick={() => handleNext(4)} className="flex-1">
+          <Button type="button" size="lg" onClick={handleNextFromStep3} className="flex-1">
             Avançar
           </Button>
         </div>
