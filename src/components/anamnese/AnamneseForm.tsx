@@ -693,7 +693,7 @@ export function AnamneseForm() {
           <Button type="button" variant="outline" size="lg" onClick={() => handleNext(2)} className="flex-1">
             Voltar
           </Button>
-          <Button type="button" size="lg" onClick={() => handleNext(4)} className="flex-1">
+          <Button type="button" size="lg" onClick={handleNextFromStep3} className="flex-1">
             Avançar
           </Button>
         </div>
