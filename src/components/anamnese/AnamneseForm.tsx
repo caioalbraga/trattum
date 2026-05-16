@@ -507,6 +507,7 @@ export function AnamneseForm() {
 
         // Clear session storage
         sessionStorage.removeItem('pendingQuizAnswers');
+        try { localStorage.removeItem('anamnese_draft'); } catch { /* noop */ }
         navigate('/confirmacao');
       }
     } else {
