@@ -45,7 +45,7 @@ export default function PreAnamnese() {
         .from('user_consents')
         .select('termo')
         .eq('user_id', user.id)
-        .in('termo', ['tcle', 'declaracao_de_veracidade']);
+        .in('termo', ['tcle', 'declaracao_veracidade']);
 
       if (data && data.length >= 2) {
         navigate('/anamnese', { replace: true });
