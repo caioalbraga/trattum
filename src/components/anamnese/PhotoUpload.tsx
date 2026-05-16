@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react';
-import { Camera, X, Upload } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ALLOWED_EXT = /\.(jpe?g|png)$/i;
 
 interface PhotoUploadProps {
   label: string;
@@ -14,6 +18,12 @@ export function PhotoUpload({ label, value, onChange }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
+    const typeOk = ALLOWED_TYPES.includes(file.type.toLowerCase()) || ALLOWED_EXT.test(file.name);
+    if (!typeOk) {
+      toast.error('Apenas imagens JPG ou PNG são aceitas');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
     onChange(file);
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
@@ -65,7 +75,7 @@ export function PhotoUpload({ label, value, onChange }: PhotoUploadProps) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,.jpg,.jpeg,.png"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
