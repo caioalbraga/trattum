@@ -159,6 +159,88 @@ export function AnamneseForm() {
     ANAMNESE_FIELD_NAMES.forEach((fieldName) => register(fieldName));
   }, [register]);
 
+  // ---- Rascunho via localStorage ----
+  const DRAFT_KEY = 'anamnese_draft';
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const pendingDraftRef = useRef<Partial<FormData> | null>(null);
+
+  const fieldNameSet = useRef(new Set<string>(ANAMNESE_FIELD_NAMES as string[])).current;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          const filtered: Record<string, unknown> = {};
+          let hasValue = false;
+          for (const [k, v] of Object.entries(parsed)) {
+            if (!fieldNameSet.has(k)) continue;
+            if (v === null || v === undefined || v === '') continue;
+            filtered[k] = v;
+            hasValue = true;
+          }
+          if (hasValue) {
+            pendingDraftRef.current = filtered as Partial<FormData>;
+            setShowDraftBanner(true);
+            return;
+          }
+        }
+      }
+    } catch {
+      /* descartar silenciosamente */
+    }
+    setDraftLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleContinueDraft = () => {
+    const draft = pendingDraftRef.current;
+    if (draft) {
+      for (const [k, v] of Object.entries(draft)) {
+        if (!fieldNameSet.has(k)) continue;
+        if (k === 'data_nascimento' && typeof v === 'string') {
+          const d = new Date(v);
+          if (!isNaN(d.getTime())) setValue('data_nascimento', d as any);
+        } else {
+          setValue(k as keyof FormData, v as any);
+        }
+      }
+    }
+    pendingDraftRef.current = null;
+    setShowDraftBanner(false);
+    setDraftLoaded(true);
+  };
+
+  const handleDiscardDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
+    pendingDraftRef.current = null;
+    setShowDraftBanner(false);
+    setDraftLoaded(true);
+  };
+
+  // Salvar a cada mudança (apenas texto/seleção, sem arquivos)
+  useEffect(() => {
+    if (!draftLoaded) return;
+    const sub = watch((values) => {
+      try {
+        const toSave: Record<string, unknown> = {};
+        for (const name of ANAMNESE_FIELD_NAMES) {
+          const v = (values as any)[name];
+          if (v === undefined || v === null || v === '') continue;
+          if (v instanceof Date) {
+            toSave[name] = v.toISOString();
+          } else {
+            toSave[name] = v;
+          }
+        }
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(toSave));
+      } catch { /* noop */ }
+    });
+    return () => sub.unsubscribe();
+  }, [draftLoaded, watch]);
+
   const nomeCompleto = watch('nome_completo');
   const sexo = watch('sexo');
   const usaMedicamento = watch('usa_medicamento_continuo');
