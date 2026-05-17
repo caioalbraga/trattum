@@ -335,7 +335,10 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
 
           {/* Scrollable Body */}
           <ScrollArea className="flex-1 min-h-0">
-            <div className="p-6 space-y-8">
+            <div
+              className="px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 sm:space-y-8"
+              style={{ paddingBottom: 'calc(96px + env(safe-area-inset-bottom))' }}
+            >
 
               {/* Section 1: Identificação */}
               <section>
