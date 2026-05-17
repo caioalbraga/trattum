@@ -497,11 +497,13 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
 
           {/* Action Footer */}
           {canTakeAction && (
-            <footer className="flex-shrink-0 border-t border-border/60 bg-card px-6 py-4">
-              <div className="flex gap-3 justify-end">
+            <footer
+              className="flex-shrink-0 border-t border-border bg-background"
+              style={{ padding: '12px 16px calc(12px + env(safe-area-inset-bottom))' }}
+            >
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
-                  size="sm"
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="w-full sm:flex-1 h-11 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={handleApprove}
                   disabled={loading !== null}
                 >
@@ -509,9 +511,8 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
                   {loading === 'aprovado' ? 'Aprovando…' : 'Aprovar'}
                 </Button>
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
+                  className="w-full sm:flex-1 h-11 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
                   onClick={() => setShowAdjustment(true)}
                   disabled={loading !== null}
                 >
@@ -519,9 +520,8 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
                   Solicitar Ajuste
                 </Button>
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                  className="w-full sm:flex-1 h-11 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
                   onClick={handleBlock}
                   disabled={loading !== null}
                 >
