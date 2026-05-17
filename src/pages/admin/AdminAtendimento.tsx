@@ -3,8 +3,9 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { decryptProfiles } from '@/lib/crypto-client';
-import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, LucideIcon } from 'lucide-react';
+import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, RefreshCw, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { AtendimentoPatientCard } from '@/components/admin/atendimento/PatientCard';
 import { AnamnseModal } from '@/components/admin/atendimento/AnamneseModal';
 
@@ -34,7 +35,15 @@ export default function AdminAtendimento() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('pendente');
   const [selectedAvaliacao, setSelectedAvaliacao] = useState<AtendimentoAvaliacao | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAvaliacoes();
+    setRefreshing(false);
+    toast({ title: 'Lista atualizada' });
+  };
 
   useEffect(() => {
     fetchAvaliacoes();
@@ -121,9 +130,21 @@ export default function AdminAtendimento() {
   return (
     <AdminLayout>
       <div className="max-w-5xl mx-auto space-y-6 pb-24 md:pb-0">
-        <header>
-          <h1 className="font-serif text-2xl font-semibold text-foreground">Atendimento</h1>
-          <p className="text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-foreground">Atendimento</h1>
+            <p className="text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            className="min-h-[44px] gap-2 flex-shrink-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Atualizar</span>
+          </Button>
         </header>
 
         {/* Filter Chips (desktop/tablet) */}
