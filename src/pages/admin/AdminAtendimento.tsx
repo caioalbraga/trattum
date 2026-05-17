@@ -130,9 +130,21 @@ export default function AdminAtendimento() {
   return (
     <AdminLayout>
       <div className="max-w-5xl mx-auto space-y-6 pb-24 md:pb-0">
-        <header>
-          <h1 className="font-serif text-2xl font-semibold text-foreground">Atendimento</h1>
-          <p className="text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-foreground">Atendimento</h1>
+            <p className="text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            className="min-h-[44px] gap-2 flex-shrink-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Atualizar</span>
+          </Button>
         </header>
 
         {/* Filter Chips (desktop/tablet) */}
