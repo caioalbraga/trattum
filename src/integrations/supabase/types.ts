@@ -927,6 +927,8 @@ export type Database = {
       }
       tratamentos: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           created_at: string
           data_inicio: string | null
           data_proxima_renovacao: string | null
@@ -939,6 +941,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           created_at?: string
           data_inicio?: string | null
           data_proxima_renovacao?: string | null
@@ -951,6 +955,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           created_at?: string
           data_inicio?: string | null
           data_proxima_renovacao?: string | null
