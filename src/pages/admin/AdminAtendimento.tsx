@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { decryptProfiles } from '@/lib/crypto-client';
-import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, RefreshCw, LucideIcon } from 'lucide-react';
+import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, RefreshCw, ClipboardList, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AtendimentoPatientCard } from '@/components/admin/atendimento/PatientCard';
