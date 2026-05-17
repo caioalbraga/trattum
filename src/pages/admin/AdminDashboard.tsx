@@ -5,6 +5,7 @@ import { MetricCard } from '@/components/admin/dashboard/MetricCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -12,7 +13,8 @@ import {
   ClipboardList,
   CreditCard,
   CalendarClock,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 
 interface Metrics {
