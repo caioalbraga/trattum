@@ -35,24 +35,25 @@ export function AtendimentoPatientCard({ avaliacao, onViewAnamnese }: Props) {
   const age = calculateAge(avaliacao.respostas?.data_nascimento as string | undefined);
 
   return (
-    <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4 hover:shadow-sm transition-shadow">
-      <div className="h-11 w-11 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-        <User className="h-5 w-5 text-muted-foreground" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h3 className="font-semibold text-foreground truncate">
-            {avaliacao.patient_name}
-          </h3>
-          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', badge.className)}>
-            {badge.label}
-          </span>
+    <div className="bg-card border border-border/60 rounded-xl p-5 hover:shadow-sm transition-shadow">
+      {/* Mobile: stacked vertical layout */}
+      <div className="flex flex-col gap-4 sm:hidden">
+        <div className="flex items-start gap-3">
+          <div className="h-11 w-11 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+            <User className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-1.5', badge.className)}>
+              {badge.label}
+            </span>
+            <h3 className="font-semibold text-foreground break-words leading-snug">
+              {avaliacao.patient_name}
+            </h3>
+          </div>
         </div>
-        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-          {age !== null && (
-            <span>{age} anos</span>
-          )}
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {age !== null && <span>{age} anos</span>}
           {avaliacao.imc && (
             <span className="flex items-center gap-1">
               <Scale className="h-3 w-3" />
@@ -64,12 +65,52 @@ export function AtendimentoPatientCard({ avaliacao, onViewAnamnese }: Props) {
             {format(new Date(avaliacao.created_at), "dd MMM yyyy", { locale: ptBR })}
           </span>
         </div>
+
+        <Button
+          variant="outline"
+          onClick={onViewAnamnese}
+          className="w-full min-h-[44px] gap-1.5"
+        >
+          <Eye className="h-4 w-4" />
+          Ver Anamnese
+        </Button>
       </div>
 
-      <Button variant="outline" size="sm" onClick={onViewAnamnese} className="gap-1.5 flex-shrink-0">
-        <Eye className="h-4 w-4" />
-        Ver Anamnese
-      </Button>
+      {/* Desktop: original horizontal layout */}
+      <div className="hidden sm:flex items-center gap-4">
+        <div className="h-11 w-11 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+          <User className="h-5 w-5 text-muted-foreground" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3 className="font-semibold text-foreground truncate">
+              {avaliacao.patient_name}
+            </h3>
+            <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', badge.className)}>
+              {badge.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+            {age !== null && <span>{age} anos</span>}
+            {avaliacao.imc && (
+              <span className="flex items-center gap-1">
+                <Scale className="h-3 w-3" />
+                IMC {avaliacao.imc.toFixed(1)}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(avaliacao.created_at), "dd MMM yyyy", { locale: ptBR })}
+            </span>
+          </div>
+        </div>
+
+        <Button variant="outline" size="sm" onClick={onViewAnamnese} className="gap-1.5 flex-shrink-0 min-h-[44px]">
+          <Eye className="h-4 w-4" />
+          Ver Anamnese
+        </Button>
+      </div>
     </div>
   );
 }
