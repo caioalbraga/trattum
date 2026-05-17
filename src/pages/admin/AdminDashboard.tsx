@@ -127,13 +127,25 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="max-w-6xl mx-auto space-y-8">
-        <header>
-          <h1 className="font-serif text-2xl font-semibold text-foreground">
-            Visão Geral
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Métricas financeiras e operacionais da clínica.
-          </p>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-foreground">
+              Visão Geral
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Métricas financeiras e operacionais da clínica.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            className="min-h-[44px] gap-2 flex-shrink-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Atualizar</span>
+          </Button>
         </header>
 
         {/* Financial KPIs */}
