@@ -35,7 +35,15 @@ export default function AdminAtendimento() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('pendente');
   const [selectedAvaliacao, setSelectedAvaliacao] = useState<AtendimentoAvaliacao | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAvaliacoes();
+    setRefreshing(false);
+    toast({ title: 'Lista atualizada' });
+  };
 
   useEffect(() => {
     fetchAvaliacoes();
