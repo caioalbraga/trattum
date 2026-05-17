@@ -198,14 +198,16 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
   const handleApprove = async () => {
     setLoading('aprovado');
     try {
-      await supabase.from('avaliacoes').update({ status: 'aprovado' }).eq('id', avaliacao.id);
-
       const { data: { user: adminUser } } = await supabase.auth.getUser();
 
-      // Update treatment
+      await supabase.from('avaliacoes').update({ status: 'aprovado' }).eq('id', avaliacao.id);
+
+      // Update treatment (registra médico aprovador)
       await supabase.from('tratamentos').update({
         status: 'aprovado',
-        plano: 'Protocolo de Gerenciamento Metabólico'
+        plano: 'Protocolo de Gerenciamento Metabólico',
+        aprovado_por: adminUser?.id,
+        aprovado_em: new Date().toISOString(),
       }).eq('user_id', avaliacao.user_id);
 
       // Create prescription
