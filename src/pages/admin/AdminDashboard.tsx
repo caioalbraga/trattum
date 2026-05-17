@@ -32,10 +32,18 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+    toast({ title: 'Dados atualizados' });
+  };
 
   const fetchDashboardData = async () => {
     try {
