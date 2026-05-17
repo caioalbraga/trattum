@@ -18,12 +18,12 @@ export interface AtendimentoAvaliacao {
   patient_name: string;
 }
 
-const filters: { key: string; label: string | null; icon?: typeof Lock }[] = [
-  { key: 'pendente', label: 'Pendentes' },
-  { key: 'ajuste', label: 'Ajustes' },
-  { key: 'aguardando_pagamento', label: 'Esperando Pagamento' },
-  { key: 'aprovado', label: 'Aprovados' },
-  { key: 'bloqueado', label: null, icon: Lock },
+const filters: { key: string; label: string; shortLabel: string; icon: LucideIcon }[] = [
+  { key: 'pendente', label: 'Pendentes', shortLabel: 'Pendentes', icon: Clock },
+  { key: 'ajuste', label: 'Ajustes', shortLabel: 'Ajustes', icon: AlertCircle },
+  { key: 'aguardando_pagamento', label: 'Esperando Pagamento', shortLabel: 'Pagto.', icon: CreditCard },
+  { key: 'aprovado', label: 'Aprovados', shortLabel: 'Aprovados', icon: CheckCircle2 },
+  { key: 'bloqueado', label: 'Bloqueados', shortLabel: 'Bloq.', icon: Lock },
 ];
 
 type FilterKey = typeof filters[number]['key'];
