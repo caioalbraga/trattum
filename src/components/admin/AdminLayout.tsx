@@ -2,6 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
+import { AdminBottomNav } from './AdminBottomNav';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -57,10 +58,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[hsl(40,20%,97%)] dark:bg-background">
-        <AdminSidebar userRole={userRole as any} />
-        <main className="flex-1 p-8 lg:p-10 overflow-auto">
+        <div className="hidden lg:block">
+          <AdminSidebar userRole={userRole as any} />
+        </div>
+        <main
+          className="flex-1 px-4 pt-4 lg:px-10 lg:pt-10 overflow-auto"
+          style={{ paddingBottom: 'calc(56px + env(safe-area-inset-bottom) + 16px)' }}
+        >
           {children}
         </main>
+        <AdminBottomNav />
       </div>
     </SidebarProvider>
   );

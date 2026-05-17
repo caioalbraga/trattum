@@ -301,31 +301,32 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
 
   return (
     <Dialog open={open} onOpenChange={isOpen => { if (!isOpen && !lightboxSrc) onClose(); }}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0 overflow-hidden [&>button.absolute]:hidden">
+      <DialogContent className="max-w-4xl w-screen sm:w-[95vw] h-[100dvh] sm:h-[90vh] max-h-[100dvh] sm:max-h-[90vh] p-0 flex flex-col gap-0 overflow-hidden rounded-none sm:rounded-lg [&>button.absolute]:hidden">
           {/* Header */}
-          <header className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-border/60 bg-card">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                  <User className="h-6 w-6 text-muted-foreground" />
+          <header className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 sm:pt-5 sm:pb-4 border-b border-border/60 bg-card">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                  <User className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                 </div>
-                <div>
-                  <h2 className="font-serif text-xl font-semibold text-foreground leading-tight">
+                <div className="flex-1 min-w-0">
+                  <h2
+                    className="font-serif text-base sm:text-xl font-semibold text-foreground leading-tight"
+                    style={{ wordBreak: 'break-word' }}
+                  >
                     {avaliacao.patient_name}
                   </h2>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(avaliacao.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </span>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                    <Calendar className="h-3 w-3 flex-shrink-0" />
+                    <span>{format(new Date(avaliacao.created_at), "dd/MM/yyyy")}</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={cn('px-3 py-1 text-xs font-medium', badge.className)}>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <Badge variant="outline" className={cn('px-2 py-0.5 text-[10px] sm:text-xs font-medium whitespace-nowrap', badge.className)}>
                   {badge.label}
                 </Badge>
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 min-w-[44px] sm:min-w-0">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -334,7 +335,10 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
 
           {/* Scrollable Body */}
           <ScrollArea className="flex-1 min-h-0">
-            <div className="p-6 space-y-8">
+            <div
+              className="px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 sm:space-y-8"
+              style={{ paddingBottom: 'calc(96px + env(safe-area-inset-bottom))' }}
+            >
 
               {/* Section 1: Identificação */}
               <section>
@@ -493,11 +497,13 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
 
           {/* Action Footer */}
           {canTakeAction && (
-            <footer className="flex-shrink-0 border-t border-border/60 bg-card px-6 py-4">
-              <div className="flex gap-3 justify-end">
+            <footer
+              className="flex-shrink-0 border-t border-border bg-background"
+              style={{ padding: '12px 16px calc(12px + env(safe-area-inset-bottom))' }}
+            >
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
-                  size="sm"
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="w-full sm:flex-1 h-11 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={handleApprove}
                   disabled={loading !== null}
                 >
@@ -505,9 +511,8 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
                   {loading === 'aprovado' ? 'Aprovando…' : 'Aprovar'}
                 </Button>
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
+                  className="w-full sm:flex-1 h-11 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50"
                   onClick={() => setShowAdjustment(true)}
                   disabled={loading !== null}
                 >
@@ -515,9 +520,8 @@ export function AnamnseModal({ avaliacao, open, onClose, onStatusUpdate }: Props
                   Solicitar Ajuste
                 </Button>
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                  className="w-full sm:flex-1 h-11 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
                   onClick={handleBlock}
                   disabled={loading !== null}
                 >

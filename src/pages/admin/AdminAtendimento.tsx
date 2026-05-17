@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { decryptProfiles } from '@/lib/crypto-client';
-import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, RefreshCw, LucideIcon } from 'lucide-react';
+import { Loader2, Lock, Clock, AlertCircle, CreditCard, CheckCircle2, RefreshCw, ClipboardList, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { AtendimentoPatientCard } from '@/components/admin/atendimento/PatientCard';
@@ -129,67 +129,67 @@ export default function AdminAtendimento() {
 
   return (
     <AdminLayout>
-      <div className="max-w-5xl mx-auto space-y-6 pb-24 md:pb-0">
-        <header className="flex items-start justify-between gap-4">
-          <div>
+      <div className="max-w-5xl mx-auto space-y-5">
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="font-serif text-2xl font-semibold text-foreground">Atendimento</h1>
-            <p className="text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
+            <p className="text-sm text-muted-foreground mt-1">Triagem clínica e gestão de avaliações</p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading || refreshing}
-            className="min-h-[44px] gap-2 flex-shrink-0"
+            className="min-h-[44px] min-w-[44px] gap-2 flex-shrink-0"
+            aria-label="Atualizar"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Atualizar</span>
           </Button>
         </header>
 
-        {/* Filter Chips (desktop/tablet) */}
-        <div className="hidden md:flex flex-wrap gap-2">
-          {filters.map(f => {
-            const count = avaliacoes.filter(a => a.status === f.key).length;
-            const isActive = activeFilter === f.key;
-            const Icon = f.icon;
-            return (
-              <button
-                key={f.key}
-                onClick={() => setActiveFilter(f.key)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 min-h-[44px]',
-                  'border',
-                  isActive
-                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                    : 'bg-card text-muted-foreground border-border/60 hover:bg-muted/50 hover:text-foreground'
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span>{f.label}</span>
-                <span className={cn(
-                  'inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-xs font-semibold',
-                  isActive ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active filter label (mobile) */}
-        <div className="md:hidden">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            {filters.find(f => f.key === activeFilter)?.label}
-          </h2>
+        {/* Scrollable status tab row */}
+        <div
+          className="-mx-4 px-4 lg:mx-0 lg:px-0 overflow-x-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          <style>{`.no-scrollbar::-webkit-scrollbar{display:none}`}</style>
+          <div className="no-scrollbar flex gap-2 pb-1">
+            {filters.map(f => {
+              const count = avaliacoes.filter(a => a.status === f.key).length;
+              const isActive = activeFilter === f.key;
+              const Icon = f.icon;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setActiveFilter(f.key)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all border min-h-[44px] flex-shrink-0',
+                    isActive
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground'
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{f.label}</span>
+                  <span className={cn(
+                    'ml-1.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold',
+                    isActive ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Patient Cards */}
-        <div className="space-y-3">
+        <div>
           {filteredAvaliacoes.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="text-lg">Nenhuma avaliação nesta categoria.</p>
+            <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-xl">
+              <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">Nenhuma avaliação nesta categoria.</p>
             </div>
           ) : (
             filteredAvaliacoes.map(avaliacao => (
@@ -201,45 +201,6 @@ export default function AdminAtendimento() {
             ))
           )}
         </div>
-
-        {/* Bottom Nav (mobile) */}
-        <nav
-          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t border-border/60"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <ul className="grid grid-cols-5">
-            {filters.map(f => {
-              const count = avaliacoes.filter(a => a.status === f.key).length;
-              const isActive = activeFilter === f.key;
-              const Icon = f.icon;
-              return (
-                <li key={f.key}>
-                  <button
-                    onClick={() => setActiveFilter(f.key)}
-                    className={cn(
-                      'w-full flex flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] relative transition-colors',
-                      isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    aria-label={f.label}
-                  >
-                    <div className="relative">
-                      <Icon className="h-5 w-5" />
-                      {count > 0 && (
-                        <span className={cn(
-                          'absolute -top-1.5 -right-2 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
-                          isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                        )}>
-                          {count}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] font-medium leading-tight">{f.shortLabel}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
 
         {/* Anamnese Modal */}
         <AnamnseModal
